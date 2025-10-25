@@ -139,16 +139,22 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               children: [
                 Icon(Icons.category, size: 14, color: Colors.grey[600]),
                 const SizedBox(width: 4),
-                Text(
-                  expense.category.displayName,
-                  style: TextStyle(color: Colors.grey[600]),
+                Flexible(
+                  child: Text(
+                    expense.category.displayName,
+                    style: TextStyle(color: Colors.grey[600]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
                 const SizedBox(width: 4),
-                Text(
-                  dateFormat.format(expense.date),
-                  style: TextStyle(color: Colors.grey[600]),
+                Flexible(
+                  child: Text(
+                    dateFormat.format(expense.date),
+                    style: TextStyle(color: Colors.grey[600]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

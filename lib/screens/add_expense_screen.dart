@@ -156,9 +156,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   );
                 }).toList(),
                 selected: _selectedType != null ? {_selectedType!} : {},
+                // Allow empty selection (user hasn't selected yet)
+                emptySelectionAllowed: true,
                 onSelectionChanged: (Set<ExpenseType> selected) {
                   setState(() {
-                    _selectedType = selected.first;
+                    // Handle empty selection (when user deselects)
+                    _selectedType = selected.isNotEmpty ? selected.first : null;
                   });
                 },
               ),
