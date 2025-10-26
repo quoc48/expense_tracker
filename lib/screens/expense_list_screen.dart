@@ -253,6 +253,9 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         _expenses.sort((a, b) => b.date.compareTo(a.date));
       });
 
+      // Save to storage after adding
+      await _storageService.saveExpenses(_expenses);
+
       // Show confirmation message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -261,10 +264,12 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             duration: const Duration(seconds: 2),
             action: SnackBarAction(
               label: 'Undo',
-              onPressed: () {
+              onPressed: () async {
                 setState(() {
                   _expenses.remove(result);
                 });
+                // Save after undo
+                await _storageService.saveExpenses(_expenses);
               },
             ),
           ),

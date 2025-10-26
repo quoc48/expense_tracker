@@ -109,15 +109,15 @@ lib/
 Make expense data persist across app restarts using shared_preferences.
 
 ## Tasks
-- [ ] Add shared_preferences package to pubspec.yaml
-- [ ] Create storage service class (`lib/services/storage_service.dart`)
-- [ ] Implement save functionality (write expenses to storage)
-- [ ] Implement load functionality (read expenses from storage)
-- [ ] Load expenses on app start (replace dummy data)
-- [ ] Auto-save when expenses are added/modified
+- [x] Add shared_preferences package to pubspec.yaml
+- [x] Create storage service class (`lib/services/storage_service.dart`)
+- [x] Implement save functionality (write expenses to storage)
+- [x] Implement load functionality (read expenses from storage)
+- [x] Load expenses on app start (replace dummy data)
+- [x] Auto-save when expenses are added/modified
+- [x] Test data persistence (add expense, restart app, verify it's still there)
 - [ ] Add edit expense functionality
 - [ ] Add delete expense functionality with confirmation
-- [ ] Test data persistence (add expense, restart app, verify it's still there)
 - [ ] Git commit: "Milestone 2 complete - Data persistence"
 
 **Learning**: async/await, Futures, JSON serialization, local storage, CRUD operations
