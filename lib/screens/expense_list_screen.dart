@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
+import '../providers/auth_provider.dart';
 import 'add_expense_screen.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
@@ -27,6 +28,14 @@ class ExpenseListScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Expense Tracker'),
+            actions: [
+              // Logout button
+              IconButton(
+                icon: const Icon(Icons.logout),
+                tooltip: 'Sign Out',
+                onPressed: () => _showLogoutDialog(context),
+              ),
+            ],
           ),
           body: expenseProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -310,6 +319,43 @@ class ExpenseListScreen extends StatelessWidget {
           ),
         ),
       );
+    }
+  }
+
+  /// Show logout confirmation dialog
+  ///
+  /// Confirms the user wants to sign out before calling AuthProvider.signOut()
+  /// After successful logout, AuthGate will automatically show LoginScreen
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sign Out'),
+          content: const Text('Are you sure you want to sign out?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text('Sign Out'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user confirmed, sign out
+    if (confirmed == true && context.mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signOut();
+      // No need to navigate - AuthGate will automatically show LoginScreen
     }
   }
 }
