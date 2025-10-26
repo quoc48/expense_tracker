@@ -119,6 +119,7 @@ class TrendsChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 50,
+                  interval: maxValue * 0.25, // Match grid line interval
                   getTitlesWidget: (value, meta) {
                     if (value == 0) return const Text('\$0');
                     if (value >= 1000) {
