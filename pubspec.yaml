@@ -41,6 +41,9 @@ dependencies:
   # Local storage for persisting data on the device
   shared_preferences: ^2.2.2
 
+  # State management using the Provider pattern
+  provider: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

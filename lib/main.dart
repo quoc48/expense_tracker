@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'screens/expense_list_screen.dart';
+import 'package:provider/provider.dart';
+import 'providers/expense_provider.dart';
+import 'screens/main_navigation_screen.dart';
 
 // This is the entry point of the Flutter app
 // The main() function is called when the app starts
@@ -14,7 +16,20 @@ class ExpenseTrackerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // ChangeNotifierProvider makes ExpenseProvider available to all descendant widgets
+    // It creates a single instance of ExpenseProvider and keeps it alive
+    // Any widget in the tree can access it using Provider.of or Consumer
+    return ChangeNotifierProvider(
+      // create: Factory function that creates the provider instance
+      // This only runs once when the provider is first needed
+      create: (context) {
+        final provider = ExpenseProvider();
+        // Load expenses from storage when the provider is created
+        // This happens asynchronously, so the app will show loading state initially
+        provider.loadExpenses();
+        return provider;
+      },
+      child: MaterialApp(
       // App title (shown in task switcher on Android)
       title: 'Expense Tracker',
 
@@ -61,8 +76,10 @@ class ExpenseTrackerApp extends StatelessWidget {
         ),
       ),
 
-      // Set ExpenseListScreen as the home screen
-      home: const ExpenseListScreen(),
+        // Set MainNavigationScreen as the home screen
+        // This provides bottom navigation to switch between Expenses and Analytics
+        home: const MainNavigationScreen(),
+      ),
     );
   }
 }
