@@ -117,12 +117,20 @@ Make expense data persist across app restarts using shared_preferences.
 - [x] Auto-save when expenses are added/modified
 - [x] Test data persistence (add expense, restart app, verify it's still there)
 - [x] Git commit: "Milestone 2 complete - Data persistence"
-- [ ] Add edit expense functionality
-- [ ] Add delete expense functionality with confirmation
+- [x] Add edit expense functionality
+  - Reused AddExpenseScreen with optional expense parameter
+  - Pre-populate form fields in edit mode
+  - Fixed category dropdown to show selected value
+  - Update expense in list and storage
+- [x] Add delete expense functionality with confirmation
+  - Implemented swipe-to-delete with Dismissible widget
+  - Confirmation dialog before deletion
+  - Undo functionality with SnackBar
+  - Save to storage after delete/undo
 
-**Learning**: async/await, Futures, JSON serialization, local storage, CRUD operations
+**Learning**: async/await, Futures, JSON serialization, local storage, CRUD operations, Dismissible widget, AlertDialog
 
 ---
 
-**Current Status**: Ready to begin Milestone 2
-**Last Updated**: 2025-10-25
+**Current Status**: ✅ Milestone 2 COMPLETE - Ready for Milestone 3!
+**Last Updated**: 2025-10-26

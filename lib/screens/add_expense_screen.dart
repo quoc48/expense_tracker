@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/expense.dart';
 
-// AddExpenseScreen: Form for creating new expenses
+// AddExpenseScreen: Form for creating new expenses OR editing existing ones
 // StatefulWidget because we need to manage form state and user input
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+  // Optional expense parameter - if provided, we're in edit mode
+  final Expense? expense;
+
+  const AddExpenseScreen({super.key, this.expense});
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -29,6 +32,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   DateTime _selectedDate = DateTime.now();
 
   @override
+  void initState() {
+    super.initState();
+    // If we're editing an existing expense, pre-populate the form
+    if (widget.expense != null) {
+      final expense = widget.expense!;
+      _descriptionController.text = expense.description;
+      _amountController.text = expense.amount.toString();
+      _noteController.text = expense.note ?? '';
+      _selectedCategory = expense.category;
+      _selectedType = expense.type;
+      _selectedDate = expense.date;
+    }
+  }
+
+  @override
   void dispose() {
     // IMPORTANT: Dispose controllers to prevent memory leaks
     // Controllers keep listeners that need to be cleaned up
@@ -40,9 +58,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if we're in edit mode
+    final isEditing = widget.expense != null;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Expense'),
+        title: Text(isEditing ? 'Edit Expense' : 'Add Expense'),
       ),
       body: Form(
         // Form widget: Wraps form fields and provides validation
@@ -107,6 +128,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.category),
                 ),
+                // value: The currently selected category (important for edit mode!)
+                value: _selectedCategory,
                 items: Category.values.map((category) {
                   return DropdownMenuItem(
                     value: category,
@@ -211,11 +234,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               FilledButton(
                 // FilledButton: Material Design 3's primary button
                 onPressed: _saveExpense,
-                child: const Padding(
-                  padding: EdgeInsets.all(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Save Expense',
-                    style: TextStyle(fontSize: 16),
+                    isEditing ? 'Update Expense' : 'Save Expense',
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ),
@@ -242,7 +265,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
   }
 
-  // Method to save the expense
+  // Method to save the expense (create new or update existing)
   void _saveExpense() {
     // Validate all form fields
     if (!_formKey.currentState!.validate()) {
@@ -255,9 +278,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       return;
     }
 
-    // Create new expense object
+    // Create or update expense object
     final expense = Expense(
-      id: DateTime.now().millisecondsSinceEpoch.toString(), // Simple ID generation
+      // If editing, keep the original ID; otherwise create a new one
+      id: widget.expense?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       description: _descriptionController.text.trim(),
       amount: double.parse(_amountController.text),
       category: _selectedCategory!,

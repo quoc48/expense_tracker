@@ -125,7 +125,43 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     // NumberFormat for currency display
     final currencyFormat = NumberFormat.currency(symbol: '\$');
 
-    return Card(
+    // Dismissible: Widget that can be dismissed by swiping
+    // This provides the swipe-to-delete functionality
+    return Dismissible(
+      // Key: Unique identifier for this dismissible (required)
+      // Using the expense ID ensures each card has a unique key
+      key: Key(expense.id),
+
+      // Direction: Only allow swiping from right to left (endToStart)
+      direction: DismissDirection.endToStart,
+
+      // Background: What shows behind the card while swiping
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(
+          Icons.delete,
+          color: Colors.white,
+          size: 32,
+        ),
+      ),
+
+      // confirmDismiss: Called when user swipes - ask for confirmation
+      confirmDismiss: (direction) async {
+        return await _showDeleteConfirmation(context, expense);
+      },
+
+      // onDismissed: Called after item is dismissed (user confirmed)
+      onDismissed: (direction) {
+        _deleteExpense(expense);
+      },
+
+      child: Card(
       // Card: Material Design elevated container
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
@@ -226,10 +262,9 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         ),
 
         // onTap: What happens when you tap the card
-        // For now, just a placeholder - we'll add edit functionality later
-        onTap: () {
-          // TODO: Navigate to edit screen
-        },
+        // Navigate to edit screen with the expense data
+        onTap: () => _editExpense(expense),
+      ),
       ),
     );
   }
@@ -275,6 +310,119 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           ),
         );
       }
+    }
+  }
+
+  // Function to edit an existing expense
+  Future<void> _editExpense(Expense expense) async {
+    // Navigate to AddExpenseScreen in edit mode by passing the expense
+    final result = await Navigator.push<Expense>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddExpenseScreen(expense: expense),
+      ),
+    );
+
+    // If user saved the changes (didn't just go back)
+    if (result != null) {
+      setState(() {
+        // Find the index of the expense to update
+        final index = _expenses.indexWhere((e) => e.id == result.id);
+        if (index != -1) {
+          // Replace the old expense with the updated one
+          _expenses[index] = result;
+          // Re-sort expenses by date (newest first)
+          _expenses.sort((a, b) => b.date.compareTo(a.date));
+        }
+      });
+
+      // Save to storage after updating
+      await _storageService.saveExpenses(_expenses);
+
+      // Show confirmation message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Updated: ${result.description}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  // Show confirmation dialog before deleting
+  Future<bool?> _showDeleteConfirmation(
+      BuildContext context, Expense expense) async {
+    // showDialog: Display a dialog that requires user interaction
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        // AlertDialog: Material Design dialog for important choices
+        return AlertDialog(
+          title: const Text('Delete Expense'),
+          content: Text(
+            'Are you sure you want to delete "${expense.description}"?',
+          ),
+          actions: [
+            // Cancel button
+            TextButton(
+              onPressed: () {
+                // Return false = don't delete
+                Navigator.pop(context, false);
+              },
+              child: const Text('Cancel'),
+            ),
+            // Delete button (destructive action)
+            TextButton(
+              onPressed: () {
+                // Return true = confirm delete
+                Navigator.pop(context, true);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Function to delete an expense
+  Future<void> _deleteExpense(Expense expense) async {
+    // Store the expense and its index for undo functionality
+    final deletedExpense = expense;
+    final deletedIndex = _expenses.indexOf(expense);
+
+    // Remove from list
+    setState(() {
+      _expenses.remove(expense);
+    });
+
+    // Save to storage after deleting
+    await _storageService.saveExpenses(_expenses);
+
+    // Show confirmation with undo option
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted: ${expense.description}'),
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              // Restore the deleted expense at its original position
+              setState(() {
+                _expenses.insert(deletedIndex, deletedExpense);
+              });
+              // Save after undo
+              await _storageService.saveExpenses(_expenses);
+            },
+          ),
+        ),
+      );
     }
   }
 }

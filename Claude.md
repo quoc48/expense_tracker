@@ -27,13 +27,20 @@ This is a **learning project** for building a Flutter expense tracker app from s
 - **Consistent naming**: Follow Dart/Flutter conventions
 - **No shortcuts**: Build things properly, even if it takes longer
 
-### 3. Architecture & Decisions
+### 3. Testing Standards
+- **Test before declaring ready**: ALWAYS manually test every feature before telling me it's ready to test
+- **Verify functionality**: Run the app and verify the feature works as expected
+- **Test edge cases**: Try invalid inputs, empty states, error conditions
+- **No untested code**: Never say "ready for testing" without actually testing first
+- **Document test results**: Share what you tested and what works
+
+### 4. Architecture & Decisions
 - **Explain trade-offs**: When choosing between approaches, tell me the pros/cons
 - **Document decisions**: Keep track of architectural choices in Serena memories
 - **Follow the plan**: Stick to the milestones in spec.md unless we explicitly decide to change
 - **No magic**: Don't use advanced patterns without explaining them first
 
-### 4. Context Management
+### 5. Context Management
 - **Always investigate first**: Read existing code before making assumptions
 - **Use Serena memories**: Check and update memories at session start/end
 - **Git hygiene**: Meaningful commits after each logical feature
@@ -42,7 +49,7 @@ This is a **learning project** for building a Flutter expense tracker app from s
   2. During: Update todos, explain concepts as we code
   3. End: Update memories, commit work, document learnings
 
-### 5. Communication Preferences
+### 6. Communication Preferences
 - **Ask when uncertain**: Don't guess - investigate or ask me
 - **Show options**: When multiple approaches exist, present them and recommend one
 - **Catch my mistakes**: If I suggest something problematic, explain why and suggest alternatives
