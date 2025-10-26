@@ -1,11 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/expense_provider.dart';
 import 'screens/main_navigation_screen.dart';
 
 // This is the entry point of the Flutter app
 // The main() function is called when the app starts
-void main() {
+// Now async to support Supabase initialization
+Future<void> main() async {
+  // Ensure Flutter bindings are initialized before async operations
+  // Required for loading .env and initializing Supabase
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables from .env file
+  // This contains our Supabase URL and Anon Key
+  await dotenv.load(fileName: '.env');
+
+  // Initialize Supabase with credentials from .env
+  // This must complete before the app starts
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+
   runApp(const ExpenseTrackerApp());
 }
 

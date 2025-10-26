@@ -47,6 +47,12 @@ dependencies:
   # Beautiful and interactive charts for Flutter
   fl_chart: ^0.69.0
 
+  # Supabase client for Flutter (PostgreSQL, Auth, Realtime)
+  supabase_flutter: ^2.0.0
+
+  # Environment variables loader for secure credential management
+  flutter_dotenv: ^5.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -70,9 +76,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
