@@ -160,6 +160,18 @@ class AuthProvider extends ChangeNotifier {
         if (kDebugMode) {
           print('Sign up successful: ${response.user?.email}');
         }
+
+        // Reset loading state
+        _isLoading = false;
+
+        // Check if email confirmation is required
+        if (response.session == null) {
+          _errorMessage = 'Please check your email to confirm your account.';
+          notifyListeners();
+          return false;
+        }
+
+        notifyListeners();
         return true;
       } else {
         _errorMessage = 'Failed to create account. Please try again.';
