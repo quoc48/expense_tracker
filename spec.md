@@ -114,7 +114,7 @@ VALUES
 ```sql
 CREATE TABLE expense_types (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  key TEXT UNIQUE NOT NULL,           -- "must_have", "nice_to_have", "wasted"
+  key TEXT UNIQUE NOT NULL,           -- "phat_sinh", "phai_chi", "lang_phi"
   name_vi TEXT NOT NULL,              -- Vietnamese display name
   name_en TEXT,                       -- English display name
   color_hex TEXT NOT NULL,            -- Type color
@@ -133,9 +133,9 @@ CREATE POLICY "Anyone can view expense types"
 **Seed Data**:
 ```sql
 INSERT INTO expense_types (key, name_vi, name_en, color_hex) VALUES
-  ('must_have', 'Cần thiết', 'Must Have', '#4CAF50'),
-  ('nice_to_have', 'Tốt nếu có', 'Nice to Have', '#FFC107'),
-  ('wasted', 'Lãng phí', 'Wasted', '#F44336');
+  ('phat_sinh', 'Phát sinh', 'Incurred', '#4CAF50'),
+  ('phai_chi', 'Phải chi', 'Must Pay', '#FFC107'),
+  ('lang_phi', 'Lãng phí', 'Wasted', '#F44336');
 ```
 
 #### 3. `expenses` Table
@@ -250,19 +250,45 @@ CREATE POLICY "Users can manage own recurring expenses"
 Expected CSV columns:
 - Name (Description)
 - Amount
-- Category (Vietnamese name)
+- Category (Vietnamese name - one of 14 categories)
+- Type (Vietnamese name - one of: Phát sinh, Phải chi, Lãng phí)
 - Date
 - Notes (optional)
 
-#### 2. Category Mapping
-Create mapping between Notion categories and Supabase category IDs:
+#### 2. Vietnamese Mappings
+
+**Category Mapping** (14 categories)  
+Create mapping between Notion Vietnamese categories and Supabase category IDs:
 
 ```python
 # After seeding categories in Supabase, fetch and create mapping
 category_mapping = {
     'Thực phẩm': 'uuid-from-supabase-1',
     'Sức khỏe': 'uuid-from-supabase-2',
-    # ... all 14 categories
+    'Thời trang': 'uuid-from-supabase-3',
+    'Giải trí': 'uuid-from-supabase-4',
+    'Tiền nhà': 'uuid-from-supabase-5',
+    'Hoá đơn': 'uuid-from-supabase-6',
+    'Biểu gia đình': 'uuid-from-supabase-7',
+    'Giáo dục': 'uuid-from-supabase-8',
+    'TẾT': 'uuid-from-supabase-9',
+    'Quà vật': 'uuid-from-supabase-10',
+    'Tạp hoá': 'uuid-from-supabase-11',
+    'Đi lại': 'uuid-from-supabase-12',
+    'Du lịch': 'uuid-from-supabase-13',
+    'Cà phê': 'uuid-from-supabase-14'
+}
+```
+
+**Expense Type Mapping** (3 types from Notion)  
+Map Notion Vietnamese types to Supabase type IDs:
+
+```python
+# After seeding expense_types in Supabase, fetch and create mapping
+type_mapping = {
+    'Phát sinh': 'uuid-for-phat-sinh',    # Incurred/Necessary
+    'Phải chi': 'uuid-for-phai-chi',      # Must Pay
+    'Lãng phí': 'uuid-for-lang-phi'       # Wasted
 }
 ```
 
@@ -284,17 +310,13 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Load CSV
 df = pd.read_csv('notion_expenses.csv')
 
-# Get category mapping from Supabase
+# Get category mapping from Supabase (14 Vietnamese categories)
 categories = supabase.table('categories').select('id, name_vi').execute()
 category_map = {cat['name_vi']: cat['id'] for cat in categories.data}
 
-# Get default type_id (or map if you have types in Notion)
-default_type = supabase.table('expense_types')\
-    .select('id')\
-    .eq('key', 'must_have')\
-    .single()\
-    .execute()
-default_type_id = default_type.data['id']
+# Get type mapping from Supabase (3 Vietnamese types)
+expense_types = supabase.table('expense_types').select('id, name_vi').execute()
+type_map = {t['name_vi']: t['id'] for t in expense_types.data}
 
 # Transform and insert
 expenses_to_insert = []
@@ -303,7 +325,7 @@ for _, row in df.iterrows():
         'id': str(uuid.uuid4()),
         'user_id': USER_ID,
         'category_id': category_map[row['Category']],
-        'type_id': default_type_id,
+        'type_id': type_map[row['Type']],  # Map Vietnamese type name
         'description': row['Name'],
         'amount': float(row['Amount']),
         'date': row['Date'],
