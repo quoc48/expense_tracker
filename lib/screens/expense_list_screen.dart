@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/expense.dart';
-import '../models/dummy_data.dart';
+import '../services/storage_service.dart';
 import 'add_expense_screen.dart';
 
 // ExpenseListScreen is a StatefulWidget because it manages changing data (the expense list)
@@ -19,19 +19,35 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   // State: The list of expenses (can be modified)
   List<Expense> _expenses = [];
 
+  // Storage service instance for saving/loading expenses
+  // late: This will be initialized before first use (in initState)
+  late final StorageService _storageService;
+
+  // Loading state to show progress indicator
+  bool _isLoading = true;
+
   @override
   void initState() {
     // initState() is called once when the widget is first created
     // Perfect place for initial data loading
     super.initState();
+    _storageService = StorageService();
     _loadExpenses();
   }
 
-  void _loadExpenses() {
-    // For now, load dummy data
-    // In Milestone 2, we'll load from shared_preferences
+  // Load expenses from storage (async operation)
+  // Future<void>: This returns nothing but takes time
+  Future<void> _loadExpenses() async {
     setState(() {
-      _expenses = getDummyExpenses();
+      _isLoading = true; // Show loading indicator
+    });
+
+    // await: Wait for expenses to be loaded from storage
+    final expenses = await _storageService.loadExpenses();
+
+    setState(() {
+      _expenses = expenses;
+      _isLoading = false; // Hide loading indicator
     });
   }
 
