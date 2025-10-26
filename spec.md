@@ -1,210 +1,554 @@
-# Expense Tracker - Project Specification
+# Expense Tracker - Advanced Features Specification
 
-## 📋 Requirements
+## 📊 Project Status
 
-### Core Features
-- **Add Expenses**: Create new expense entries with detailed information
-  - Description (required)
-  - Amount (required, numeric)
-  - Category (required, predefined list)
-  - Type (required): Must Have / Nice to Have / Wasted
-  - Date (required, with date picker)
-  - Note (optional, for additional context)
-
-- **Edit Expenses**: Modify existing expense entries
-
-- **Delete Expenses**: Remove unwanted expense entries
-
-- **View Expenses**: Display list of all expenses with key information
-
-- **Monthly Summary**:
-  - Total spending for selected month
-  - Breakdown by category (bar chart)
-  - Breakdown by type (bar chart)
-
-- **Data Persistence**: All data survives app restarts via local storage
+**MVP Status**: ✅ Complete (Milestones 1-3)
+**Current Phase**: Planning Milestone 4-7 (Cloud Sync + Advanced Features)
+**Next Milestone**: M4 - Supabase Infrastructure
 
 ---
 
-## 🛠️ Tech Stack
+## 🎯 Overview
 
-### Framework & Language
-- **Flutter**: Latest stable version
-- **Dart**: Latest stable version
-
-### Storage & State
-- **Local Storage**: `shared_preferences` package
-  - Simple key-value storage
-  - JSON serialization for complex data
-  - Suitable for small to medium datasets
-
-### Visualization
-- **Charts**: `fl_chart` package
-  - Bar charts for category breakdown
-  - Bar charts for type breakdown
-  - Customizable and performant
-
-### State Management Evolution
-- **Milestone 1-2**: `setState` (built-in, simple)
-- **Milestone 3**: `provider` package (scalable, recommended by Flutter team)
-
-### UI Framework
-- **Material Design 3**: Modern Flutter Material library
-- **Material Icons**: Built-in icon set
+This specification outlines advanced features for the Expense Tracker app, focusing on:
+1. **Cloud Sync with Supabase** - Real-time synchronization across devices
+2. **Notion Data Migration** - Import existing expense data from Notion
+3. **Vietnamese Category Support** - Preserve 14 Vietnamese categories from Notion
+4. **Advanced Features** - Recurring expenses and budget tracking
 
 ---
 
-## 🎨 Design Guidelines
+## 🌏 Vietnamese Categories (From Notion)
 
-### Visual Principles
-- **Material Design 3**: Follow latest Material Design specifications
-- **Clean UI**: Minimalist interface, focus on content
-- **Visual Hierarchy**: Clear information structure
-- **Intuitive Navigation**: Easy to understand flow
+### Current Notion Categories (14 total)
 
-### Color Scheme
-- **Expense Types Color Coding**:
-  - Must Have: Green (essential spending)
-  - Nice to Have: Yellow/Orange (discretionary spending)
-  - Wasted: Red (regrettable spending)
+| Vietnamese Name | English Translation | Icon | Color | Notes |
+|----------------|-------------------|------|-------|-------|
+| Thực phẩm | Food | restaurant | #FF6B6B | General food items |
+| Sức khỏe | Health | medical_services | #4ECDC4 | Healthcare, medicine |
+| Thời trang | Fashion | checkroom | #95E1D3 | Clothing, accessories |
+| Giải trí | Entertainment | movie | #F38181 | Movies, games, hobbies |
+| Tiền nhà | Housing | home | #AA96DA | Rent, mortgage |
+| Hoá đơn | Bills | receipt_long | #FCBAD3 | Utilities, services |
+| Biểu gia đình | Family | family_restroom | #A8D8EA | Family expenses |
+| Giáo dục | Education | school | #FFCB85 | Courses, books |
+| TẾT | Tet Holiday | celebration | #FF6B6B | Vietnamese New Year |
+| Quà vật | Gifts | card_giftcard | #FFE66D | Presents, donations |
+| Tạp hoá | Groceries | local_grocery_store | #C7CEEA | Daily supplies |
+| Đi lại | Transportation | directions_car | #B4F8C8 | Commute, fuel |
+| Du lịch | Travel | flight | #FBE7C6 | Tourism, trips |
+| Cà phê | Coffee | local_cafe | #A0E7E5 | Coffee shops, cafes |
 
-### Accessibility
-- Sufficient color contrast (WCAG AA minimum)
-- Readable font sizes (16sp minimum for body text)
-- Clear touch targets (48x48 minimum)
-- Descriptive labels for all interactive elements
-
-### Responsive Design
-- Support various screen sizes (phones, tablets)
-- Adaptive layouts
-- Safe area handling (notches, rounded corners)
+**Design Decision**: Keep all 14 Vietnamese categories to preserve data accuracy during Notion migration.
 
 ---
 
-## 🎯 Milestones
+## 🗄️ Supabase Database Schema
 
-### Milestone 1: Basic UI with Dummy Data (Weeks 1-2)
-**Goal**: Learn Flutter basics and build functional UI
+### Architecture: Normalized Tables
+
+**Decision**: Use separate tables for categories and types instead of enums in the expense table.
+
+**Reasons**:
+- ✅ Enables custom user categories in the future
+- ✅ Supports bilingual names (Vietnamese + English)
+- ✅ Better data integrity with foreign key constraints
+- ✅ Easier to add metadata (icons, colors, sorting)
+- ✅ Supabase enforces referential integrity
+
+### Table Schemas
+
+#### 1. `categories` Table
+```sql
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id),  -- NULL = system category
+  name_vi TEXT NOT NULL,                    -- Vietnamese name (primary)
+  name_en TEXT,                             -- English name (for i18n)
+  icon_name TEXT NOT NULL,                  -- Material Icon identifier
+  color_hex TEXT NOT NULL,                  -- Display color (#RRGGBB)
+  is_system BOOLEAN DEFAULT false,          -- System categories cannot be deleted
+  display_order INTEGER NOT NULL,           -- Sort order in UI
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now(),
+  deleted_at TIMESTAMP                      -- Soft delete
+);
+
+-- Indexes
+CREATE INDEX idx_categories_user_id ON categories(user_id);
+CREATE INDEX idx_categories_display_order ON categories(display_order);
+
+-- RLS Policies
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view all categories"
+  ON categories FOR SELECT
+  USING (user_id IS NULL OR user_id = auth.uid());
+
+CREATE POLICY "Users can manage their own categories"
+  ON categories FOR ALL
+  USING (user_id = auth.uid());
+```
+
+**Seed Data (14 Vietnamese Categories)**:
+```sql
+INSERT INTO categories (name_vi, name_en, icon_name, color_hex, is_system, display_order)
+VALUES
+  ('Thực phẩm', 'Food', 'restaurant', '#FF6B6B', true, 1),
+  ('Sức khỏe', 'Health', 'medical_services', '#4ECDC4', true, 2),
+  ('Thời trang', 'Fashion', 'checkroom', '#95E1D3', true, 3),
+  ('Giải trí', 'Entertainment', 'movie', '#F38181', true, 4),
+  ('Tiền nhà', 'Housing', 'home', '#AA96DA', true, 5),
+  ('Hoá đơn', 'Bills', 'receipt_long', '#FCBAD3', true, 6),
+  ('Biểu gia đình', 'Family', 'family_restroom', '#A8D8EA', true, 7),
+  ('Giáo dục', 'Education', 'school', '#FFCB85', true, 8),
+  ('TẾT', 'Tet Holiday', 'celebration', '#FF6B6B', true, 9),
+  ('Quà vật', 'Gifts', 'card_giftcard', '#FFE66D', true, 10),
+  ('Tạp hoá', 'Groceries', 'local_grocery_store', '#C7CEEA', true, 11),
+  ('Đi lại', 'Transportation', 'directions_car', '#B4F8C8', true, 12),
+  ('Du lịch', 'Travel', 'flight', '#FBE7C6', true, 13),
+  ('Cà phê', 'Coffee', 'local_cafe', '#A0E7E5', true, 14);
+```
+
+#### 2. `expense_types` Table
+```sql
+CREATE TABLE expense_types (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  key TEXT UNIQUE NOT NULL,           -- "must_have", "nice_to_have", "wasted"
+  name_vi TEXT NOT NULL,              -- Vietnamese display name
+  name_en TEXT,                       -- English display name
+  color_hex TEXT NOT NULL,            -- Type color
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+-- RLS: Public read-only
+ALTER TABLE expense_types ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view expense types"
+  ON expense_types FOR SELECT
+  USING (true);
+```
+
+**Seed Data**:
+```sql
+INSERT INTO expense_types (key, name_vi, name_en, color_hex) VALUES
+  ('must_have', 'Cần thiết', 'Must Have', '#4CAF50'),
+  ('nice_to_have', 'Tốt nếu có', 'Nice to Have', '#FFC107'),
+  ('wasted', 'Lãng phí', 'Wasted', '#F44336');
+```
+
+#### 3. `expenses` Table
+```sql
+CREATE TABLE expenses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  category_id UUID NOT NULL REFERENCES categories(id),
+  type_id UUID NOT NULL REFERENCES expense_types(id),
+  description TEXT NOT NULL,
+  amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
+  date DATE NOT NULL,
+  note TEXT,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now(),
+  deleted_at TIMESTAMP,               -- Soft delete
+
+  -- Sync metadata
+  local_id TEXT,                      -- Original local UUID (for migration)
+  last_synced_at TIMESTAMP
+);
+
+-- Indexes for performance
+CREATE INDEX idx_expenses_user_id ON expenses(user_id);
+CREATE INDEX idx_expenses_date ON expenses(date DESC);
+CREATE INDEX idx_expenses_category_id ON expenses(category_id);
+CREATE INDEX idx_expenses_created_at ON expenses(created_at DESC);
+
+-- RLS Policies
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own expenses"
+  ON expenses FOR SELECT
+  USING (user_id = auth.uid() AND deleted_at IS NULL);
+
+CREATE POLICY "Users can insert own expenses"
+  ON expenses FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update own expenses"
+  ON expenses FOR UPDATE
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Users can soft delete own expenses"
+  ON expenses FOR UPDATE
+  USING (user_id = auth.uid() AND deleted_at IS NULL);
+```
+
+#### 4. `budgets` Table (Milestone 6)
+```sql
+CREATE TABLE budgets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  category_id UUID NOT NULL REFERENCES categories(id),
+  amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
+  month DATE NOT NULL,                -- First day of month
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now(),
+
+  UNIQUE(user_id, category_id, month)  -- One budget per category per month
+);
+
+CREATE INDEX idx_budgets_user_month ON budgets(user_id, month);
+
+ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own budgets"
+  ON budgets FOR ALL
+  USING (user_id = auth.uid());
+```
+
+#### 5. `recurring_expenses` Table (Milestone 6)
+```sql
+CREATE TABLE recurring_expenses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  category_id UUID NOT NULL REFERENCES categories(id),
+  type_id UUID NOT NULL REFERENCES expense_types(id),
+  description TEXT NOT NULL,
+  amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
+  frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
+  start_date DATE NOT NULL,
+  end_date DATE,                      -- NULL = no end date
+  last_created_date DATE,             -- Track when last expense was created
+  is_active BOOLEAN DEFAULT true,
+  note TEXT,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE INDEX idx_recurring_active ON recurring_expenses(user_id, is_active);
+
+ALTER TABLE recurring_expenses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own recurring expenses"
+  ON recurring_expenses FOR ALL
+  USING (user_id = auth.uid());
+```
+
+---
+
+## 🔄 Notion → Supabase Migration Strategy
+
+### Migration Steps
+
+#### 1. Export Notion Database
+1. Open Notion database
+2. Click "..." menu → Export
+3. Choose format: CSV
+4. Download export file
+
+Expected CSV columns:
+- Name (Description)
+- Amount
+- Category (Vietnamese name)
+- Date
+- Notes (optional)
+
+#### 2. Category Mapping
+Create mapping between Notion categories and Supabase category IDs:
+
+```python
+# After seeding categories in Supabase, fetch and create mapping
+category_mapping = {
+    'Thực phẩm': 'uuid-from-supabase-1',
+    'Sức khỏe': 'uuid-from-supabase-2',
+    # ... all 14 categories
+}
+```
+
+#### 3. Migration Script (Python)
+```python
+import pandas as pd
+from supabase import create_client
+import uuid
+from datetime import datetime
+
+# Configuration
+SUPABASE_URL = "your-project-url"
+SUPABASE_KEY = "your-anon-key"
+USER_ID = "your-user-uuid"
+
+# Initialize Supabase client
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Load CSV
+df = pd.read_csv('notion_expenses.csv')
+
+# Get category mapping from Supabase
+categories = supabase.table('categories').select('id, name_vi').execute()
+category_map = {cat['name_vi']: cat['id'] for cat in categories.data}
+
+# Get default type_id (or map if you have types in Notion)
+default_type = supabase.table('expense_types')\
+    .select('id')\
+    .eq('key', 'must_have')\
+    .single()\
+    .execute()
+default_type_id = default_type.data['id']
+
+# Transform and insert
+expenses_to_insert = []
+for _, row in df.iterrows():
+    expense = {
+        'id': str(uuid.uuid4()),
+        'user_id': USER_ID,
+        'category_id': category_map[row['Category']],
+        'type_id': default_type_id,
+        'description': row['Name'],
+        'amount': float(row['Amount']),
+        'date': row['Date'],
+        'note': row.get('Notes', ''),
+        'local_id': str(uuid.uuid4())
+    }
+    expenses_to_insert.append(expense)
+
+# Batch insert
+result = supabase.table('expenses').insert(expenses_to_insert).execute()
+print(f"✅ Migrated {len(result.data)} expenses")
+```
+
+#### 4. Validation
+After migration, verify:
+- Total expense count matches
+- Sum of amounts per category matches
+- Date range matches
+- No missing categories
+
+---
+
+## 🏗️ Application Architecture
+
+### Tech Stack Updates
+
+#### New Dependencies
+```yaml
+dependencies:
+  supabase_flutter: ^2.0.0      # Supabase client
+  connectivity_plus: ^5.0.0     # Network status
+  rxdart: ^0.27.0              # Stream management
+  equatable: ^2.0.0            # Value equality
+```
+
+### Repository Pattern (Clean Architecture)
+
+```
+lib/
+├── models/
+│   ├── expense.dart
+│   ├── category.dart          # NEW
+│   ├── expense_type.dart      # NEW
+│   ├── budget.dart            # NEW (M6)
+│   └── recurring_expense.dart # NEW (M6)
+├── repositories/
+│   ├── expense_repository.dart              # Abstract interface
+│   ├── local_expense_repository.dart        # SharedPreferences
+│   └── supabase_expense_repository.dart     # Supabase
+├── services/
+│   ├── auth_service.dart      # Authentication
+│   ├── sync_service.dart      # Orchestrates sync
+│   └── storage_service.dart   # Local storage (existing)
+├── providers/
+│   ├── auth_provider.dart     # NEW
+│   ├── category_provider.dart # NEW
+│   └── expense_provider.dart  # Updated
+└── screens/
+    ├── auth/
+    │   ├── login_screen.dart  # NEW
+    │   └── signup_screen.dart # NEW
+    └── [existing screens...]
+```
+
+### Sync Strategy: Local-First
+
+**Pattern**: Offline-first with background sync
+
+**Flow**:
+1. User action → Update local storage immediately
+2. UI updates instantly (fast UX)
+3. Background sync to Supabase
+4. Listen for remote changes → Update local → Update UI
+
+**Conflict Resolution**: Last-write-wins based on `updated_at` timestamp
+
+---
+
+## 📋 Milestone Breakdown
+
+### Milestone 4: Supabase Infrastructure (2-3 sessions)
+
+**Goals**:
+- Set up Supabase project and database
+- Implement database schema with Vietnamese categories
+- Migrate Notion data to Supabase
 
 **Deliverables**:
-- Expense list screen displaying sample data
-- Add expense form with all required fields
-- Basic navigation between screens
-- Material Design 3 theming applied
-- Form validation
+- Supabase project configured
+- All 5 tables created with RLS
+- 14 Vietnamese categories seeded
+- Real expense data migrated from Notion
+- Migration validation complete
 
-**Data**: Hardcoded dummy expenses (no persistence)
-
-**Learning Focus**:
-- Flutter widget system
-- Layouts and navigation
-- Forms and validation
-- Stateful vs Stateless widgets
+**Tasks**:
+1. Create Supabase account and project
+2. Set up environment variables
+3. Create database schema (SQL scripts)
+4. Seed categories and types
+5. Export Notion data to CSV
+6. Write and run migration script
+7. Validate data integrity
 
 ---
 
-### Milestone 2: Local Data Persistence (Week 3)
-**Goal**: Implement data storage and CRUD operations
+### Milestone 5: Authentication + Cloud Sync (3-4 sessions)
+
+**Goals**:
+- Add user authentication
+- Implement cloud synchronization
+- Support offline mode
 
 **Deliverables**:
-- Integration of `shared_preferences` package
-- Save expenses to local storage
-- Load expenses on app start
-- Edit existing expenses
-- Delete expenses
-- Data survives app restart
+- Email/password authentication
+- Protected app routes
+- Real-time sync between local and Supabase
+- Offline queue and retry logic
+- Sync status indicators in UI
 
-**Learning Focus**:
-- JSON serialization/deserialization
-- Asynchronous programming (async/await)
-- Local storage patterns
-- Data lifecycle management
+**Tasks**:
+1. Implement auth screens (login, signup)
+2. Add AuthProvider for state management
+3. Protect routes with auth check
+4. Create repository pattern
+5. Implement SyncService
+6. Add background sync
+7. Handle offline/online transitions
+8. Add sync status indicators
 
 ---
 
-### Milestone 3: Analytics & Polish (Weeks 4-5)
-**Goal**: Add visualizations and enhance user experience
+### Milestone 6: Advanced Features (3-4 sessions)
+
+**Goals**:
+- Add recurring expenses
+- Implement budget tracking
 
 **Deliverables**:
-- Monthly summary screen
-- Bar chart for category breakdown
-- Bar chart for type breakdown
-- Month filter/selector
-- Smooth animations and transitions
-- Error handling and empty states
-- Code cleanup and documentation
+- Recurring expense templates
+- Auto-creation of recurring expenses
+- Budget setup per category
+- Budget vs actual tracking
+- Budget alerts and indicators
 
-**Upgrade**: Migrate to `provider` for better state management
+**Tasks**:
 
-**Learning Focus**:
-- Data visualization
-- State management with Provider
-- Date/time manipulation
-- Performance optimization
-- Flutter animations
+**Recurring Expenses**:
+1. Create RecurringExpense model and UI
+2. Add recurring expense management screen
+3. Implement auto-creation service
+4. Sync with Supabase
 
----
-
-## 🚀 Future Enhancements (Post-MVP)
-- Supabase integration for cloud backup
-- Multi-device sync
-- Budget tracking and alerts
-- Recurring expenses
-- Export to CSV/PDF
-- Dark mode
-- Localization (multiple languages)
+**Budget Tracking**:
+1. Create Budget model and UI
+2. Add budget setup screen
+3. Calculate budget vs actual
+4. Show progress indicators
+5. Add budget alerts (80%, 100%)
+6. Enhance analytics with budget lines
 
 ---
 
-## 📝 Development Practices
+### Milestone 7: Production Polish (2-3 sessions)
 
-### Version Control
-- Commit after each logical feature
-- Meaningful commit messages
-- Tag milestone completions
+**Goals**:
+- Finalize app for production
+- Prepare for App Store
 
-### Code Quality
-- Clear comments explaining concepts
-- Consistent naming conventions
-- Organized file structure
-- No hardcoded strings (use constants)
+**Deliverables**:
+- Complete error handling
+- Loading states and animations
+- Network status handling
+- Onboarding flow
+- App icon and launch screens
+- Privacy policy
+- App Store assets
 
-### Testing Strategy
-- Manual testing per feature
-- Future: Unit tests for models
-- Future: Widget tests for UI
-- Future: Integration tests for workflows
-
----
-
-## 📚 Learning Objectives
-
-By the end of this project, you will understand:
-
-1. **Flutter Fundamentals**
-   - Widget tree and composition
-   - State management patterns
-   - Navigation and routing
-   - Material Design implementation
-
-2. **Dart Language**
-   - Classes and objects
-   - Asynchronous programming
-   - Null safety
-   - JSON handling
-
-3. **App Architecture**
-   - Separation of concerns (models, screens, widgets)
-   - Data persistence patterns
-   - State management strategies
-
-4. **Production Readiness**
-   - Error handling
-   - User experience patterns
-   - Performance considerations
-   - Deployment preparation
+**Tasks**:
+1. Add polish (animations, transitions)
+2. Improve error messages
+3. Add onboarding tutorial
+4. Create app icon
+5. Design launch screen
+6. Write privacy policy
+7. Create App Store screenshots
+8. TestFlight beta testing
+9. Final QA testing
 
 ---
 
-**Last Updated**: 2025-10-25
-**Status**: Ready to begin Milestone 1
+## 🔀 Git Branching Strategy
+
+### Workflow
+
+```bash
+main          # Stable MVP (production-ready)
+└── develop   # Integration branch for M4-7
+     ├── feature/supabase-setup
+     ├── feature/authentication
+     ├── feature/cloud-sync
+     ├── feature/recurring-expenses
+     └── feature/budget-tracking
+```
+
+### Branch Naming Convention
+- `feature/supabase-setup`
+- `feature/auth-system`
+- `feature/cloud-sync`
+- `feature/recurring-expenses`
+- `feature/budget-tracking`
+- `bugfix/sync-conflict-handling`
+
+### Process
+1. Create `develop` from `main`
+2. For each feature: create branch from `develop`
+3. Complete feature → merge to `develop`
+4. After milestone complete → merge `develop` to `main`
+5. Tag releases: `v2.0.0-beta`, `v2.0.0`
+
+---
+
+## ⏱️ Timeline Estimate
+
+| Milestone | Duration | Deliverable |
+|-----------|----------|-------------|
+| M4 | 2-3 sessions | Supabase + Migration |
+| M5 | 3-4 sessions | Auth + Sync |
+| M6 | 3-4 sessions | Advanced Features |
+| M7 | 2-3 sessions | Production Polish |
+| **Total** | **10-14 sessions** | **Production App** |
+
+---
+
+## 🎓 Learning Outcomes (M4-7)
+
+**New skills you'll gain**:
+- Supabase (PostgreSQL, RLS, real-time)
+- Cloud authentication and JWT
+- Sync patterns (local-first, conflict resolution)
+- Repository pattern (clean architecture)
+- Background services in Flutter
+- Production deployment (App Store)
+
+---
+
+**Last Updated**: October 26, 2025
+**Status**: Ready to begin Milestone 4
+**Next Step**: Create Supabase account and export Notion data

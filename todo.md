@@ -1,184 +1,317 @@
-# Milestone 1: Basic UI with Dummy Data ✅ COMPLETE
+# Expense Tracker - Advanced Features TODO
 
-## Phase 1.1: Project Setup & Models ✅
-- [x] Review generated Flutter project structure
-- [x] Create expense model class (`lib/models/expense.dart`)
-  - Fields: id, description, amount, category, type, date, note
-  - Helper methods: toMap(), fromMap()
-- [x] Create enum for ExpenseType (mustHave, niceToHave, wasted)
-- [x] Create category constants or enum
-- [x] Generate dummy data (10-15 sample expenses)
+## 🎉 MVP Complete - Milestones 1-3 ✅
 
-**Learning**: Dart classes, enums, DateTime, data modeling ✅
+**Completed**: October 26, 2025
 
----
+For MVP task history, see [`docs/mvp/todo.md`](docs/mvp/todo.md)
 
-## Phase 1.2: Expense List Screen ✅
-- [x] Create `lib/screens/expense_list_screen.dart`
-- [x] Design AppBar with title and add button
-- [x] Create expense list using ListView.builder
-- [x] Design expense list item widget
-  - Show: description, amount, category, date
-  - Add visual indicator for expense type (color coding)
-- [x] Handle empty state (no expenses message)
-
-**Learning**: Stateful widgets, ListView, Flutter layout system ✅
+**MVP Delivered:**
+- ✅ Complete CRUD operations
+- ✅ Local data persistence
+- ✅ Bottom navigation with two tabs
+- ✅ Provider state management
+- ✅ Analytics dashboard with charts
+- ✅ Category breakdown (bar chart)
+- ✅ Spending trends (line chart)
 
 ---
 
-## Phase 1.3: Add Expense Form ✅
-- [x] Create `lib/screens/add_expense_screen.dart`
-- [x] Build form with TextFormField widgets:
-  - Description (required)
-  - Amount (number input, required)
-  - Category (dropdown/chips)
-  - Type (radio buttons/segmented button)
-  - Date (date picker)
-  - Note (optional, multiline)
-- [x] Add form validation
-- [x] Create "Save" button
-- [x] Navigate back on save with new expense data
+## 📋 Next Session Preparation
 
-**Learning**: Forms, TextFormField, validation, navigation, date picker ✅
+### Before Starting Milestone 4
+- [ ] Review [`spec.md`](spec.md) - Advanced features specification
+- [ ] Review Vietnamese categories table in spec.md
+- [ ] Create Supabase account at [supabase.com](https://supabase.com)
+- [ ] Export Notion expense database to CSV
+- [ ] Create `develop` branch from `main`
+- [ ] Create `feature/supabase-setup` branch from `develop`
 
 ---
 
-## Phase 1.4: Integration & Navigation ✅
-- [x] Set up navigation from list to add screen
-- [x] Pass dummy expense back to list screen
-- [x] Update list with new expense (in-memory only)
-- [x] Test adding multiple expenses
-- [x] Verify data displays correctly in list
+## Milestone 4: Supabase Infrastructure
 
-**Learning**: Navigator, passing data between screens, setState ✅
+**Status**: Not Started
+**Estimated Duration**: 2-3 sessions
+**Goal**: Set up cloud backend and migrate Notion data
+
+### Phase 4.1: Supabase Project Setup
+- [ ] Create Supabase account and new project
+- [ ] Configure project settings
+- [ ] Set up environment variables in Flutter
+  - Create `.env` file
+  - Add `SUPABASE_URL`
+  - Add `SUPABASE_ANON_KEY`
+- [ ] Add `supabase_flutter` dependency to pubspec.yaml
+- [ ] Install dependencies (`flutter pub get`)
+- [ ] Initialize Supabase in Flutter app
+
+### Phase 4.2: Database Schema Implementation
+- [ ] Create `categories` table (14 Vietnamese categories)
+- [ ] Create `expense_types` table (3 types with Vietnamese names)
+- [ ] Create `expenses` table (with FKs to categories/types)
+- [ ] Create `budgets` table (for Milestone 6)
+- [ ] Create `recurring_expenses` table (for Milestone 6)
+- [ ] Set up all indexes for performance
+- [ ] Configure Row Level Security (RLS) policies
+- [ ] Test RLS policies
+
+### Phase 4.3: Seed Data
+- [ ] Seed 14 Vietnamese categories from spec.md
+- [ ] Seed 3 expense types (Vietnamese names)
+- [ ] Verify seed data in Supabase dashboard
+
+### Phase 4.4: Notion Data Migration
+- [ ] Export Notion database to CSV
+- [ ] Review CSV structure and data quality
+- [ ] Create Python migration script
+  - Install dependencies (`pandas`, `supabase-py`)
+  - Map Vietnamese categories to Supabase UUIDs
+  - Transform CSV data to match schema
+  - Handle data validation
+- [ ] Run migration script
+- [ ] Validate migrated data
+  - Count total expenses
+  - Sum by category matches
+  - Date range verification
+  - No missing categories
+
+### Phase 4.5: Testing & Verification
+- [ ] Test database queries in Supabase dashboard
+- [ ] Verify RLS policies prevent unauthorized access
+- [ ] Confirm all Vietnamese categories display correctly
+- [ ] Document any migration issues or data cleaning needed
+
+**Milestone 4 Completion Criteria**:
+- ✅ Supabase project fully configured
+- ✅ All tables created with correct schema
+- ✅ RLS policies tested and working
+- ✅ 14 Vietnamese categories seeded
+- ✅ Real Notion data migrated successfully
+- ✅ Data integrity validated
 
 ---
 
-## Phase 1.5: UI Polish ✅
-- [x] Apply Material Design 3 theme
-- [x] Add color scheme (primary, secondary colors)
-- [x] Format currency display (e.g., $1,234.56)
-- [x] Format date display (e.g., Jan 15, 2025)
-- [x] Add icons for categories
-- [x] Add type indicators (colors: green/yellow/red)
-- [x] Ensure responsive layout on different screen sizes
+## Milestone 5: Authentication + Cloud Sync
 
-**Learning**: Themes, formatters, icons, responsive design ✅
+**Status**: Not Started
+**Estimated Duration**: 3-4 sessions
+**Goal**: Add user auth and real-time synchronization
+
+### Phase 5.1: Authentication Screens
+- [ ] Create `lib/screens/auth/` directory
+- [ ] Create `login_screen.dart`
+- [ ] Create `signup_screen.dart`
+- [ ] Create `forgot_password_screen.dart`
+- [ ] Add email/password validation
+- [ ] Style auth screens with Material Design 3
+
+### Phase 5.2: Auth State Management
+- [ ] Create `AuthProvider` or use Supabase auth state
+- [ ] Add auth check on app startup
+- [ ] Route to login if not authenticated
+- [ ] Persist auth session
+- [ ] Handle logout functionality
+- [ ] Add user profile screen (optional)
+
+### Phase 5.3: Protected Routes
+- [ ] Wrap main app with auth check
+- [ ] Show login screen for unauthenticated users
+- [ ] Navigate to main app after successful login
+- [ ] Handle session expiration
+
+### Phase 5.4: Repository Pattern
+- [ ] Create `ExpenseRepository` interface
+- [ ] Implement `LocalExpenseRepository` (SharedPreferences)
+- [ ] Implement `SupabaseExpenseRepository`
+- [ ] Update `ExpenseProvider` to use repositories
+
+### Phase 5.5: Sync Service
+- [ ] Create `SyncService` class
+- [ ] Implement push to Supabase (local → cloud)
+- [ ] Implement pull from Supabase (cloud → local)
+- [ ] Add conflict resolution (last-write-wins)
+- [ ] Handle sync errors and retry logic
+- [ ] Add periodic background sync
+
+### Phase 5.6: Offline Support
+- [ ] Queue operations when offline
+- [ ] Retry failed syncs when online
+- [ ] Show sync status indicator in UI
+- [ ] Handle network state changes
+- [ ] Test offline → online transitions
+
+**Milestone 5 Completion Criteria**:
+- ✅ Users can sign up and login
+- ✅ Protected routes work correctly
+- ✅ Expenses sync to/from Supabase
+- ✅ Offline mode works (queue + retry)
+- ✅ Real-time updates from other devices
+- ✅ Sync status visible to user
 
 ---
 
-## Bug Fixes & Polish ✅
-- [x] Fix SegmentedButton assertion error (emptySelectionAllowed)
-- [x] Fix RenderFlex overflow issues with Flexible widgets
-- [x] Test on iOS simulator successfully
+## Milestone 6: Advanced Features
+
+**Status**: Not Started
+**Estimated Duration**: 3-4 sessions
+**Goal**: Add recurring expenses and budget tracking
+
+### Phase 6.1: Recurring Expenses
+- [ ] Create `RecurringExpense` model
+- [ ] Create recurring expense management screen
+- [ ] Add recurring expense form (add/edit)
+- [ ] Implement auto-creation service
+  - Check daily/on app open
+  - Create expenses based on frequency
+  - Update last_created_date
+- [ ] Sync recurring expenses with Supabase
+- [ ] Add enable/disable toggle
+- [ ] Test frequency logic (daily, weekly, monthly, yearly)
+
+### Phase 6.2: Budget Tracking
+- [ ] Create `Budget` model
+- [ ] Create budget setup screen
+- [ ] Add budget per category
+- [ ] Calculate budget vs actual spending
+- [ ] Show progress indicators
+- [ ] Add budget alerts (80%, 100% thresholds)
+- [ ] Display remaining budget per category
+- [ ] Sync budgets with Supabase
+
+### Phase 6.3: Analytics Enhancement
+- [ ] Add budget lines to charts
+- [ ] Show budget vs actual comparison
+- [ ] Add monthly budget adherence score
+- [ ] Update category chart with budget overlay
+
+**Milestone 6 Completion Criteria**:
+- ✅ Recurring expenses auto-create correctly
+- ✅ Budgets can be set per category
+- ✅ Budget tracking shows real-time progress
+- ✅ Alerts trigger at 80% and 100%
+- ✅ Analytics show budget comparisons
 
 ---
 
-## Milestone 1 Completion Checklist ✅
-- [x] Can view list of dummy expenses
-- [x] Can navigate to add expense screen
-- [x] Can fill out complete expense form
-- [x] Form validates required fields
-- [x] New expense appears in list (temporarily)
-- [x] UI follows Material Design 3
-- [x] Code is well-organized and commented
-- [x] Git commit: "Milestone 1 complete - Basic UI"
-- [x] Git commit: "Fix UI bugs: SegmentedButton and layout overflow issues"
+## Milestone 7: Production Polish
 
-**Note**: Data will NOT persist after app restart (expected behavior for M1) ✅
+**Status**: Not Started
+**Estimated Duration**: 2-3 sessions
+**Goal**: Make app production-ready for App Store
+
+### Phase 7.1: UI/UX Polish
+- [ ] Add loading animations
+- [ ] Improve error messages
+- [ ] Add smooth transitions between screens
+- [ ] Show network status indicator
+- [ ] Add pull-to-refresh on expense list
+- [ ] Polish empty states
+- [ ] Add confirmation dialogs where needed
+
+### Phase 7.2: Onboarding
+- [ ] Create onboarding flow for new users
+- [ ] Add feature highlights
+- [ ] Create tutorial overlays
+- [ ] Add skip option
+
+### Phase 7.3: App Assets
+- [ ] Design app icon
+- [ ] Create launch screen
+- [ ] Design App Store screenshots
+- [ ] Write app description
+- [ ] Create privacy policy (required for cloud sync)
+
+### Phase 7.4: Testing
+- [ ] Multi-device sync testing
+- [ ] Offline/online transition testing
+- [ ] Conflict resolution testing
+- [ ] Performance testing
+- [ ] Edge case testing
+- [ ] TestFlight beta testing
+
+### Phase 7.5: App Store Preparation
+- [ ] Configure App Store Connect
+- [ ] Upload build to TestFlight
+- [ ] Gather beta tester feedback
+- [ ] Fix critical bugs
+- [ ] Submit for App Store review
+
+**Milestone 7 Completion Criteria**:
+- ✅ App is polished and bug-free
+- ✅ Onboarding flow complete
+- ✅ App assets created
+- ✅ Privacy policy published
+- ✅ TestFlight testing complete
+- ✅ Ready for App Store submission
 
 ---
 
-## 📂 Final Project Structure After M1
+## 🔀 Git Workflow
+
+### Branch Structure
 ```
-lib/
-├── main.dart                    # App entry point ✅
-├── models/
-│   ├── expense.dart             # Expense data model ✅
-│   └── dummy_data.dart          # Test data ✅
-└── screens/
-    ├── expense_list_screen.dart # Home screen with expense list ✅
-    └── add_expense_screen.dart  # Form to add new expense ✅
+main          ← Stable MVP (production-ready)
+└── develop   ← Integration branch for M4-7
+     ├── feature/supabase-setup
+     ├── feature/authentication
+     ├── feature/cloud-sync
+     ├── feature/recurring-expenses
+     └── feature/budget-tracking
+```
+
+### Workflow Commands
+```bash
+# Initial setup (do once)
+git checkout main
+git checkout -b develop
+
+# For each feature
+git checkout develop
+git checkout -b feature/supabase-setup
+# ... work on feature ...
+git add .
+git commit -m "Descriptive message"
+git checkout develop
+git merge feature/supabase-setup
+
+# After milestone complete
+git checkout main
+git merge develop --no-ff
+git tag v2.0.0-beta
 ```
 
 ---
 
-# Milestone 2: Local Data Persistence (NEXT)
+## 📊 Progress Tracking
 
-## Overview
-Make expense data persist across app restarts using shared_preferences.
+| Milestone | Status | Completion |
+|-----------|--------|------------|
+| M1: Basic UI | ✅ Complete | 100% |
+| M2: Persistence | ✅ Complete | 100% |
+| M3: Analytics | ✅ Complete | 100% |
+| M4: Supabase | ⏳ Not Started | 0% |
+| M5: Auth + Sync | ⏳ Not Started | 0% |
+| M6: Features | ⏳ Not Started | 0% |
+| M7: Polish | ⏳ Not Started | 0% |
 
-## Tasks
-- [x] Add shared_preferences package to pubspec.yaml
-- [x] Create storage service class (`lib/services/storage_service.dart`)
-- [x] Implement save functionality (write expenses to storage)
-- [x] Implement load functionality (read expenses from storage)
-- [x] Load expenses on app start (replace dummy data)
-- [x] Auto-save when expenses are added/modified
-- [x] Test data persistence (add expense, restart app, verify it's still there)
-- [x] Git commit: "Milestone 2 complete - Data persistence"
-- [x] Add edit expense functionality
-  - Reused AddExpenseScreen with optional expense parameter
-  - Pre-populate form fields in edit mode
-  - Fixed category dropdown to show selected value
-  - Update expense in list and storage
-- [x] Add delete expense functionality with confirmation
-  - Implemented swipe-to-delete with Dismissible widget
-  - Confirmation dialog before deletion
-  - Undo functionality with SnackBar
-  - Save to storage after delete/undo
-
-**Learning**: async/await, Futures, JSON serialization, local storage, CRUD operations, Dismissible widget, AlertDialog
+**Overall Progress**: 3/7 milestones (43%)
 
 ---
 
-**Current Status**: ✅ Milestone 2 COMPLETE
-**Last Updated**: 2025-10-26
+## 🎯 Next Session Checklist
+
+When starting next session:
+1. ✅ Review this todo.md
+2. ✅ Read `spec.md` for technical details
+3. ✅ Read Serena memory: `milestone_4_7_planning.md`
+4. ✅ Ensure Notion data exported
+5. ✅ Create Supabase account if not done
+6. ✅ Create `develop` branch
+7. ✅ Start Milestone 4, Phase 4.1
 
 ---
 
-# Milestone 3: Analytics & Charts ✅ COMPLETE
-
-## Overview
-Implement analytics dashboard with interactive charts, month navigation, and Provider state management.
-
-## All Phases Completed ✅
-- [x] Phase 1: Bottom Navigation Structure
-- [x] Phase 2: Provider State Management  
-- [x] Phase 3: Analytics Utilities
-- [x] Phase 4: Analytics Screen Foundation
-- [x] Phase 5: Interactive Charts (fl_chart)
-- [x] Phase 6: Polish & Testing
-
-## Key Features Delivered
-- ✅ Bottom navigation with two tabs (Expenses | Analytics)
-- ✅ Provider pattern for global state management
-- ✅ Month-by-month navigation (cannot view future)
-- ✅ Monthly summary with comparison to previous month
-- ✅ Percentage change indicators (↑ red / ↓ green)
-- ✅ Category breakdown bar chart with tooltips
-- ✅ 6-month spending trends line chart
-- ✅ Interactive touch-responsive charts
-- ✅ Empty state handling
-- ✅ Material Design 3 theming throughout
-
-## Files Created
-- lib/screens/main_navigation_screen.dart
-- lib/providers/expense_provider.dart
-- lib/models/month_total.dart
-- lib/utils/analytics_calculator.dart
-- lib/screens/analytics_screen.dart
-- lib/widgets/category_chart.dart
-- lib/widgets/trends_chart.dart
-
-## Dependencies Added
-- provider: ^6.1.0 (State management)
-- fl_chart: ^0.69.0 (Interactive charts)
-
-## Bug Fixes
-- ✅ Fixed y-axis label overlap in trends chart
-
----
-
-**Current Status**: ✅ Milestone 3 COMPLETE - Analytics Dashboard Fully Functional! 🎊
-**Last Updated**: 2025-10-26
+**Last Updated**: October 26, 2025
+**Current Focus**: Preparing for Milestone 4
+**Next Task**: Review spec.md and create Supabase account
