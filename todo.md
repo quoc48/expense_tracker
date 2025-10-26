@@ -116,9 +116,9 @@ Make expense data persist across app restarts using shared_preferences.
 - [x] Load expenses on app start (replace dummy data)
 - [x] Auto-save when expenses are added/modified
 - [x] Test data persistence (add expense, restart app, verify it's still there)
+- [x] Git commit: "Milestone 2 complete - Data persistence"
 - [ ] Add edit expense functionality
 - [ ] Add delete expense functionality with confirmation
-- [ ] Git commit: "Milestone 2 complete - Data persistence"
 
 **Learning**: async/await, Futures, JSON serialization, local storage, CRUD operations
 
