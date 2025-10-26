@@ -1,208 +1,184 @@
-# Current Phase: Milestone 4 (80% Complete) → Ready for Milestone 5
+# Current Phase: Milestone 5 (60% Complete) - Authentication Working
 
-**Last Updated**: October 26, 2025
-
----
-
-## ✅ Milestone 4 Status: 80% Complete
-
-### Completed Phases
-- ✅ **Phase 4.1**: Supabase project setup with Flutter
-- ✅ **Phase 4.2**: Database schema execution (5 tables)
-- ✅ **Phase 4.3**: Vietnamese seed data (14 categories + 3 types)
-- ✅ **Phase 4.4**: Migration script created and documented
-
-### Remaining Phases (Deferred to After M5)
-- ⏳ **Phase 4.5**: Notion data migration (waiting for user account)
-- ⏳ **Phase 4.6**: Migration validation
-
-**Decision**: Complete authentication (M5) first, then return to migrate Notion data
+**Last Updated**: October 26, 2025  
+**Session**: Authentication implementation and testing complete
 
 ---
 
-## 🎯 Next Milestone: M5 - Authentication + Cloud Sync
+## ✅ Milestone 5 Progress: 60% Complete
 
-**Branch**: Continue on `feature/supabase-setup` OR create new `feature/authentication`  
-**Status**: Not Started  
-**Estimated Duration**: 3-4 sessions
+### **Completed Phases**
+- ✅ **Phase 5.1**: Authentication screens (login, signup)
+- ✅ **Phase 5.2**: Auth state management and protected routes
+- ✅ **Phase 5.3**: Authentication testing (all flows verified)
 
-### Milestone 5 Goals
-1. **Authentication Screens** (M5.1)
-   - Login screen with email/password
-   - Signup screen with validation
-   - Password reset flow
-   - Material Design 3 styling
-
-2. **Auth State Management** (M5.2)
-   - AuthProvider or Supabase auth listener
-   - Session persistence
-   - Protected routes
-   - Logout functionality
-
-3. **Protected Routes** (M5.3)
-   - Auth gate on app startup
-   - Redirect to login if not authenticated
-   - Navigate to main app after login
-
-4. **Complete M4 Migration** (M5.4)
-   - Sign up user through app
-   - Export Notion database to CSV
-   - Run migration script with real user ID
-   - Validate migrated data
-
-5. **Repository Pattern** (M5.5)
-   - Abstract ExpenseRepository interface
-   - LocalExpenseRepository (SharedPreferences)
-   - SupabaseExpenseRepository (cloud)
-   - Update ExpenseProvider to use repositories
-
-6. **Sync Service** (M5.6)
-   - SyncService orchestration
-   - Push local → cloud
-   - Pull cloud → local
-   - Conflict resolution (last-write-wins)
-   - Offline queue and retry
+### **Remaining Phases**
+- ⏳ **Phase 5.4**: Notion data migration (next session)
+- 📅 **Phase 5.5**: Repository pattern (offline-first architecture)
+- 📅 **Phase 5.6**: Sync service (cloud sync orchestration)
 
 ---
 
-## 📊 Current Git Status
+## 🎯 Current Status: Ready for Notion Migration
+
+**What Was Accomplished This Session:**
+1. ✅ Built complete authentication system
+2. ✅ Created login/signup screens with Material Design 3
+3. ✅ Implemented AuthProvider with Supabase auth stream
+4. ✅ Created AuthGate for protected routes
+5. ✅ Added logout functionality
+6. ✅ **Tested all flows successfully:**
+   - Signup: Account creation works
+   - Login: Email/password authentication works
+   - Logout: Clean session termination works
+   - **Session persistence: Auto-login after app restart works!**
+
+**User Account Created:**
+- Email: `thanh.quoc731@gmail.com`
+- Status: Active and confirmed
+- Session: Persists across app restarts
+
+**Bug Fixed:**
+- Email confirmation was enabled in Supabase (blocking signup)
+- Solution: Disabled in Supabase dashboard → Authentication → Providers → Email
+- Added proper loading state management in AuthProvider
+
+---
+
+## 📋 Next Session: Phase 5.4 - Notion Data Migration
+
+### **Prerequisites (User needs to do):**
+1. **Get User ID from Supabase:**
+   - Go to Supabase Dashboard → Authentication → Users
+   - Click on `thanh.quoc731@gmail.com`
+   - Copy the UUID (looks like: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`)
+
+2. **Export Notion Database:**
+   - Open Notion expense database
+   - Click `...` → Export → CSV
+   - Save the CSV file
+   - Note the file path
+
+### **Migration Steps (Next Session):**
+```bash
+# Navigate to migration directory
+cd scripts/migration
+
+# Run migration script
+python notion_to_supabase.py \
+  --csv /path/to/notion_export.csv \
+  --user-id YOUR_USER_UUID
+
+# Verify migration
+# Check Supabase Dashboard → Table Editor → expenses table
+```
+
+### **After Migration:**
+- Historical expenses will appear in the app
+- All expenses linked to user account
+- Vietnamese categories and types preserved
+- Ready to move to Phase 5.5 (Repository Pattern)
+
+---
+
+## 📊 Git Status
 
 **Branch**: `feature/supabase-setup`  
-**Commits**: 4 new commits since main  
-**Status**: Clean working tree, ready for next phase
-
-**Recent Commits:**
+**Status**: Clean working tree  
+**Recent Commits**:
 ```
-a21d915 - M4 Phase 4.4: Create Notion migration script
-f8e8ffb - M4 Phase 4.2-4.3: Database schema and seed data complete
-ff3f2ad - M4 Phase 4.1: Supabase project setup complete
-c126b92 - Update spec.md with Vietnamese expense types from Notion
+332e118 - M5 Phase 5.1-5.3: Authentication testing complete
+5aeba00 - M5 Phase 5.1-5.2: Implement authentication system
+7b134fb - M4: Update session memories and progress tracking
 ```
 
-**Branch Structure:**
-```
-main (stable MVP)
-  └─ develop (integration branch)
-      └─ feature/supabase-setup (current)
-```
+**Files Created This Session:**
+- `lib/providers/auth_provider.dart` - Auth state management
+- `lib/screens/auth/login_screen.dart` - Login UI
+- `lib/screens/auth/signup_screen.dart` - Signup UI
+- `lib/widgets/auth_gate.dart` - Protected route guard
+
+**Files Modified:**
+- `lib/main.dart` - Added MultiProvider and AuthGate
+- `lib/screens/expense_list_screen.dart` - Added logout button
 
 ---
 
-## 🗄️ Supabase Database Status
+## 🔑 Key Architectural Decisions
 
-**Project URL**: `https://ewxplrndtazcxnhiiwfl.supabase.co`
+**1. Hybrid Auth Approach:**
+- Supabase handles: Auth logic, tokens, sessions, persistence
+- Provider handles: UI state, loading, error messages
+- Best of both worlds: Automatic token management + familiar state pattern
 
-**Tables:**
-- ✅ `categories` (14 rows) - Vietnamese system categories
-- ✅ `expense_types` (3 rows) - Vietnamese types
-- ✅ `expenses` (0 rows) - Empty, waiting for migration
-- ✅ `budgets` (0 rows) - For Milestone 6
-- ✅ `recurring_expenses` (0 rows) - For Milestone 6
+**2. AuthGate Pattern:**
+- Single entry point for entire app
+- Automatically routes based on auth state
+- Reactive - no manual navigation needed
 
-**Security:**
-- ✅ Row Level Security enabled on all tables
-- ✅ Policies configured and tested
-- ✅ Credentials stored in `.env` (gitignored)
+**3. Session Persistence:**
+- Supabase stores JWT in secure storage (flutter_secure_storage)
+- Token refresh happens automatically (seen in logs: `tokenRefreshed` events)
+- Users stay logged in indefinitely until explicit logout
 
----
-
-## 📋 Next Session Checklist
-
-When starting Milestone 5:
-
-1. ✅ Read `milestone_4_progress.md` memory
-2. ✅ Check git status and branch
-3. ✅ Review `spec.md` M5 section
-4. ✅ Decide on branch strategy:
-   - Option A: Continue on `feature/supabase-setup`
-   - Option B: Create new `feature/authentication` from current branch
-5. ✅ Start M5 Phase 5.1: Authentication screens
+**4. MultiProvider Setup:**
+- AuthProvider first (other providers may depend on it)
+- ExpenseProvider second (data management)
+- Both available throughout widget tree
 
 ---
 
-## 🔑 Key Information for Next Session
+## 🐛 Known Issues / Notes
 
-### Supabase Auth Setup
-- No additional configuration needed in Supabase dashboard
-- Supabase Auth is enabled by default
-- Email confirmations can be disabled for testing
-- Auth policies already configured in schema
+**1. Email Confirmation:**
+- **Must be disabled** in Supabase dashboard
+- Path: Authentication → Providers → Email → Turn off "Confirm email"
+- Without this, signup works but doesn't create session
 
-### Authentication Approach
-- Simple email/password (no OAuth for MVP)
-- Supabase handles JWT tokens automatically
-- Session persists across app restarts
-- `supabase.auth` API available through `supabase_service.dart`
+**2. First User Issue:**
+- First signup attempt had email confirmation enabled (blocking)
+- User had to be deleted and recreated
+- Now working perfectly
 
-### Flutter Packages Needed (M5)
-Already installed:
-- ✅ `supabase_flutter` (has auth built-in)
-
-May need to add:
-- Consider `flutter_secure_storage` for token storage (optional)
-
-### File Structure for M5
-```
-lib/
-├── screens/
-│   └── auth/
-│       ├── login_screen.dart (new)
-│       ├── signup_screen.dart (new)
-│       └── forgot_password_screen.dart (new)
-├── providers/
-│   ├── expense_provider.dart (existing)
-│   └── auth_provider.dart (new)
-├── repositories/
-│   ├── expense_repository.dart (new - interface)
-│   ├── local_expense_repository.dart (new)
-│   └── supabase_expense_repository.dart (new)
-└── services/
-    ├── supabase_service.dart (existing)
-    ├── storage_service.dart (existing)
-    └── sync_service.dart (new)
-```
+**3. Existing Local Data:**
+- Current local expenses (from SharedPreferences) are NOT linked to user
+- Will handle in Phase 5.5 (Repository Pattern)
+- Migration script handles Notion data → Supabase
 
 ---
 
-## 💡 Session Learnings
+## 📈 Overall Progress
 
-### What Worked Well
-- Normalized database design (categories/types as tables)
-- Vietnamese-first approach for all data
-- Python migration script with validation
-- Clear separation of phases
+**Milestone 5**: 60% Complete (3 of 5 phases done)
 
-### Technical Decisions Made
-- Wait for M5 authentication before migrating Notion data
-- Use repository pattern for clean architecture
-- Local-first sync strategy (offline support)
-- Last-write-wins conflict resolution
+| Phase | Status | Duration |
+|-------|--------|----------|
+| 5.1: Auth Screens | ✅ Complete | This session |
+| 5.2: Auth State & Routes | ✅ Complete | This session |
+| 5.3: Testing | ✅ Complete | This session |
+| 5.4: Notion Migration | ⏳ Next session | ~30 min |
+| 5.5: Repository Pattern | 📅 Future | ~1 session |
+| 5.6: Sync Service | 📅 Future | ~1-2 sessions |
 
-### Next Session Goals
-- Build authentication UI (login/signup)
-- Implement auth state management
-- Protect routes with auth check
-- Create first user account
-- Complete Notion data migration
+**Overall Project**: ~58% Complete (3.8 + 0.6 = 4.4 of 7 milestones)
 
 ---
 
-## 🚀 Roadmap Overview
+## 🚀 Next Session Checklist
 
-| Milestone | Status | Progress |
-|-----------|--------|----------|
-| M1: Basic UI | ✅ Complete | 100% |
-| M2: Persistence | ✅ Complete | 100% |
-| M3: Analytics | ✅ Complete | 100% |
-| M4: Supabase | 🔄 In Progress | 80% |
-| M5: Auth + Sync | ⏳ Next | 0% |
-| M6: Features | 📅 Planned | 0% |
-| M7: Polish | 📅 Planned | 0% |
-
-**Overall Progress**: 3.8/7 milestones (54%)
+When resuming:
+1. ✅ Load Serena project and read memories
+2. ✅ Verify on `feature/supabase-setup` branch
+3. ✅ User provides UUID from Supabase dashboard
+4. ✅ User provides Notion CSV export file path
+5. ✅ Run migration script: `python scripts/migration/notion_to_supabase.py`
+6. ✅ Verify data in Supabase Table Editor
+7. ✅ Test app - historical expenses should appear
+8. ✅ Commit migration completion
+9. ✅ Start Phase 5.5 (Repository Pattern) OR wrap up M5
 
 ---
 
-**Current Focus**: Ready to start Milestone 5 - Authentication  
-**Next Action**: Create authentication screens (login/signup)  
-**Blocker**: None - all prerequisites complete
+**Current Focus**: Authentication complete ✅ | Next: Notion data migration  
+**Blocker**: None - ready for migration  
+**Session End**: All changes committed, memories updated
