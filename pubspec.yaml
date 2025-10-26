@@ -44,6 +44,9 @@ dependencies:
   # State management using the Provider pattern
   provider: ^6.1.0
 
+  # Beautiful and interactive charts for Flutter
+  fl_chart: ^0.69.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

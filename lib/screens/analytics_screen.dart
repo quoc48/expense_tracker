@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../utils/analytics_calculator.dart';
+import '../widgets/category_chart.dart';
+import '../widgets/trends_chart.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -86,20 +88,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   if (monthExpenses.isEmpty)
                     _buildEmptyState()
                   else ...[
-                    // Placeholder for category breakdown chart
-                    _buildChartPlaceholder(
-                      'Category Breakdown',
-                      Icons.pie_chart,
-                      'Coming in Phase 5',
-                    ),
+                    // Category Breakdown Chart
+                    _buildCategoryBreakdownCard(monthExpenses),
                     const SizedBox(height: 20),
 
-                    // Placeholder for spending trends chart
-                    _buildChartPlaceholder(
-                      'Spending Trends',
-                      Icons.show_chart,
-                      'Coming in Phase 5',
-                    ),
+                    // Spending Trends Chart
+                    _buildSpendingTrendsCard(expenseProvider.expenses),
                   ],
                 ],
               ),
@@ -319,8 +313,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  /// Placeholder card for charts (will be replaced in Phase 5)
-  Widget _buildChartPlaceholder(String title, IconData icon, String message) {
+  /// Category breakdown chart card
+  Widget _buildCategoryBreakdownCard(List<Expense> monthExpenses) {
+    // Calculate category breakdown for the selected month
+    final categoryBreakdown = AnalyticsCalculator.getCategoryBreakdown(
+      monthExpenses,
+      _selectedMonth,
+    );
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -330,51 +330,60 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             // Title
             Row(
               children: [
-                Icon(icon, color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  Icons.pie_chart,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Text(
-                  title,
+                  'Category Breakdown',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
-            // Placeholder content
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.grey[300]!,
-                  width: 2,
-                  style: BorderStyle.solid,
+            // Chart
+            CategoryChart(categoryBreakdown: categoryBreakdown),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Spending trends chart card
+  Widget _buildSpendingTrendsCard(List<Expense> allExpenses) {
+    // Get last 6 months of trend data
+    final monthlyTrends = AnalyticsCalculator.getMonthlyTrend(allExpenses, 6);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title
+            Row(
+              children: [
+                Icon(
+                  Icons.show_chart,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.bar_chart,
-                      size: 48,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      message,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
+                const SizedBox(width: 8),
+                Text(
+                  'Spending Trends (Last 6 Months)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
                 ),
-              ),
+              ],
             ),
+            const SizedBox(height: 12),
+
+            // Chart
+            TrendsChart(monthlyTrends: monthlyTrends),
           ],
         ),
       ),
