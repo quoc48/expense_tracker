@@ -60,7 +60,8 @@ class ExpenseProvider extends ChangeNotifier {
 
   /// Add a new expense to the list
   /// Returns true if successful, false otherwise
-  Future<bool> addExpense(Expense expense) async {
+  /// [categoryNameVi] and [typeNameVi] preserve the exact Vietnamese names from the form
+  Future<bool> addExpense(Expense expense, {String? categoryNameVi, String? typeNameVi}) async {
     try {
       // Add to in-memory list
       _expenses.add(expense);
@@ -68,8 +69,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Sort by date (newest first)
       _expenses.sort((a, b) => b.date.compareTo(a.date));
 
-      // Save to Supabase
-      await _repository.create(expense);
+      // Save to Supabase with original Vietnamese names
+      await _repository.create(expense, categoryNameVi: categoryNameVi, typeNameVi: typeNameVi);
 
       // Notify listeners that the data has changed
       // This will trigger a rebuild in all listening widgets
@@ -87,7 +88,8 @@ class ExpenseProvider extends ChangeNotifier {
 
   /// Update an existing expense
   /// Returns true if successful, false otherwise
-  Future<bool> updateExpense(Expense updatedExpense) async {
+  /// [categoryNameVi] and [typeNameVi] preserve the exact Vietnamese names from the form
+  Future<bool> updateExpense(Expense updatedExpense, {String? categoryNameVi, String? typeNameVi}) async {
     try {
       // Find the index of the expense to update
       final index = _expenses.indexWhere((e) => e.id == updatedExpense.id);
@@ -103,8 +105,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Re-sort by date
       _expenses.sort((a, b) => b.date.compareTo(a.date));
 
-      // Save to Supabase
-      await _repository.update(updatedExpense);
+      // Save to Supabase with original Vietnamese names
+      await _repository.update(updatedExpense, categoryNameVi: categoryNameVi, typeNameVi: typeNameVi);
 
       // Notify listeners
       notifyListeners();

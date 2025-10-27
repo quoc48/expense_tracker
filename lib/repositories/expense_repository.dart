@@ -29,13 +29,21 @@ abstract class ExpenseRepository {
   ///
   /// The expense should have a unique ID generated before calling.
   /// Returns the created expense (may include server-generated fields).
-  Future<Expense> create(Expense expense);
+  ///
+  /// [categoryNameVi] and [typeNameVi] are the original Vietnamese names from the form.
+  /// These should be provided to preserve the exact category/type selected by the user.
+  /// If not provided, will use reverse mapping from the enum (may lose precision).
+  Future<Expense> create(Expense expense, {String? categoryNameVi, String? typeNameVi});
 
   /// Update an existing expense
   ///
   /// Updates the expense with matching ID.
   /// Throws an exception if the expense doesn't exist.
-  Future<Expense> update(Expense expense);
+  ///
+  /// [categoryNameVi] and [typeNameVi] are the original Vietnamese names from the form.
+  /// These should be provided to preserve the exact category/type selected by the user.
+  /// If not provided, will use reverse mapping from the enum (may lose precision).
+  Future<Expense> update(Expense expense, {String? categoryNameVi, String? typeNameVi});
 
   /// Delete an expense by ID
   ///

@@ -13,7 +13,8 @@ import 'expense_repository.dart';
 class SupabaseExpenseRepository implements ExpenseRepository {
   // Category mapping: Vietnamese names → English enums
   // These match the Vietnamese names in the Supabase categories table
-  static const Map<String, Category> _categoryMapping = {
+  // Made public so the form screen can use the same mapping
+  static const Map<String, Category> categoryMapping = {
     'Thực phẩm': Category.food,
     'Đi lại': Category.transportation,
     'Hoá đơn': Category.utilities,
@@ -43,7 +44,8 @@ class SupabaseExpenseRepository implements ExpenseRepository {
   };
 
   // Type mapping: Vietnamese names → English enums
-  static const Map<String, ExpenseType> _typeMapping = {
+  // Made public so the form screen can use the same mapping
+  static const Map<String, ExpenseType> typeMapping = {
     'Phải chi': ExpenseType.mustHave,
     'Phát sinh': ExpenseType.niceToHave,
     'Lãng phí': ExpenseType.wasted,
@@ -99,8 +101,8 @@ class SupabaseExpenseRepository implements ExpenseRepository {
 
     // Map to English enums (with fallback)
     final category =
-        _categoryMapping[categoryVi] ?? Category.other;
-    final type = _typeMapping[typeVi] ?? ExpenseType.niceToHave;
+        categoryMapping[categoryVi] ?? Category.other;
+    final type = typeMapping[typeVi] ?? ExpenseType.niceToHave;
 
     return Expense(
       id: row['id'] as String,
@@ -159,12 +161,12 @@ class SupabaseExpenseRepository implements ExpenseRepository {
   }
 
   @override
-  Future<Expense> create(Expense expense) async {
+  Future<Expense> create(Expense expense, {String? categoryNameVi, String? typeNameVi}) async {
     await _ensureMappingsLoaded();
 
-    // Map English enums to Vietnamese names
-    final categoryVi = _reverseCategoryMapping[expense.category] ?? 'Quà vật';
-    final typeVi = _reverseTypeMapping[expense.type] ?? 'Phát sinh';
+    // Use provided Vietnamese names if available, otherwise fall back to reverse mapping
+    final categoryVi = categoryNameVi ?? (_reverseCategoryMapping[expense.category] ?? 'Quà vật');
+    final typeVi = typeNameVi ?? (_reverseTypeMapping[expense.type] ?? 'Phát sinh');
 
     // Get UUIDs
     final categoryId = _categoryIdMap![categoryVi];
@@ -208,12 +210,12 @@ class SupabaseExpenseRepository implements ExpenseRepository {
   }
 
   @override
-  Future<Expense> update(Expense expense) async {
+  Future<Expense> update(Expense expense, {String? categoryNameVi, String? typeNameVi}) async {
     await _ensureMappingsLoaded();
 
-    // Map English enums to Vietnamese names
-    final categoryVi = _reverseCategoryMapping[expense.category] ?? 'Quà vật';
-    final typeVi = _reverseTypeMapping[expense.type] ?? 'Phát sinh';
+    // Use provided Vietnamese names if available, otherwise fall back to reverse mapping
+    final categoryVi = categoryNameVi ?? (_reverseCategoryMapping[expense.category] ?? 'Quà vật');
+    final typeVi = typeNameVi ?? (_reverseTypeMapping[expense.type] ?? 'Phát sinh');
 
     // Get UUIDs
     final categoryId = _categoryIdMap![categoryVi];

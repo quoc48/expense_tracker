@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
+import '../models/expense_form_result.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
 import 'add_expense_screen.dart';
@@ -217,7 +218,7 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Future<void> _addExpense(BuildContext context) async {
-    final result = await Navigator.push<Expense>(
+    final result = await Navigator.push<ExpenseFormResult>(
       context,
       MaterialPageRoute(
         builder: (context) => const AddExpenseScreen(),
@@ -228,18 +229,22 @@ class ExpenseListScreen extends StatelessWidget {
       // Access the provider without listening (we don't need rebuilds here)
       // listen: false tells Provider we just want to call a method, not listen to changes
       final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.addExpense(result);
+      final success = await provider.addExpense(
+        result.expense,
+        categoryNameVi: result.categoryNameVi,
+        typeNameVi: result.typeNameVi,
+      );
 
       if (success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added: ${result.description}'),
+            content: Text('Added: ${result.expense.description}'),
             duration: const Duration(seconds: 2),
             action: SnackBarAction(
               label: 'Undo',
               onPressed: () async {
                 // Delete the just-added expense to undo
-                await provider.deleteExpense(result.id);
+                await provider.deleteExpense(result.expense.id);
               },
             ),
           ),
@@ -249,7 +254,7 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Future<void> _editExpense(BuildContext context, Expense expense) async {
-    final result = await Navigator.push<Expense>(
+    final result = await Navigator.push<ExpenseFormResult>(
       context,
       MaterialPageRoute(
         builder: (context) => AddExpenseScreen(expense: expense),
@@ -258,12 +263,16 @@ class ExpenseListScreen extends StatelessWidget {
 
     if (result != null && context.mounted) {
       final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.updateExpense(result);
+      final success = await provider.updateExpense(
+        result.expense,
+        categoryNameVi: result.categoryNameVi,
+        typeNameVi: result.typeNameVi,
+      );
 
       if (success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Updated: ${result.description}'),
+            content: Text('Updated: ${result.expense.description}'),
             duration: const Duration(seconds: 2),
           ),
         );
