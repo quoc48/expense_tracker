@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/expense.dart';
+import '../repositories/expense_repository.dart';
+import '../repositories/supabase_expense_repository.dart';
 
 // AddExpenseScreen: Form for creating new expenses OR editing existing ones
 // StatefulWidget because we need to manage form state and user input
@@ -26,14 +28,26 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
 
+  // Repository for fetching categories and types
+  final ExpenseRepository _repository = SupabaseExpenseRepository();
+
   // Form field values (for dropdown and radio buttons)
   Category? _selectedCategory;
   ExpenseType? _selectedType;
   DateTime _selectedDate = DateTime.now();
 
+  // Lists loaded from Supabase
+  List<String> _categories = [];
+  List<String> _expenseTypes = [];
+  bool _isLoadingOptions = true;
+
   @override
   void initState() {
     super.initState();
+
+    // Load categories and types from Supabase
+    _loadOptions();
+
     // If we're editing an existing expense, pre-populate the form
     if (widget.expense != null) {
       final expense = widget.expense!;
@@ -43,6 +57,25 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       _selectedCategory = expense.category;
       _selectedType = expense.type;
       _selectedDate = expense.date;
+    }
+  }
+
+  /// Load categories and expense types from Supabase
+  Future<void> _loadOptions() async {
+    try {
+      final categories = await _repository.getCategories();
+      final types = await _repository.getExpenseTypes();
+
+      setState(() {
+        _categories = categories;
+        _expenseTypes = types;
+        _isLoadingOptions = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading form options: $e');
+      setState(() {
+        _isLoadingOptions = false;
+      });
     }
   }
 

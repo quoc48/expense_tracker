@@ -93,7 +93,10 @@ class ExpenseListScreen extends StatelessWidget {
 
   Widget _buildExpenseCard(BuildContext context, Expense expense, int index) {
     final dateFormat = DateFormat('MMM dd, yyyy');
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyFormat = NumberFormat.currency(
+      symbol: '₫',
+      decimalDigits: 0, // No decimals for Vietnamese Dong
+    );
 
     return Dismissible(
       key: Key(expense.id),

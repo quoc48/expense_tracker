@@ -286,4 +286,21 @@ class SupabaseExpenseRepository implements ExpenseRepository {
 
     return (response as List).length;
   }
+
+  @override
+  Future<List<String>> getCategories() async {
+    await _ensureMappingsLoaded();
+
+    // Return all Vietnamese category names sorted alphabetically
+    final categories = _categoryIdMap!.keys.toList()..sort();
+    return categories;
+  }
+
+  @override
+  Future<List<String>> getExpenseTypes() async {
+    await _ensureMappingsLoaded();
+
+    // Return Vietnamese expense type names
+    return _typeIdMap!.keys.toList();
+  }
 }

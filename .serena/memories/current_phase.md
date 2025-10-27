@@ -1,218 +1,226 @@
-# Current Phase: Milestone 5 (80% Complete) - Migration Complete!
+# Current Phase: Milestone 5 Phase 5.5 (IN PROGRESS) - Repository Pattern 70% Complete
 
 **Last Updated**: October 27, 2025  
-**Session**: Notion data migration successful - 873 expenses migrated  
+**Session**: Phase 5.5 Repository Pattern - INCOMPLETE (needs 15 min to finish)
 
 ---
 
-## ✅ Milestone 5 Progress: 80% Complete
+## ⚠️ CURRENT STATUS: IN PROGRESS
 
-### **Completed Phases**
-- ✅ **Phase 5.1**: Authentication screens (login, signup)
-- ✅ **Phase 5.2**: Auth state management and protected routes
-- ✅ **Phase 5.3**: Authentication testing (all flows verified)
-- ✅ **Phase 5.4**: Notion data migration ← **COMPLETED THIS SESSION!**
+**Phase 5.5**: Repository Pattern Implementation - **70% Complete**
 
-### **Remaining Phases**
-- ⏳ **Phase 5.5**: Repository pattern (next session)
-- 📅 **Phase 5.6**: Sync service (cloud sync orchestration)
+### ✅ Completed Today:
+1. ✅ Created `ExpenseRepository` interface (62 lines)
+2. ✅ Implemented `SupabaseExpenseRepository` (295 lines)
+3. ⚠️ **PARTIAL**: Updated `ExpenseProvider` (loadExpenses only)
 
----
+### ❌ Still Needs Work:
+- **Fix 4 methods in ExpenseProvider** (lines 73, 108, 138, 158)
+- Replace `_storageService` calls with `_repository` methods
+- Hot reload app to test
+- Verify 873 expenses appear
 
-## 🎯 Current Status: Ready for Repository Pattern
-
-**What Was Accomplished This Session:**
-1. ✅ Analyzed Notion CSV structure (874 rows, 19 columns)
-2. ✅ Built enhanced migration script with automatic data cleaning
-3. ✅ Handled Vietnamese spelling variants (Quà vặt → Quà vật, etc.)
-4. ✅ Configured Supabase permissions (RLS + PostgreSQL GRANTs)
-5. ✅ **Successfully migrated 873 historical expenses**
-6. ✅ **Total amount**: ₫278,678,158 (~$11,500 USD)
-7. ✅ **Date range**: 2025-01-01 to 2026-01-01 (full year of data)
-
-**Migration Details:**
-- **Enhanced Script**: `scripts/migration/notion_to_supabase_enhanced.py`
-- **Data Cleaning**: Automatic Notion URL removal, amount parsing, date conversion
-- **Normalization**: Vietnamese spelling variant mapping
-- **Verification**: All 873 expenses confirmed in Supabase
-- **Security**: RLS re-enabled after migration
+**Estimated time to complete**: 15-20 minutes
 
 ---
 
-## 📋 Next Session: Phase 5.5 - Repository Pattern
+## 🎯 Next Session: Complete Phase 5.5
 
-### **Goal**: Abstract data sources for offline-first architecture
+### Step 1: Fix ExpenseProvider (10 minutes)
 
-### **Tasks**:
-1. **Create ExpenseRepository interface**
-   ```dart
-   abstract class ExpenseRepository {
-     Future<List<Expense>> getAll();
-     Future<Expense?> getById(String id);
-     Future<void> create(Expense expense);
-     Future<void> update(Expense expense);
-     Future<void> delete(String id);
-   }
-   ```
+Open `lib/providers/expense_provider.dart` and fix these lines:
 
-2. **Implement LocalExpenseRepository**
-   - Uses SharedPreferences
-   - Fast, offline storage
-   - JSON serialization
+```dart
+// Line 73 - addExpense() method
+// REPLACE: await _storageService.saveExpenses(_expenses);
+// WITH: await _repository.create(expense);
 
-3. **Implement SupabaseExpenseRepository**
-   - Uses Supabase client
-   - Cloud storage
-   - Real-time sync capability
+// Line 108 - updateExpense() method  
+// REPLACE: await _storageService.saveExpenses(_expenses);
+// WITH: await _repository.update(updatedExpense);
 
-4. **Update ExpenseProvider**
-   - Use repository instead of direct storage
-   - Switch between local/cloud sources
-   - Prepare for sync service (Phase 5.6)
+// Line 138 - deleteExpense() method
+// REPLACE: await _storageService.saveExpenses(_expenses);
+// WITH: await _repository.delete(expenseId);
 
-### **Benefits**:
-- Clean architecture (separation of concerns)
-- Easy to test (mock repositories)
-- Flexible data sources (local ↔ cloud)
-- Offline-first foundation
-
-### **Estimated Time**: 1-2 sessions
-
----
-
-## 📊 Git Status
-
-**Branch**: `feature/supabase-setup`  
-**Status**: Clean working tree  
-**Recent Commits**:
-```
-7a075d7 - M5 Phase 5.4: Notion data migration complete - 873 expenses migrated
-332e118 - M5 Phase 5.1-5.3: Authentication testing complete
-5aeba00 - M5 Phase 5.1-5.2: Implement authentication system
+// Line 158 - restoreExpense() method
+// REPLACE: await _storageService.saveExpenses(_expenses);
+// WITH: await _repository.create(expense);
 ```
 
-**Files Added This Session:**
-- `scripts/migration/notion_to_supabase_enhanced.py` (385 lines)
-- Session memories (migration documentation)
+### Step 2: Hot Reload (1 minute)
+1. Save the file (compiler errors clear)
+2. In `flutter run` terminal, press `r` for hot reload
+3. Watch console for: "Loaded 873 expenses from Supabase"
 
-**Files Modified:**
-- `.env` - Added SUPABASE_SERVICE_ROLE_KEY
-- Serena memories updated
+### Step 3: Test App (5 minutes)
+- ✅ List shows 873 historical expenses with Vietnamese text
+- ✅ Add new expense (tests `create()`)
+- ✅ Edit expense (tests `update()`)
+- ✅ Delete expense (tests `delete()`)
 
----
-
-## 🔑 Key Files & Configurations
-
-**Authentication System:**
-- `lib/providers/auth_provider.dart` - Auth state management
-- `lib/screens/auth/login_screen.dart` - Login UI
-- `lib/screens/auth/signup_screen.dart` - Signup UI
-- `lib/widgets/auth_gate.dart` - Protected routes
-- `lib/main.dart` - MultiProvider setup
-
-**Migration:**
-- `scripts/migration/notion_to_supabase_enhanced.py` - Production migration script
-- `scripts/database/01_schema.sql` - Database schema
-- `scripts/database/02_seed_data.sql` - Seed data (categories, types)
-
-**Environment:**
-- `.env` - Supabase credentials (gitignored ✅)
-  - SUPABASE_URL
-  - SUPABASE_ANON_KEY (for app)
-  - SUPABASE_SERVICE_ROLE_KEY (for migrations)
+### Step 4: Commit
+```bash
+git add .
+git commit -m "M5 Phase 5.5: Repository Pattern complete - Supabase integration working"
+```
 
 ---
 
-## 🎓 Technical Highlights
+## 📁 Files Status
 
-### Migration Script Features:
-1. **Data Cleaning Pipeline**:
-   - Notion URL removal: `clean_notion_text()`
-   - Amount parsing: `clean_amount()` handles comma separators
-   - Date conversion: `parse_notion_date()` handles text dates
-   - Category normalization: `normalize_category_name()` handles variants
+### New Files (Staged):
+- `lib/repositories/expense_repository.dart` ✅
+- `lib/repositories/supabase_expense_repository.dart` ✅
 
-2. **Vietnamese Text Handling**:
-   - UTF-8 encoding preserved
-   - Automatic spelling variant mapping:
-     - `Quà vặt` → `Quà vật`
-     - `Sức khoẻ` → `Sức khỏe`
-     - `Biếu gia đình` → `Biểu gia đình`
+### Modified Files (Staged):
+- `lib/providers/expense_provider.dart` ⚠️ (needs 4 more fixes)
 
-3. **Supabase Integration**:
-   - Service role key for admin operations
-   - Batch insertion (100 rows per batch)
-   - Progress tracking with visual feedback
-   - Automatic verification after migration
-
-### Security Layers Learned:
-1. **Row Level Security (RLS)**:
-   - Table-level policies using `auth.uid()`
-   - Can block service_role if `auth.uid()` is null
-   - Temporarily disabled during migration
-
-2. **PostgreSQL GRANTs**:
-   - Database-level permissions
-   - Required even for service_role
-   - Must be explicitly granted: `GRANT ALL ON TABLE ... TO service_role`
+### Memories (Staged):
+- `session_summary_2025_10_27_notion_migration.md` ✅
+- `session_summary_2025_10_27_phase_5_5_partial.md` ✅
+- `current_phase.md` ✅
 
 ---
 
-## 🧪 Testing Status
+## 🛠️ Technical Architecture
 
-### Authentication (Phase 5.3): ✅ All tests passed
-- ✅ Signup flow: Account creation works
-- ✅ Login flow: Email/password authentication works
-- ✅ Logout flow: Clean session termination works
-- ✅ Session persistence: Auto-login after app restart works
+### Current Data Flow:
+```
+UI (Screens)
+    ↓
+ExpenseProvider (State Management)
+    ↓  
+ExpenseRepository (Interface)
+    ↓
+SupabaseExpenseRepository (Implementation)
+    ↓
+Supabase Cloud (PostgreSQL + RLS)
+    ↓
+User's 873 Expenses
+```
 
-### Migration (Phase 5.4): ✅ Verified
-- ✅ All 873 expenses migrated successfully
-- ✅ Vietnamese text preserved (descriptions, categories, types)
-- ✅ Amounts and dates correctly formatted
-- ✅ Data linked to correct user UUID
-- ✅ RLS security re-enabled after migration
+### What's Working:
+- ✅ Authentication (auto-login with session persistence)
+- ✅ Supabase connection and queries
+- ✅ Vietnamese ↔ English category/type mapping
+- ✅ Read operation (`loadExpenses()`)
 
-### Next Testing (Phase 5.5):
-- Repository CRUD operations
-- Data source switching (local ↔ cloud)
-- Offline functionality
+### What's Not Working Yet:
+- ❌ Create operation (Add expense button)
+- ❌ Update operation (Edit expense)
+- ❌ Delete operation (Swipe to delete)
 
 ---
 
-## 📈 Overall Progress
+## 📊 Milestone 5 Progress
 
-**Milestone 5**: 80% Complete (4 of 5 phases done)
+**Overall M5**: 82% Complete
 
-| Phase | Status | Duration | Notes |
+| Phase | Status | Progress | Notes |
 |-------|--------|----------|-------|
-| 5.1: Auth Screens | ✅ Complete | Session 1 | Login/signup UI |
-| 5.2: Auth State & Routes | ✅ Complete | Session 1 | AuthProvider + AuthGate |
-| 5.3: Testing | ✅ Complete | Session 1 | All flows verified |
-| 5.4: Notion Migration | ✅ Complete | Session 2 | **873 expenses migrated** |
-| 5.5: Repository Pattern | ⏳ Next | ~1-2 sessions | Abstraction layer |
-| 5.6: Sync Service | 📅 Future | ~1-2 sessions | Cloud sync |
-
-**Overall Project**: ~62% Complete (4.8 of 7 milestones)
+| 5.1: Auth Screens | ✅ Complete | 100% | Login/Signup working |
+| 5.2: Auth State | ✅ Complete | 100% | AuthProvider + AuthGate |
+| 5.3: Testing | ✅ Complete | 100% | All flows verified |
+| 5.4: Migration | ✅ Complete | 100% | 873 expenses migrated |
+| **5.5: Repository** | **⚠️ In Progress** | **70%** | **Provider needs fixes** |
+| 5.6: Sync Service | 📅 Not Started | 0% | Offline-first sync |
 
 ---
 
-## 🚀 Next Session Checklist
+## 🔑 Key Implementation Details
 
-When resuming:
-1. ✅ Load Serena project and read memories
-2. ✅ Verify on `feature/supabase-setup` branch (clean working tree)
-3. ✅ Review Phase 5.5 goals (Repository Pattern)
-4. ✅ Create `ExpenseRepository` interface
-5. ✅ Implement `LocalExpenseRepository`
-6. ✅ Implement `SupabaseExpenseRepository`
-7. ✅ Update `ExpenseProvider` to use repositories
-8. ✅ Test data source switching
-9. ✅ Commit repository pattern implementation
+### SupabaseExpenseRepository Features:
+- **Caching**: Category/type UUIDs cached after first load
+- **Joins**: Efficient PostgreSQL joins for category/type names
+- **Mapping**: Bidirectional Vietnamese ↔ English conversion
+- **Error Handling**: Graceful handling of null responses
+- **Type Safety**: Converts PostgreSQL types to Dart types
+
+### Category Mappings (14 total):
+```
+'Thực phẩm' → Category.food
+'Đi lại' → Category.transportation
+'Hoá đơn' → Category.utilities
+'Giải trí' → Category.entertainment
+'Sức khỏe' → Category.health
+... etc
+```
+
+### Type Mappings (3 total):
+```
+'Phải chi' → ExpenseType.mustHave
+'Phát sinh' → ExpenseType.niceToHave  
+'Lãng phí' → ExpenseType.wasted
+```
 
 ---
 
-**Current Focus**: Migration complete ✅ | Next: Repository Pattern  
-**Blocker**: None - ready for Phase 5.5  
-**Session End**: All changes committed, memories updated  
-**Ready to test**: Launch Flutter app to see 873 historical expenses! 🎉
+## 🐛 Current Compiler Errors
+
+**File**: `lib/providers/expense_provider.dart`
+
+```
+Line 73:13 - Undefined name '_storageService'
+Line 108:13 - Undefined name '_storageService'
+Line 138:13 - Undefined name '_storageService'
+Line 158:13 - Undefined name '_storageService'
+```
+
+**Fix**: Replace with `_repository` method calls (see Step 1 above)
+
+---
+
+## 📱 Flutter App Status
+
+**Currently running**: Yes (`flutter run` background process)  
+**Device**: iPhone 16 simulator  
+**Ready for**: Hot reload after provider fixes  
+
+**Expected after fixes**:
+```
+Console output:
+✅ "Loaded 873 expenses from Supabase"
+
+App UI:
+✅ Expense list populated with historical data
+✅ Vietnamese descriptions displayed
+✅ Categories and types showing correctly
+✅ Amounts formatted as ₫
+```
+
+---
+
+## 📈 Overall Project Progress
+
+**Project**: ~62% Complete (4.9 of 7 milestones)
+
+| Milestone | Status | Progress |
+|-----------|--------|----------|
+| M1: Basic UI | ✅ Complete | 100% |
+| M2: Local Storage | ✅ Complete | 100% |
+| M3: Analytics | ✅ Complete | 100% |
+| M4: Supabase Setup | ✅ Complete | 100% |
+| **M5: Cloud Sync** | **🔄 In Progress** | **82%** |
+| M6: Offline-First | 📅 Not Started | 0% |
+| M7: Production | 📅 Not Started | 0% |
+
+---
+
+## 🚀 Quick Start Next Session
+
+1. **Read this memory** + `session_summary_2025_10_27_phase_5_5_partial.md`
+2. **Open file**: `lib/providers/expense_provider.dart`
+3. **Fix 4 lines**: Replace `_storageService` with `_repository` (see Step 1)
+4. **Hot reload**: Press `r` in terminal
+5. **Test**: See 873 expenses + test CRUD
+6. **Commit**: Phase 5.5 complete!
+
+**Time needed**: 15-20 minutes to finish
+
+---
+
+**Current Focus**: Phase 5.5 Repository Pattern - 70% done  
+**Blocker**: None - clear path to completion  
+**Next Action**: Fix 4 provider methods  
+**Git Branch**: `feature/supabase-setup` (has uncommitted work)

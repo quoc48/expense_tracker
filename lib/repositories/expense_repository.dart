@@ -53,4 +53,16 @@ abstract class ExpenseRepository {
   ///
   /// Useful for pagination and statistics.
   Future<int> getCount();
+
+  /// Get all available categories
+  ///
+  /// Returns a list of category names (Vietnamese) from the database.
+  /// Used to populate category dropdowns in forms.
+  Future<List<String>> getCategories();
+
+  /// Get all available expense types
+  ///
+  /// Returns a list of expense type names (Vietnamese) from the database.
+  /// Used to populate type dropdowns in forms.
+  Future<List<String>> getExpenseTypes();
 }

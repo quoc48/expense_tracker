@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import '../models/expense.dart';
-import '../models/dummy_data.dart';
 import '../repositories/expense_repository.dart';
 import '../repositories/supabase_expense_repository.dart';
 
@@ -69,8 +68,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Sort by date (newest first)
       _expenses.sort((a, b) => b.date.compareTo(a.date));
 
-      // Save to storage
-      await _storageService.saveExpenses(_expenses);
+      // Save to Supabase
+      await _repository.create(expense);
 
       // Notify listeners that the data has changed
       // This will trigger a rebuild in all listening widgets
@@ -104,8 +103,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Re-sort by date
       _expenses.sort((a, b) => b.date.compareTo(a.date));
 
-      // Save to storage
-      await _storageService.saveExpenses(_expenses);
+      // Save to Supabase
+      await _repository.update(updatedExpense);
 
       // Notify listeners
       notifyListeners();
@@ -134,8 +133,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Remove from list and store for undo
       final deletedExpense = _expenses.removeAt(index);
 
-      // Save to storage
-      await _storageService.saveExpenses(_expenses);
+      // Save to Supabase
+      await _repository.delete(expenseId);
 
       // Notify listeners
       notifyListeners();
@@ -154,8 +153,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Insert at the original position
       _expenses.insert(index, expense);
 
-      // Save to storage
-      await _storageService.saveExpenses(_expenses);
+      // Save to Supabase
+      await _repository.create(expense);
 
       // Notify listeners
       notifyListeners();

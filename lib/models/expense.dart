@@ -23,15 +23,15 @@ enum Category {
 // Extension: Adds custom methods to existing enums
 // This helps us display user-friendly names and get appropriate icons
 extension ExpenseTypeExtension on ExpenseType {
-  // Display name for UI
+  // Display name for UI (Vietnamese)
   String get displayName {
     switch (this) {
       case ExpenseType.mustHave:
-        return 'Must Have';
+        return 'Phải chi';
       case ExpenseType.niceToHave:
-        return 'Nice to Have';
+        return 'Phát sinh';
       case ExpenseType.wasted:
-        return 'Wasted';
+        return 'Lãng phí';
     }
   }
 
@@ -49,25 +49,25 @@ extension ExpenseTypeExtension on ExpenseType {
 }
 
 extension CategoryExtension on Category {
-  // Display name for UI
+  // Display name for UI (Vietnamese)
   String get displayName {
     switch (this) {
       case Category.food:
-        return 'Food';
+        return 'Thực phẩm';
       case Category.transportation:
-        return 'Transportation';
+        return 'Đi lại';
       case Category.utilities:
-        return 'Utilities';
+        return 'Hoá đơn';
       case Category.entertainment:
-        return 'Entertainment';
+        return 'Giải trí';
       case Category.shopping:
-        return 'Shopping';
+        return 'Tạp hoá';
       case Category.health:
-        return 'Health';
+        return 'Sức khỏe';
       case Category.education:
-        return 'Education';
+        return 'Giáo dục';
       case Category.other:
-        return 'Other';
+        return 'Khác';
     }
   }
 
