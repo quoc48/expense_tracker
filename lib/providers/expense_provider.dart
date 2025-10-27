@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../models/expense.dart';
 import '../models/dummy_data.dart';
-import '../services/storage_service.dart';
+import '../repositories/expense_repository.dart';
+import '../repositories/supabase_expense_repository.dart';
 
 /// ExpenseProvider manages the global state for all expenses in the app.
 /// It extends ChangeNotifier which is part of Flutter's built-in state management.
@@ -20,8 +21,8 @@ class ExpenseProvider extends ChangeNotifier {
   List<Expense> _expenses = [];
   bool _isLoading = false;
 
-  // Storage service for persistence
-  final StorageService _storageService = StorageService();
+  // Repository for data access (now using Supabase instead of SharedPreferences)
+  final ExpenseRepository _repository = SupabaseExpenseRepository();
 
   // Public getters - allow read-only access to private state
   // This is a common pattern: private state, public getters
@@ -35,9 +36,9 @@ class ExpenseProvider extends ChangeNotifier {
     return _expenses.fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  /// Load all expenses from storage
+  /// Load all expenses from Supabase
   /// This should be called once when the app starts
-  /// If no saved expenses exist, loads dummy data for testing
+  /// Fetches all expenses for the authenticated user
   Future<void> loadExpenses() async {
     _isLoading = true;
     // Notify listeners that loading has started
@@ -45,16 +46,8 @@ class ExpenseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _expenses = await _storageService.loadExpenses();
-
-      // If no saved expenses, load dummy data for testing
-      // This makes the app look populated when you first run it
-      if (_expenses.isEmpty) {
-        _expenses = DummyData.getExpenses();
-        // Save dummy data so it persists across app restarts
-        await _storageService.saveExpenses(_expenses);
-        debugPrint('Loaded ${_expenses.length} dummy expenses for testing');
-      }
+      _expenses = await _repository.getAll();
+      debugPrint('Loaded ${_expenses.length} expenses from Supabase');
     } catch (e) {
       // In production, you'd want proper error handling here
       debugPrint('Error loading expenses: $e');
