@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../models/month_total.dart';
+import '../utils/currency_formatter.dart';
 
 /// A line chart showing spending trends over multiple months
 /// Displays monthly totals with interactive tooltips
@@ -32,7 +33,6 @@ class TrendsChart extends StatelessWidget {
     final sortedTrends = List<MonthTotal>.from(monthlyTrends)
       ..sort((a, b) => a.month.compareTo(b.month));
 
-    final currencyFormat = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
     final theme = Theme.of(context);
 
     // Calculate max value for better scaling
@@ -74,7 +74,7 @@ class TrendsChart extends StatelessWidget {
                       ),
                       children: [
                         TextSpan(
-                          text: currencyFormat.format(monthTotal.total),
+                          text: CurrencyFormatter.format(monthTotal.total, context: CurrencyContext.compact),
                           style: TextStyle(
                             color: theme.colorScheme.primary,
                             fontSize: 16,
@@ -121,18 +121,10 @@ class TrendsChart extends StatelessWidget {
                   reservedSize: 50,
                   interval: maxValue * 0.25, // Match grid line interval
                   getTitlesWidget: (value, meta) {
-                    if (value == 0) return const Text('\$0');
-                    if (value >= 1000) {
-                      return Text(
-                        '\$${(value / 1000).toStringAsFixed(1)}k',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface.withAlpha(178),
-                        ),
-                      );
-                    }
+                    if (value == 0) return const Text('0');
+                    // Use compact format for chart axis labels
                     return Text(
-                      '\$${value.toInt()}',
+                      CurrencyFormatter.format(value, context: CurrencyContext.compact),
                       style: TextStyle(
                         fontSize: 11,
                         color: theme.colorScheme.onSurface.withAlpha(178),

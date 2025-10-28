@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
+import '../utils/currency_formatter.dart';
 import 'add_expense_screen.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
@@ -93,10 +94,6 @@ class ExpenseListScreen extends StatelessWidget {
 
   Widget _buildExpenseCard(BuildContext context, Expense expense, int index) {
     final dateFormat = DateFormat('MMM dd, yyyy');
-    final currencyFormat = NumberFormat.currency(
-      symbol: '₫',
-      decimalDigits: 0, // No decimals for Vietnamese Dong
-    );
 
     return Dismissible(
       key: Key(expense.id),
@@ -182,7 +179,7 @@ class ExpenseListScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                currencyFormat.format(expense.amount),
+                CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,

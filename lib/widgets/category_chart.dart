@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../models/expense.dart';
+import '../utils/currency_formatter.dart';
 
 /// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
 /// Uses fl_chart for beautiful and interactive visualizations
@@ -63,7 +64,6 @@ class CategoryChart extends StatelessWidget {
     final sortedEntries = categoryBreakdown.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final currencyFormat = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
     final theme = Theme.of(context);
 
     return SizedBox(
@@ -92,7 +92,7 @@ class CategoryChart extends StatelessWidget {
                     ),
                     children: [
                       TextSpan(
-                        text: currencyFormat.format(amount),
+                        text: CurrencyFormatter.format(amount, context: CurrencyContext.compact),
                         style: TextStyle(
                           color: theme.colorScheme.primary,
                           fontSize: 16,
@@ -131,18 +131,10 @@ class CategoryChart extends StatelessWidget {
                   showTitles: true,
                   reservedSize: 50,
                   getTitlesWidget: (value, meta) {
-                    if (value == 0) return const Text('\$0');
-                    if (value >= 1000) {
-                      return Text(
-                        '\$${(value / 1000).toStringAsFixed(1)}k',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface.withAlpha(178),
-                        ),
-                      );
-                    }
+                    if (value == 0) return const Text('0');
+                    // Use compact format for chart axis labels
                     return Text(
-                      '\$${value.toInt()}',
+                      CurrencyFormatter.format(value, context: CurrencyContext.compact),
                       style: TextStyle(
                         fontSize: 11,
                         color: theme.colorScheme.onSurface.withAlpha(178),

@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../models/expense.dart';
 import '../repositories/expense_repository.dart';
 import '../repositories/supabase_expense_repository.dart';
+import '../utils/currency_formatter.dart';
 
 /// AddExpenseScreen: Form for creating new expenses OR editing existing ones (SIMPLIFIED - Phase 5.5.1)
 ///
@@ -194,18 +195,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Amount Field
+                    // Amount Field (Vietnamese đồng - integer only, no decimals)
                     TextFormField(
                       controller: _amountController,
-                      decoration: const InputDecoration(
-                        labelText: 'Amount',
-                        hintText: '0.00',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.attach_money),
+                      decoration: InputDecoration(
+                        labelText: 'Amount (${CurrencyFormatter.currencySymbol})',
+                        hintText: '50000',  // Vietnamese đồng example
+                        helperText: 'Enter amount in Vietnamese đồng',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.payments),  // Generic currency icon
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.number,  // Integer only, no decimals
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d*')),  // Only digits
                       ],
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {

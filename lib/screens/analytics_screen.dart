@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../utils/analytics_calculator.dart';
+import '../utils/currency_formatter.dart';
 import '../widgets/category_chart.dart';
 import '../widgets/trends_chart.dart';
 
@@ -148,8 +149,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   /// Summary card showing this month vs last month comparison
   Widget _buildSummaryCard(List<Expense> expenses) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
-
     // Calculate this month's total
     final thisMonthTotal = AnalyticsCalculator.getTotalForMonth(
       expenses,
@@ -189,9 +188,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // This month total (large, prominent)
+            // This month total (large, prominent) - use full Vietnamese format
             Text(
-              currencyFormat.format(thisMonthTotal),
+              CurrencyFormatter.format(thisMonthTotal, context: CurrencyContext.full),
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,
@@ -226,7 +225,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      currencyFormat.format(lastMonthTotal),
+                      CurrencyFormatter.format(lastMonthTotal, context: CurrencyContext.shortCompact),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
