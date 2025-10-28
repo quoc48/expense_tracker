@@ -64,7 +64,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     if (widget.expense != null) {
       final expense = widget.expense!;
       _descriptionController.text = expense.description;
-      _amountController.text = expense.amount.toString();
+      _amountController.text = CurrencyFormatter.formatForInput(expense.amount);
       _noteController.text = expense.note ?? '';
       _selectedDate = expense.date;
 

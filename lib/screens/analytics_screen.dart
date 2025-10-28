@@ -225,7 +225,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      CurrencyFormatter.format(lastMonthTotal, context: CurrencyContext.shortCompact),
+                      CurrencyFormatter.format(lastMonthTotal, context: CurrencyContext.full),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,

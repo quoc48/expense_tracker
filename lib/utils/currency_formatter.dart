@@ -67,18 +67,18 @@ class CurrencyFormatter {
     return formatter.format(amount);
   }
 
-  /// Format in compact style for charts: "50k", "1.2M", "1.5B"
-  /// No currency symbol, uses k/M/B suffixes
+  /// Format in compact style for charts: "50k", "8.5m", "1.5b"
+  /// No currency symbol, uses lowercase k/m/b suffixes
   static String formatCompact(double amount) {
     if (amount >= 1000000000) {
-      // Billions: 1.5B
-      return '${(amount / 1000000000).toStringAsFixed(1)}B';
+      // Billions: 1.5b (lowercase)
+      return '${(amount / 1000000000).toStringAsFixed(1)}b';
     } else if (amount >= 1000000) {
-      // Millions: 1.5M
+      // Millions: 8.5m (lowercase)
       final millions = amount / 1000000;
       return millions >= 10
-          ? '${millions.toStringAsFixed(0)}M'  // 10M, 15M (no decimals)
-          : '${millions.toStringAsFixed(1)}M';  // 1.5M, 9.8M (1 decimal)
+          ? '${millions.toStringAsFixed(0)}m'  // 10m, 15m (no decimals)
+          : '${millions.toStringAsFixed(1)}m';  // 8.5m, 9.8m (1 decimal)
     } else if (amount >= 1000) {
       // Thousands: 50k
       final thousands = amount / 1000;
@@ -91,7 +91,7 @@ class CurrencyFormatter {
     }
   }
 
-  /// Format in short compact style with symbol: "50k₫", "1.2M₫"
+  /// Format in short compact style with symbol: "50k₫", "8.5m₫"
   /// Same as compact but includes currency symbol
   static String formatShortCompact(double amount) {
     return '${formatCompact(amount)}$currencySymbol';
