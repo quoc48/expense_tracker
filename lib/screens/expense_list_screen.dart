@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
-import '../models/expense_form_result.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
 import 'add_expense_screen.dart';
@@ -126,10 +125,10 @@ class ExpenseListScreen extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor: expense.type.color.withOpacity(0.2),
+            backgroundColor: expense.typeColor.withOpacity(0.2),  // Fixed: Use getter
             child: Icon(
-              expense.category.icon,
-              color: expense.type.color,
+              expense.categoryIcon,  // Fixed: Use getter
+              color: expense.typeColor,  // Fixed: Use getter
             ),
           ),
           title: Text(
@@ -146,7 +145,7 @@ class ExpenseListScreen extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      expense.category.displayName,
+                      expense.categoryNameVi,  // NEW: Use Vietnamese string directly
                       style: TextStyle(color: Colors.grey[600]),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -193,18 +192,18 @@ class ExpenseListScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: expense.type.color.withOpacity(0.1),
+                  color: expense.typeColor.withOpacity(0.1),  // NEW: Use getter
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: expense.type.color.withOpacity(0.5),
+                    color: expense.typeColor.withOpacity(0.5),  // NEW: Use getter
                     width: 1,
                   ),
                 ),
                 child: Text(
-                  expense.type.displayName,
+                  expense.typeNameVi,  // NEW: Use Vietnamese string directly
                   style: TextStyle(
                     fontSize: 10,
-                    color: expense.type.color,
+                    color: expense.typeColor,  // NEW: Use getter
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -218,7 +217,7 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Future<void> _addExpense(BuildContext context) async {
-    final result = await Navigator.push<ExpenseFormResult>(
+    final result = await Navigator.push<Expense>(  // NEW: Return Expense directly
       context,
       MaterialPageRoute(
         builder: (context) => const AddExpenseScreen(),
@@ -229,22 +228,18 @@ class ExpenseListScreen extends StatelessWidget {
       // Access the provider without listening (we don't need rebuilds here)
       // listen: false tells Provider we just want to call a method, not listen to changes
       final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.addExpense(
-        result.expense,
-        categoryNameVi: result.categoryNameVi,
-        typeNameVi: result.typeNameVi,
-      );
+      final success = await provider.addExpense(result);  // NEW: Simplified API
 
       if (success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added: ${result.expense.description}'),
+            content: Text('Added: ${result.description}'),  // Fixed: result IS the expense
             duration: const Duration(seconds: 2),
             action: SnackBarAction(
               label: 'Undo',
               onPressed: () async {
                 // Delete the just-added expense to undo
-                await provider.deleteExpense(result.expense.id);
+                await provider.deleteExpense(result.id);  // Fixed: result IS the expense
               },
             ),
           ),
@@ -254,7 +249,7 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Future<void> _editExpense(BuildContext context, Expense expense) async {
-    final result = await Navigator.push<ExpenseFormResult>(
+    final result = await Navigator.push<Expense>(  // NEW: Return Expense directly
       context,
       MaterialPageRoute(
         builder: (context) => AddExpenseScreen(expense: expense),
@@ -263,16 +258,12 @@ class ExpenseListScreen extends StatelessWidget {
 
     if (result != null && context.mounted) {
       final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.updateExpense(
-        result.expense,
-        categoryNameVi: result.categoryNameVi,
-        typeNameVi: result.typeNameVi,
-      );
+      final success = await provider.updateExpense(result);  // NEW: Simplified API
 
       if (success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Updated: ${result.expense.description}'),
+            content: Text('Updated: ${result.description}'),  // Fixed: result IS the expense
             duration: const Duration(seconds: 2),
           ),
         );

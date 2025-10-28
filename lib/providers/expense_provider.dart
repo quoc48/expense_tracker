@@ -58,10 +58,10 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-  /// Add a new expense to the list
+  /// Add a new expense to the list (SIMPLIFIED - Phase 5.5.1)
   /// Returns true if successful, false otherwise
-  /// [categoryNameVi] and [typeNameVi] preserve the exact Vietnamese names from the form
-  Future<bool> addExpense(Expense expense, {String? categoryNameVi, String? typeNameVi}) async {
+  /// Vietnamese names are now part of the Expense object itself!
+  Future<bool> addExpense(Expense expense) async {
     try {
       // Add to in-memory list
       _expenses.add(expense);
@@ -69,8 +69,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Sort by date (newest first)
       _expenses.sort((a, b) => b.date.compareTo(a.date));
 
-      // Save to Supabase with original Vietnamese names
-      await _repository.create(expense, categoryNameVi: categoryNameVi, typeNameVi: typeNameVi);
+      // Save to Supabase (Vietnamese names are in the expense object)
+      await _repository.create(expense);
 
       // Notify listeners that the data has changed
       // This will trigger a rebuild in all listening widgets
@@ -86,10 +86,10 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-  /// Update an existing expense
+  /// Update an existing expense (SIMPLIFIED - Phase 5.5.1)
   /// Returns true if successful, false otherwise
-  /// [categoryNameVi] and [typeNameVi] preserve the exact Vietnamese names from the form
-  Future<bool> updateExpense(Expense updatedExpense, {String? categoryNameVi, String? typeNameVi}) async {
+  /// Vietnamese names are now part of the Expense object itself!
+  Future<bool> updateExpense(Expense updatedExpense) async {
     try {
       // Find the index of the expense to update
       final index = _expenses.indexWhere((e) => e.id == updatedExpense.id);
@@ -105,8 +105,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Re-sort by date
       _expenses.sort((a, b) => b.date.compareTo(a.date));
 
-      // Save to Supabase with original Vietnamese names
-      await _repository.update(updatedExpense, categoryNameVi: categoryNameVi, typeNameVi: typeNameVi);
+      // Save to Supabase (Vietnamese names are in the expense object)
+      await _repository.update(updatedExpense);
 
       // Notify listeners
       notifyListeners();
@@ -135,15 +135,20 @@ class ExpenseProvider extends ChangeNotifier {
       // Remove from list and store for undo
       final deletedExpense = _expenses.removeAt(index);
 
-      // Save to Supabase
+      // Save to Supabase (DELETE operation)
+      debugPrint('🗑️ Deleting expense from Supabase: $expenseId');
       await _repository.delete(expenseId);
+      debugPrint('✅ Successfully deleted from Supabase: $expenseId');
 
       // Notify listeners
       notifyListeners();
 
       return deletedExpense;
     } catch (e) {
-      debugPrint('Error deleting expense: $e');
+      debugPrint('❌ Error deleting expense: $e');
+      debugPrint('❌ Error details: ${e.runtimeType}');
+      // Restore the expense to the list if delete failed
+      // Don't restore yet - let's see the error first
       return null;
     }
   }

@@ -1,66 +1,23 @@
+import 'package:flutter/foundation.dart';
 import '../models/expense.dart';
 import '../services/supabase_service.dart';
 import 'expense_repository.dart';
 
-/// Supabase implementation of ExpenseRepository
+/// Supabase implementation of ExpenseRepository (SIMPLIFIED - Phase 5.5.1)
 ///
-/// This repository fetches expense data from Supabase cloud database.
-/// It handles:
-/// - UUID-based references to categories and types
-/// - Vietnamese → English mapping for categories/types
-/// - Row Level Security (user-specific data)
-/// - Real-time updates (future enhancement)
+/// Architecture Change:
+/// - BEFORE: Complex Vietnamese ↔ English enum mappings, data loss issues
+/// - AFTER: Use Vietnamese strings directly from Supabase, zero mappings!
+///
+/// Benefits:
+/// - Simpler code (no mapping dictionaries)
+/// - Zero data loss (Cà phê stays Cà phê)
+/// - Supabase is the single source of truth
+/// - Future-proof (add categories in Supabase without code changes)
 class SupabaseExpenseRepository implements ExpenseRepository {
-  // Category mapping: Vietnamese names → English enums
-  // These match the Vietnamese names in the Supabase categories table
-  // Made public so the form screen can use the same mapping
-  static const Map<String, Category> categoryMapping = {
-    'Thực phẩm': Category.food,
-    'Đi lại': Category.transportation,
-    'Hoá đơn': Category.utilities,
-    'Giải trí': Category.entertainment,
-    'Tạp hoá': Category.shopping,
-    'Thời trang': Category.shopping,
-    'Sức khỏe': Category.health,
-    'Giáo dục': Category.education,
-    'Cà phê': Category.food,
-    'Du lịch': Category.entertainment,
-    'Tiền nhà': Category.utilities,
-    'Quà vật': Category.other,
-    'Biểu gia đình': Category.other,
-    'TẾT': Category.other,
-  };
-
-  // Reverse mapping: English enums → Vietnamese names (for creating expenses)
-  static const Map<Category, String> _reverseCategoryMapping = {
-    Category.food: 'Thực phẩm',
-    Category.transportation: 'Đi lại',
-    Category.utilities: 'Hoá đơn',
-    Category.entertainment: 'Giải trí',
-    Category.shopping: 'Tạp hoá',
-    Category.health: 'Sức khỏe',
-    Category.education: 'Giáo dục',
-    Category.other: 'Quà vật',
-  };
-
-  // Type mapping: Vietnamese names → English enums
-  // Made public so the form screen can use the same mapping
-  static const Map<String, ExpenseType> typeMapping = {
-    'Phải chi': ExpenseType.mustHave,
-    'Phát sinh': ExpenseType.niceToHave,
-    'Lãng phí': ExpenseType.wasted,
-  };
-
-  // Reverse mapping: English enums → Vietnamese names
-  static const Map<ExpenseType, String> _reverseTypeMapping = {
-    ExpenseType.mustHave: 'Phải chi',
-    ExpenseType.niceToHave: 'Phát sinh',
-    ExpenseType.wasted: 'Lãng phí',
-  };
-
   // Cache for category/type UUIDs (to avoid repeated lookups)
   Map<String, String>? _categoryIdMap; // Vietnamese name → UUID
-  Map<String, String>? _typeIdMap; // Vietnamese name → UUID
+  Map<String, String>? _typeIdMap;     // Vietnamese name → UUID
 
   /// Initialize category and type ID mappings from Supabase
   ///
@@ -90,31 +47,6 @@ class SupabaseExpenseRepository implements ExpenseRepository {
     }
   }
 
-  /// Convert Supabase row to Expense model
-  ///
-  /// Maps Vietnamese category/type names to English enums
-  Expense _fromSupabaseRow(Map<String, dynamic> row) {
-    // Extract category and type Vietnamese names
-    // (Supabase query should join the tables to get these)
-    final categoryVi = row['categories']?['name_vi'] as String? ?? '';
-    final typeVi = row['expense_types']?['name_vi'] as String? ?? '';
-
-    // Map to English enums (with fallback)
-    final category =
-        categoryMapping[categoryVi] ?? Category.other;
-    final type = typeMapping[typeVi] ?? ExpenseType.niceToHave;
-
-    return Expense(
-      id: row['id'] as String,
-      description: row['description'] as String,
-      amount: (row['amount'] as num).toDouble(),
-      category: category,
-      type: type,
-      date: DateTime.parse(row['date'] as String),
-      note: row['note'] as String?,
-    );
-  }
-
   @override
   Future<List<Expense>> getAll() async {
     await _ensureMappingsLoaded();
@@ -134,7 +66,7 @@ class SupabaseExpenseRepository implements ExpenseRepository {
         .order('date', ascending: false);
 
     return (response as List)
-        .map((row) => _fromSupabaseRow(row as Map<String, dynamic>))
+        .map((row) => Expense.fromSupabaseRow(row as Map<String, dynamic>))
         .toList();
   }
 
@@ -157,23 +89,24 @@ class SupabaseExpenseRepository implements ExpenseRepository {
         .maybeSingle();
 
     if (response == null) return null;
-    return _fromSupabaseRow(response as Map<String, dynamic>);
+    return Expense.fromSupabaseRow(response as Map<String, dynamic>);
   }
 
   @override
   Future<Expense> create(Expense expense, {String? categoryNameVi, String? typeNameVi}) async {
     await _ensureMappingsLoaded();
 
-    // Use provided Vietnamese names if available, otherwise fall back to reverse mapping
-    final categoryVi = categoryNameVi ?? (_reverseCategoryMapping[expense.category] ?? 'Quà vật');
-    final typeVi = typeNameVi ?? (_reverseTypeMapping[expense.type] ?? 'Phát sinh');
+    // Use the Vietnamese names from the expense object
+    // (categoryNameVi/typeNameVi parameters are now redundant but kept for compatibility)
+    final categoryVi = expense.categoryNameVi;
+    final typeVi = expense.typeNameVi;
 
     // Get UUIDs
     final categoryId = _categoryIdMap![categoryVi];
     final typeId = _typeIdMap![typeVi];
 
     if (categoryId == null || typeId == null) {
-      throw Exception('Category or type not found in Supabase');
+      throw Exception('Category "$categoryVi" or type "$typeVi" not found in Supabase');
     }
 
     // Get current user ID
@@ -206,23 +139,23 @@ class SupabaseExpenseRepository implements ExpenseRepository {
         ''')
         .single();
 
-    return _fromSupabaseRow(response as Map<String, dynamic>);
+    return Expense.fromSupabaseRow(response as Map<String, dynamic>);
   }
 
   @override
   Future<Expense> update(Expense expense, {String? categoryNameVi, String? typeNameVi}) async {
     await _ensureMappingsLoaded();
 
-    // Use provided Vietnamese names if available, otherwise fall back to reverse mapping
-    final categoryVi = categoryNameVi ?? (_reverseCategoryMapping[expense.category] ?? 'Quà vật');
-    final typeVi = typeNameVi ?? (_reverseTypeMapping[expense.type] ?? 'Phát sinh');
+    // Use the Vietnamese names from the expense object
+    final categoryVi = expense.categoryNameVi;
+    final typeVi = expense.typeNameVi;
 
     // Get UUIDs
     final categoryId = _categoryIdMap![categoryVi];
     final typeId = _typeIdMap![typeVi];
 
     if (categoryId == null || typeId == null) {
-      throw Exception('Category or type not found in Supabase');
+      throw Exception('Category "$categoryVi" or type "$typeVi" not found in Supabase');
     }
 
     // Update in Supabase
@@ -248,12 +181,28 @@ class SupabaseExpenseRepository implements ExpenseRepository {
         ''')
         .single();
 
-    return _fromSupabaseRow(response as Map<String, dynamic>);
+    return Expense.fromSupabaseRow(response as Map<String, dynamic>);
   }
 
   @override
   Future<void> delete(String id) async {
-    await supabase.from('expenses').delete().eq('id', id);
+    debugPrint('🔍 Repository: Attempting to delete expense: $id');
+
+    final response = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id)
+        .select();  // Add select() to get the deleted row back
+
+    debugPrint('🔍 Repository: Delete response: $response');
+
+    // Check if anything was actually deleted
+    if ((response as List).isEmpty) {
+      debugPrint('⚠️ WARNING: Delete returned empty - likely blocked by RLS!');
+      throw Exception('Delete failed - Row Level Security may be blocking delete operations');
+    }
+
+    debugPrint('✅ Repository: Successfully deleted expense from database');
   }
 
   @override
@@ -276,7 +225,7 @@ class SupabaseExpenseRepository implements ExpenseRepository {
         .order('date', ascending: false);
 
     return (response as List)
-        .map((row) => _fromSupabaseRow(row as Map<String, dynamic>))
+        .map((row) => Expense.fromSupabaseRow(row as Map<String, dynamic>))
         .toList();
   }
 

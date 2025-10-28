@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
-// Enum: A special type that represents a fixed set of constant values
-// ExpenseType classifies how necessary the expense was
+// Legacy enums kept for backward compatibility and icon/color lookup
+// These are NO LONGER used as data fields, only for UI helpers
 enum ExpenseType {
-  mustHave,    // Essential expenses (rent, groceries, utilities)
-  niceToHave,  // Discretionary but reasonable (dining out, entertainment)
-  wasted,      // Regrettable spending (impulse purchases, unused subscriptions)
+  mustHave,
+  niceToHave,
+  wasted,
 }
 
-// Category enum for organizing expenses by type
 enum Category {
   food,
   transportation,
@@ -20,10 +19,9 @@ enum Category {
   other,
 }
 
-// Extension: Adds custom methods to existing enums
-// This helps us display user-friendly names and get appropriate icons
+// Extension methods for getting colors and icons
+// These map Vietnamese names to UI elements
 extension ExpenseTypeExtension on ExpenseType {
-  // Display name for UI (Vietnamese)
   String get displayName {
     switch (this) {
       case ExpenseType.mustHave:
@@ -35,7 +33,6 @@ extension ExpenseTypeExtension on ExpenseType {
     }
   }
 
-  // Color coding for visual feedback
   Color get color {
     switch (this) {
       case ExpenseType.mustHave:
@@ -49,7 +46,6 @@ extension ExpenseTypeExtension on ExpenseType {
 }
 
 extension CategoryExtension on Category {
-  // Display name for UI (Vietnamese)
   String get displayName {
     switch (this) {
       case Category.food:
@@ -71,7 +67,6 @@ extension CategoryExtension on Category {
     }
   }
 
-  // Icon for each category
   IconData get icon {
     switch (this) {
       case Category.food:
@@ -94,71 +89,133 @@ extension CategoryExtension on Category {
   }
 }
 
-// The Expense class: Blueprint for expense data
-// This is a simple Dart class (PODO - Plain Old Dart Object)
+/// The NEW Expense class: Using Vietnamese strings as source of truth
+///
+/// Architecture Change (Phase 5.5.1):
+/// - BEFORE: Stored Category/ExpenseType enums → lost precision ("Cà phê" became "Thực phẩm")
+/// - AFTER: Store Vietnamese strings directly from Supabase → perfect preservation
+///
+/// Benefits:
+/// - No data loss (Cà phê stays Cà phê)
+/// - No hardcoded mappings (Supabase is source of truth)
+/// - Future-proof (add new categories in Supabase without code changes)
+/// - Flexible (icons/colors determined dynamically)
 class Expense {
-  // Properties (fields) - these are final because we'll create new objects for edits
   final String id;
   final String description;
   final double amount;
-  final Category category;
-  final ExpenseType type;
-  final DateTime date;
-  final String? note; // The ? makes this nullable (optional)
 
-  // Constructor: Special method called when creating a new Expense object
-  // 'required' means these parameters must be provided
+  // NEW: Store Vietnamese names directly (not enums!)
+  final String categoryNameVi;  // e.g., "Cà phê", "Du lịch", "TẾT"
+  final String typeNameVi;      // e.g., "Phải chi", "Phát sinh", "Lãng phí"
+
+  final DateTime date;
+  final String? note;
+
   Expense({
     required this.id,
     required this.description,
     required this.amount,
-    required this.category,
-    required this.type,
+    required this.categoryNameVi,
+    required this.typeNameVi,
     required this.date,
-    this.note, // Optional parameter (nullable)
+    this.note,
   });
 
-  // Named constructor for creating an Expense from a Map (JSON data)
-  // This is essential for loading data from storage
+  /// Get icon for category based on Vietnamese name
+  /// Uses a flexible mapping that can be extended without changing data
+  IconData get categoryIcon {
+    // Map common Vietnamese category names to icons
+    switch (categoryNameVi) {
+      case 'Thực phẩm':
+      case 'Cà phê':
+        return Icons.restaurant;
+      case 'Đi lại':
+        return Icons.directions_car;
+      case 'Hoá đơn':
+      case 'Tiền nhà':
+        return Icons.lightbulb;
+      case 'Giải trí':
+      case 'Du lịch':
+        return Icons.movie;
+      case 'Tạp hoá':
+      case 'Thời trang':
+        return Icons.shopping_bag;
+      case 'Sức khỏe':
+        return Icons.medical_services;
+      case 'Giáo dục':
+        return Icons.school;
+      case 'Quà vật':
+      case 'TẾT':
+      case 'Biểu gia đình':
+        return Icons.card_giftcard;
+      default:
+        return Icons.more_horiz;
+    }
+  }
+
+  /// Get color for expense type based on Vietnamese name
+  Color get typeColor {
+    switch (typeNameVi) {
+      case 'Phải chi':
+        return Colors.green;
+      case 'Phát sinh':
+        return Colors.orange;
+      case 'Lãng phí':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// Factory constructor for creating from Supabase row
+  /// This is simpler now - no enum conversion needed!
+  factory Expense.fromSupabaseRow(Map<String, dynamic> row) {
+    return Expense(
+      id: row['id'] as String,
+      description: row['description'] as String,
+      amount: (row['amount'] as num).toDouble(),
+      categoryNameVi: row['categories']?['name_vi'] as String? ?? 'Khác',
+      typeNameVi: row['expense_types']?['name_vi'] as String? ?? 'Phát sinh',
+      date: DateTime.parse(row['date'] as String),
+      note: row['note'] as String?,
+    );
+  }
+
+  /// Legacy method for backward compatibility with local storage
+  /// (if we still use SharedPreferences anywhere)
   factory Expense.fromMap(Map<String, dynamic> map) {
     return Expense(
       id: map['id'] as String,
       description: map['description'] as String,
       amount: map['amount'] as double,
-      // Convert string back to enum
-      category: Category.values.firstWhere(
-        (c) => c.name == map['category'],
-      ),
-      type: ExpenseType.values.firstWhere(
-        (t) => t.name == map['type'],
-      ),
-      // Parse ISO8601 string back to DateTime
+      categoryNameVi: map['categoryNameVi'] as String? ?? 'Khác',
+      typeNameVi: map['typeNameVi'] as String? ?? 'Phát sinh',
       date: DateTime.parse(map['date'] as String),
       note: map['note'] as String?,
     );
   }
 
-  // Convert Expense object to Map (for JSON storage)
+  /// Convert to Map for storage
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'description': description,
       'amount': amount,
-      'category': category.name, // Convert enum to string
-      'type': type.name,
-      'date': date.toIso8601String(), // Convert DateTime to ISO8601 string
+      'categoryNameVi': categoryNameVi,
+      'typeNameVi': typeNameVi,
+      'date': date.toIso8601String(),
       'note': note,
     };
   }
 
-  // CopyWith method: Creates a new Expense with some fields changed
-  // This is the immutable pattern - we don't modify existing objects
+  /// CopyWith for immutable updates
   Expense copyWith({
     String? id,
     String? description,
     double? amount,
-    Category? category,
-    ExpenseType? type,
+    String? categoryNameVi,
+    String? typeNameVi,
     DateTime? date,
     String? note,
   }) {
@@ -166,8 +223,8 @@ class Expense {
       id: id ?? this.id,
       description: description ?? this.description,
       amount: amount ?? this.amount,
-      category: category ?? this.category,
-      type: type ?? this.type,
+      categoryNameVi: categoryNameVi ?? this.categoryNameVi,
+      typeNameVi: typeNameVi ?? this.typeNameVi,
       date: date ?? this.date,
       note: note ?? this.note,
     );

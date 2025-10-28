@@ -3,15 +3,46 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../models/expense.dart';
 
-/// A bar chart showing expense breakdown by category
+/// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
 /// Uses fl_chart for beautiful and interactive visualizations
+/// Now uses Vietnamese category names directly instead of enums
 class CategoryChart extends StatelessWidget {
-  final Map<Category, double> categoryBreakdown;
+  final Map<String, double> categoryBreakdown;  // Changed from Map<Category, double>
 
   const CategoryChart({
     super.key,
     required this.categoryBreakdown,
   });
+
+  /// Helper: Get icon for Vietnamese category name
+  IconData _getCategoryIcon(String categoryNameVi) {
+    switch (categoryNameVi) {
+      case 'Thực phẩm':
+      case 'Cà phê':
+        return Icons.restaurant;
+      case 'Đi lại':
+        return Icons.directions_car;
+      case 'Hoá đơn':
+      case 'Tiền nhà':
+        return Icons.lightbulb;
+      case 'Giải trí':
+      case 'Du lịch':
+        return Icons.movie;
+      case 'Tạp hoá':
+      case 'Thời trang':
+        return Icons.shopping_bag;
+      case 'Sức khỏe':
+        return Icons.medical_services;
+      case 'Giáo dục':
+        return Icons.school;
+      case 'Quà vật':
+      case 'TẾT':
+      case 'Biểu gia đình':
+        return Icons.card_giftcard;
+      default:
+        return Icons.more_horiz;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,10 +81,10 @@ class CategoryChart extends StatelessWidget {
                 tooltipPadding: const EdgeInsets.all(8),
                 tooltipMargin: 8,
                 getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  final category = sortedEntries[groupIndex].key;
+                  final categoryNameVi = sortedEntries[groupIndex].key;  // Now a String
                   final amount = sortedEntries[groupIndex].value;
                   return BarTooltipItem(
-                    '${category.displayName}\n',
+                    '$categoryNameVi\n',  // Already in Vietnamese!
                     TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
@@ -82,11 +113,11 @@ class CategoryChart extends StatelessWidget {
                     if (value.toInt() >= sortedEntries.length) {
                       return const Text('');
                     }
-                    final category = sortedEntries[value.toInt()].key;
+                    final categoryNameVi = sortedEntries[value.toInt()].key;  // Now a String
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Icon(
-                        category.icon,
+                        _getCategoryIcon(categoryNameVi),  // Use helper method
                         size: 20,
                         color: theme.colorScheme.primary,
                       ),
