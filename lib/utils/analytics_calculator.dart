@@ -194,4 +194,22 @@ class AnalyticsCalculator {
     final now = DateTime.now();
     return DateTime(now.year, now.month, 1);
   }
+
+  /// Get the number of days in a given month
+  ///
+  /// Different months have different lengths:
+  /// - January, March, May, July, August, October, December: 31 days
+  /// - April, June, September, November: 30 days
+  /// - February: 28 days (29 in leap years)
+  ///
+  /// Learning: DateTime trick for getting days in month
+  /// DateTime(year, month + 1, 0) gives us the last day of the current month
+  /// Example: DateTime(2025, 11, 0) = October 31, 2025
+  ///
+  /// Why? Because day 0 of November = last day of October
+  static int daysInMonth(DateTime month) {
+    // Get the last day of this month by going to day 0 of next month
+    final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
+    return lastDayOfMonth.day;
+  }
 }

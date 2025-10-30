@@ -94,24 +94,27 @@ class TopCategoryCard extends StatelessWidget {
           // Header
           Row(
             children: [
-              Icon(Icons.trending_up, size: 20, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                'Top Category',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+              Icon(Icons.trending_up, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Top Category',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Category display with icon
           Row(
             children: [
               // Category icon in a colored circle
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,  // Light background
                   shape: BoxShape.circle,  // Circular container
@@ -119,10 +122,10 @@ class TopCategoryCard extends StatelessWidget {
                 child: Icon(
                   categoryIcon,
                   color: theme.colorScheme.primary,
-                  size: 24,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
 
               // Category name and amount
               Expanded(
@@ -132,18 +135,19 @@ class TopCategoryCard extends StatelessWidget {
                     // Category name
                     Text(
                       categoryNameVi,
-                      style: theme.textTheme.bodyLarge?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
 
                     // Amount spent in this category
                     Text(
                       CurrencyFormatter.format(amount, context: CurrencyContext.full),
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
                   ],

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../utils/currency_formatter.dart';
 import 'summary_stat_card.dart';
 
 /// Card showing expense breakdown by type (Phải chi, Phát sinh, Lãng phí)
@@ -71,27 +70,32 @@ class TypeBreakdownCard extends StatelessWidget {
           // Header
           Row(
             children: [
-              Icon(Icons.donut_small, size: 20, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                'Type Breakdown',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+              Icon(Icons.donut_small, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Type Breakdown',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Build a row for each expense type
-          ...typeBreakdown.entries.map((entry) {
+          // Build a row for each expense type (sorted by percentage, highest first)
+          ...(typeBreakdown.entries.toList()
+              ..sort((a, b) => b.value.compareTo(a.value)))  // Sort descending by amount
+              .map((entry) {
             final typeNameVi = entry.key;
             final amount = entry.value;
             final percentage = (amount / totalAmount * 100);  // Calculate percentage
             final color = _getTypeColor(typeNameVi);
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -99,15 +103,19 @@ class TypeBreakdownCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        typeNameVi,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
+                      Flexible(
+                        child: Text(
+                          typeNameVi,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 6),
                       Text(
                         '${percentage.toStringAsFixed(0)}%',  // Show as "50%"
-                        style: theme.textTheme.bodyMedium?.copyWith(
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: color,
                           fontWeight: FontWeight.bold,
                         ),
@@ -118,27 +126,18 @@ class TypeBreakdownCard extends StatelessWidget {
 
                   // Progress bar (visual representation)
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                     child: LinearProgressIndicator(
                       value: percentage / 100,  // Convert to 0.0-1.0 range
-                      backgroundColor: color.withOpacity(0.1),  // Light background
+                      backgroundColor: color.withValues(alpha: 0.1),  // Light background
                       valueColor: AlwaysStoppedAnimation<Color>(color),  // Bar color
-                      minHeight: 8,  // Thickness of the bar
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-
-                  // Amount in compact format
-                  Text(
-                    CurrencyFormatter.format(amount, context: CurrencyContext.shortCompact),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
+                      minHeight: 6,  // Thickness of the bar
                     ),
                   ),
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

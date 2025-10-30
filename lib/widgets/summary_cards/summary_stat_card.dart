@@ -41,7 +41,7 @@ class SummaryStatCard extends StatelessWidget {
 
       // Child content with consistent padding
       child: Padding(
-        padding: const EdgeInsets.all(16.0),  // 16px padding on all sides
+        padding: const EdgeInsets.all(12.0),  // 12px padding on all sides
         child: child,  // The unique content each card provides
       ),
     );

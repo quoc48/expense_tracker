@@ -7,6 +7,11 @@ import '../utils/analytics_calculator.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/category_chart.dart';
 import '../widgets/trends_chart.dart';
+import '../widgets/summary_cards/monthly_total_card.dart';
+import '../widgets/summary_cards/type_breakdown_card.dart';
+import '../widgets/summary_cards/top_category_card.dart';
+import '../widgets/summary_cards/daily_average_card.dart';
+import '../widgets/summary_cards/previous_month_card.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -81,8 +86,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   _buildMonthSelector(),
                   const SizedBox(height: 20),
 
-                  // Summary card
-                  _buildSummaryCard(expenseProvider.expenses),
+                  // Summary cards grid (5 cards)
+                  _buildSummaryCardsGrid(expenseProvider.expenses, monthExpenses),
                   const SizedBox(height: 20),
 
                   // Empty state if no expenses this month
@@ -147,133 +152,100 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  /// Summary card showing this month vs last month comparison
-  Widget _buildSummaryCard(List<Expense> expenses) {
+  /// Summary cards grid showing 5 key metrics
+  ///
+  /// **Learning: GridView vs Column**
+  /// Instead of stacking cards vertically with Column, we use GridView
+  /// to create a responsive 2-column layout that adapts to screen size.
+  ///
+  /// **Material Design: Card Grid Patterns**
+  /// - Primary card (Monthly Total) spans full width
+  /// - Other cards arranged in 2 columns on tablet/desktop
+  /// - All cards use the same base styling (DRY principle)
+  Widget _buildSummaryCardsGrid(List<Expense> allExpenses, List<Expense> monthExpenses) {
     // Calculate this month's total
     final thisMonthTotal = AnalyticsCalculator.getTotalForMonth(
-      expenses,
+      allExpenses,
       _selectedMonth,
     );
 
-    // Calculate previous month's total
+    // Calculate previous month data
     final previousMonth = AnalyticsCalculator.getPreviousMonth(_selectedMonth);
     final lastMonthTotal = AnalyticsCalculator.getTotalForMonth(
-      expenses,
+      allExpenses,
       previousMonth,
     );
 
-    // Calculate percentage change
-    final percentChange = AnalyticsCalculator.percentageChange(
-      lastMonthTotal,
-      thisMonthTotal,
+    // Calculate type breakdown (Phải chi, Phát sinh, Lãng phí)
+    final typeBreakdown = AnalyticsCalculator.getTypeBreakdown(
+      monthExpenses,
+      _selectedMonth,
     );
 
-    // Determine if spending increased or decreased
-    final isIncrease = percentChange > 0;
-    final changeColor = isIncrease ? Colors.red : Colors.green;
-    final changeIcon = isIncrease ? Icons.arrow_upward : Icons.arrow_downward;
+    // Calculate category breakdown
+    final categoryBreakdown = AnalyticsCalculator.getCategoryBreakdown(
+      monthExpenses,
+      _selectedMonth,
+    );
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
+    // Get days in selected month for daily average
+    final daysInMonth = AnalyticsCalculator.daysInMonth(_selectedMonth);
+
+    // Format month names
+    final monthFormat = DateFormat('MMMM yyyy');
+    final currentMonthName = monthFormat.format(_selectedMonth);
+    final previousMonthName = monthFormat.format(previousMonth);
+
+    return Column(
+      children: [
+        // Row 1: Monthly Total (spans full width - PRIMARY CARD)
+        MonthlyTotalCard(
+          totalAmount: thisMonthTotal,
+          monthName: currentMonthName,
+        ),
+        const SizedBox(height: 8),
+
+        // Row 2: Type Breakdown + Top Category (2 columns)
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Text(
-              'Monthly Summary',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+            Expanded(
+              child: TypeBreakdownCard(
+                typeBreakdown: typeBreakdown,
+                totalAmount: thisMonthTotal,
+              ),
             ),
-            const SizedBox(height: 16),
-
-            // This month total (large, prominent) - use full Vietnamese format
-            Text(
-              CurrencyFormatter.format(thisMonthTotal, context: CurrencyContext.full),
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-            ),
-            Text(
-              'Total Spending',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-            const SizedBox(height: 20),
-
-            // Divider
-            Divider(color: Colors.grey[300]),
-            const SizedBox(height: 12),
-
-            // Comparison with previous month
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Previous month info
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Previous Month',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      CurrencyFormatter.format(lastMonthTotal, context: CurrencyContext.full),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Change indicator
-                if (lastMonthTotal > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: changeColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: changeColor.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          changeIcon,
-                          size: 16,
-                          color: changeColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${percentChange.abs().toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: changeColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+            const SizedBox(width: 8),
+            Expanded(
+              child: TopCategoryCard(
+                categoryBreakdown: categoryBreakdown,
+              ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 8),
+
+        // Row 3: Daily Average + Previous Month (2 columns)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: DailyAverageCard(
+                totalAmount: thisMonthTotal,
+                daysInMonth: daysInMonth,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: PreviousMonthCard(
+                previousMonthAmount: lastMonthTotal,
+                currentMonthAmount: thisMonthTotal,
+                previousMonthName: previousMonthName,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
