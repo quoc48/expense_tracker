@@ -9,9 +9,6 @@ import '../widgets/category_chart.dart';
 import '../widgets/trends_chart.dart';
 import '../widgets/summary_cards/monthly_total_card.dart';
 import '../widgets/summary_cards/type_breakdown_card.dart';
-import '../widgets/summary_cards/top_category_card.dart';
-import '../widgets/summary_cards/daily_average_card.dart';
-import '../widgets/summary_cards/previous_month_card.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -152,16 +149,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  /// Summary cards grid showing 5 key metrics
+  /// Summary cards showing consolidated monthly metrics
   ///
-  /// **Learning: GridView vs Column**
-  /// Instead of stacking cards vertically with Column, we use GridView
-  /// to create a responsive 2-column layout that adapts to screen size.
+  /// **Learning: Simplified Card Layout**
+  /// Instead of 5 separate mini-cards, we consolidated related metrics:
+  /// - MonthlyTotalCard now includes daily average and previous month inline
+  /// - TypeBreakdownCard shows spending type distribution
+  /// This reduces visual clutter and improves information hierarchy.
   ///
-  /// **Material Design: Card Grid Patterns**
-  /// - Primary card (Monthly Total) spans full width
-  /// - Other cards arranged in 2 columns on tablet/desktop
-  /// - All cards use the same base styling (DRY principle)
+  /// **Material Design: Information Density**
+  /// - Full-width cards for better readability on mobile
+  /// - Related metrics grouped together logically
+  /// - Consistent spacing and padding throughout
   Widget _buildSummaryCardsGrid(List<Expense> allExpenses, List<Expense> monthExpenses) {
     // Calculate this month's total
     final thisMonthTotal = AnalyticsCalculator.getTotalForMonth(
@@ -182,68 +181,34 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       _selectedMonth,
     );
 
-    // Calculate category breakdown
-    final categoryBreakdown = AnalyticsCalculator.getCategoryBreakdown(
-      monthExpenses,
-      _selectedMonth,
-    );
-
     // Get days in selected month for daily average
     final daysInMonth = AnalyticsCalculator.daysInMonth(_selectedMonth);
 
-    // Format month names
-    final monthFormat = DateFormat('MMMM yyyy');
-    final currentMonthName = monthFormat.format(_selectedMonth);
+    // Calculate daily average
+    final dailyAverage = daysInMonth > 0 ? thisMonthTotal / daysInMonth : 0.0;
+
+    // Format previous month name (short format: "October")
+    final monthFormat = DateFormat('MMMM');
     final previousMonthName = monthFormat.format(previousMonth);
 
     return Column(
       children: [
-        // Row 1: Monthly Total (spans full width - PRIMARY CARD)
+        // 1. Enhanced Monthly Total (full width)
+        // Shows: total amount + daily average + previous month comparison
         MonthlyTotalCard(
           totalAmount: thisMonthTotal,
-          monthName: currentMonthName,
+          dailyAverage: dailyAverage,
+          daysInMonth: daysInMonth,
+          previousMonthAmount: lastMonthTotal,
+          previousMonthName: previousMonthName,
         ),
         const SizedBox(height: 8),
 
-        // Row 2: Type Breakdown + Top Category (2 columns)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TypeBreakdownCard(
-                typeBreakdown: typeBreakdown,
-                totalAmount: thisMonthTotal,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TopCategoryCard(
-                categoryBreakdown: categoryBreakdown,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        // Row 3: Daily Average + Previous Month (2 columns)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: DailyAverageCard(
-                totalAmount: thisMonthTotal,
-                daysInMonth: daysInMonth,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: PreviousMonthCard(
-                previousMonthAmount: lastMonthTotal,
-                currentMonthAmount: thisMonthTotal,
-                previousMonthName: previousMonthName,
-              ),
-            ),
-          ],
+        // 2. Type Breakdown (full width)
+        // Shows: Phải chi, Phát sinh, Lãng phí percentages (sorted by highest)
+        TypeBreakdownCard(
+          typeBreakdown: typeBreakdown,
+          totalAmount: thisMonthTotal,
         ),
       ],
     );

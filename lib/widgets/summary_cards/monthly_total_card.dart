@@ -109,7 +109,7 @@ class MonthlyTotalCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      CurrencyFormatter.format(dailyAverage, context: CurrencyContext.shortCompact),
+                      CurrencyFormatter.format(dailyAverage, context: CurrencyContext.full),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.primary,
@@ -169,7 +169,7 @@ class MonthlyTotalCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      CurrencyFormatter.format(previousMonthAmount, context: CurrencyContext.shortCompact),
+                      CurrencyFormatter.format(previousMonthAmount, context: CurrencyContext.full),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.primary,
