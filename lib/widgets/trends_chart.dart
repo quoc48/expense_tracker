@@ -6,12 +6,15 @@ import '../utils/currency_formatter.dart';
 
 /// A line chart showing spending trends over multiple months
 /// Displays monthly totals with interactive tooltips
+/// Highlights the selected month and shows contextual trend information
 class TrendsChart extends StatelessWidget {
   final List<MonthTotal> monthlyTrends;
+  final DateTime selectedMonth; // Currently selected month to highlight
 
   const TrendsChart({
     super.key,
     required this.monthlyTrends,
+    required this.selectedMonth,
   });
 
   @override
@@ -33,6 +36,24 @@ class TrendsChart extends StatelessWidget {
     final sortedTrends = List<MonthTotal>.from(monthlyTrends)
       ..sort((a, b) => a.month.compareTo(b.month));
 
+    // Find the index of the selected month in the sorted trends
+    final selectedMonthIndex = sortedTrends.indexWhere((trend) =>
+        trend.month.year == selectedMonth.year &&
+        trend.month.month == selectedMonth.month);
+
+    // Calculate trend: compare selected month with its previous month
+    double? trendPercentage;
+    bool? isIncreasing; // true = spending up (bad), false = spending down (good)
+    if (selectedMonthIndex > 0) {
+      // Selected month exists and has a previous month to compare
+      final current = sortedTrends[selectedMonthIndex].total;
+      final previous = sortedTrends[selectedMonthIndex - 1].total;
+      if (previous > 0) {
+        trendPercentage = ((current - previous) / previous) * 100;
+        isIncreasing = trendPercentage > 0;
+      }
+    }
+
     final theme = Theme.of(context);
 
     // Calculate max value for better scaling
@@ -43,11 +64,54 @@ class TrendsChart extends StatelessWidget {
       return FlSpot(entry.key.toDouble(), entry.value.total);
     }).toList();
 
-    return SizedBox(
-      height: 250,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: LineChart(
+    // Determine line color based on trend (green = spending down, red = spending up)
+    final lineColor = isIncreasing == null
+        ? theme.colorScheme.primary // Default if no trend data
+        : isIncreasing
+            ? const Color(0xFFE74C3C) // Red - spending increased (bad)
+            : const Color(0xFF2ECC71); // Green - spending decreased (good)
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Trend Indicator
+        if (trendPercentage != null && isIncreasing != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isIncreasing ? Icons.arrow_upward : Icons.arrow_downward,
+                  size: 20,
+                  color: lineColor,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${trendPercentage.abs().toStringAsFixed(1)}%',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: lineColor,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  isIncreasing ? 'vs last month' : 'vs last month',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withAlpha(178),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        // Chart
+        SizedBox(
+          height: 250,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: LineChart(
           LineChartData(
             minX: 0,
             maxX: (sortedTrends.length - 1).toDouble(),
@@ -157,31 +221,37 @@ class TrendsChart extends StatelessWidget {
               LineChartBarData(
                 spots: spots,
                 isCurved: true,
-                color: theme.colorScheme.primary,
+                color: lineColor, // Use trend-based color
                 barWidth: 3,
                 isStrokeCapRound: true,
                 dotData: FlDotData(
                   show: true,
                   getDotPainter: (spot, percent, barData, index) {
+                    // Highlight selected month's dot in blue with larger size
+                    final isSelectedMonth = index == selectedMonthIndex;
                     return FlDotCirclePainter(
-                      radius: 4,
-                      color: theme.colorScheme.primary,
-                      strokeWidth: 2,
+                      radius: isSelectedMonth ? 6 : 4,
+                      color: isSelectedMonth
+                          ? const Color(0xFF2196F3) // Blue for selected month
+                          : lineColor, // Trend color for other months
+                      strokeWidth: isSelectedMonth ? 3 : 2,
                       strokeColor: theme.colorScheme.surface,
                     );
                   },
                 ),
                 belowBarData: BarAreaData(
                   show: true,
-                  color: theme.colorScheme.primary.withAlpha(26),
+                  color: lineColor.withAlpha(26), // Match line color with transparency
                 ),
               ),
             ],
           ),
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 }

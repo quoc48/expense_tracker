@@ -75,7 +75,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
           return SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0), // Material Design 3: 20px edge padding
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -83,21 +83,47 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   _buildMonthSelector(),
                   const SizedBox(height: 20),
 
-                  // Summary cards grid (5 cards)
-                  _buildSummaryCardsGrid(expenseProvider.expenses, monthExpenses),
+                  // Summary cards grid with fade transition
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                    child: _buildSummaryCardsGrid(
+                      allExpenses: expenseProvider.expenses,
+                      monthExpenses: monthExpenses,
+                      // Use month as key to trigger animation on month change
+                      key: ValueKey(_selectedMonth.toString()),
+                    ),
+                  ),
                   const SizedBox(height: 20),
 
-                  // Empty state if no expenses this month
-                  if (monthExpenses.isEmpty)
-                    _buildEmptyState()
-                  else ...[
-                    // Category Breakdown Chart
-                    _buildCategoryBreakdownCard(monthExpenses),
-                    const SizedBox(height: 20),
+                  // Charts with fade transition
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                    child: monthExpenses.isEmpty
+                        ? _buildEmptyState()
+                        : Column(
+                            key: ValueKey(_selectedMonth.toString() + '_charts'),
+                            children: [
+                              // Category Breakdown Chart
+                              _buildCategoryBreakdownCard(monthExpenses),
+                              const SizedBox(height: 20),
 
-                    // Spending Trends Chart
-                    _buildSpendingTrendsCard(expenseProvider.expenses),
-                  ],
+                              // Spending Trends Chart
+                              _buildSpendingTrendsCard(expenseProvider.expenses),
+                            ],
+                          ),
+                  ),
                 ],
               ),
             ),
@@ -161,7 +187,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   /// - Full-width cards for better readability on mobile
   /// - Related metrics grouped together logically
   /// - Consistent spacing and padding throughout
-  Widget _buildSummaryCardsGrid(List<Expense> allExpenses, List<Expense> monthExpenses) {
+  Widget _buildSummaryCardsGrid({
+    required List<Expense> allExpenses,
+    required List<Expense> monthExpenses,
+    Key? key,
+  }) {
     // Calculate this month's total
     final thisMonthTotal = AnalyticsCalculator.getTotalForMonth(
       allExpenses,
@@ -202,7 +232,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           previousMonthAmount: lastMonthTotal,
           previousMonthName: previousMonthName,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12), // Material Design 3: improved spacing
 
         // 2. Type Breakdown (full width)
         // Shows: Phải chi, Phát sinh, Lãng phí percentages (sorted by highest)
@@ -319,7 +349,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             const SizedBox(height: 12),
 
             // Chart
-            TrendsChart(monthlyTrends: monthlyTrends),
+            TrendsChart(
+              monthlyTrends: monthlyTrends,
+              selectedMonth: _selectedMonth,
+            ),
           ],
         ),
       ),

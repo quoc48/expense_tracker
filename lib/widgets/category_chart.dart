@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
-import '../models/expense.dart';
 import '../utils/currency_formatter.dart';
 
 /// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
@@ -44,6 +42,7 @@ class CategoryChart extends StatelessWidget {
         return Icons.more_horiz;
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +171,7 @@ class CategoryChart extends StatelessWidget {
                   BarChartRodData(
                     toY: entry.value.value,
                     color: theme.colorScheme.primary,
-                    width: 20, // Reduced bar width to emphasize spacing
+                    width: 20,
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(4),
                     ),
