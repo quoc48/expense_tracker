@@ -1,330 +1,206 @@
-# Budget Feature - Implementation Progress
+# 📋 Budget Feature Progress - Phase 3 Ready
 
-**Branch:** `feature/budget-tracking`
-**Started:** 2025-11-02
-**Status:** 🔄 In Progress
-
----
-
-## 📊 Overall Progress: 2/8 Phases Complete (25%)
+**Session Saved:** 2025-11-02
+**Branch:** feature/budget-tracking
+**Last Commit:** 6a6f026 - RLS fix complete
+**Status:** Phase 2 ✅ COMPLETE, Phase 3 starting
 
 ---
 
-## Phase 0: Setup ✅ COMPLETE
+## ✅ Completed: Phase 1 & 2 (100%)
 
-**Duration:** 30 min
-**Status:** ✅ Done
+### Phase 1: Backend Foundation ✅
+- Supabase `user_preferences` table
+- UserPreferences model with serialization
+- Repository pattern (interface + implementation)
+- UserPreferencesProvider with reactive state
+- Integration into main.dart MultiProvider
+- Default 20M VND budget auto-creation
 
-### Completed Tasks:
-- [x] Create feature branch `feature/budget-tracking`
-- [x] Create `claudedocs/` directory
-- [x] Create `budget_feature_spec.md`
-- [x] Create `budget_feature_progress.md`
-- [x] Set up TodoWrite tracking
+**Commit:** cae238a
 
-**Commit**: `dc33006` - docs: initialize budget feature documentation and tracking
+### Phase 2: Settings UI ✅
+- SettingsScreen with category layout
+- BudgetSettingTile (display current budget)
+- BudgetEditDialog (validation 0-1B VND)
+- Navigation from ExpenseListScreen
+- **RLS Fix:** Added missing GRANT permissions
+- **Database Verified:** 100% checklist complete
 
----
+**Commits:** 075393b, 6a6f026
 
-## Phase 1: Backend Foundation ✅ COMPLETE
-
-**Duration:** 1.5 hours
-**Status:** ✅ Done
-
-### Completed Tasks:
-- [x] **1.1 Supabase Database Setup**
-  - [x] Create `user_preferences` table
-  - [x] Set up RLS policies
-  - [x] Create indexes (user_id, updated_at)
-  - [x] Unique constraint on user_id
-
-- [x] **1.2 UserPreferences Model**
-  - [x] Create `lib/models/user_preferences.dart`
-  - [x] Add fields: id, userId, monthlyBudget, language, theme, currency
-  - [x] Implement `fromMap()`, `toMap()`, `toUpdateMap()`, `copyWith()`
-  - [x] Add `defaultPreferences()` factory
-  - [x] Add toString(), ==, hashCode for debugging
-
-- [x] **1.3 Repository Interface**
-  - [x] Create `lib/repositories/user_preferences_repository.dart`
-  - [x] Define abstract methods: `getPreferences()`, `updateBudget()`, `updatePreferences()`
-  - [x] Add comprehensive documentation comments
-
-- [x] **1.4 Supabase Repository Implementation**
-  - [x] Create `lib/repositories/supabase_user_preferences_repository.dart`
-  - [x] Implement `getPreferences()` with maybeSingle()
-  - [x] Implement `updateBudget()` with upsert pattern
-  - [x] Implement `updatePreferences()` full update
-  - [x] Implement `createDefaultPreferences()`
-  - [x] Add convenience methods for current user
-  - [x] Error handling with rethrow pattern
-
-- [x] **1.5 UserPreferences Provider**
-  - [x] Create `lib/providers/user_preferences_provider.dart`
-  - [x] Extend ChangeNotifier
-  - [x] Add state: `_preferences`, `_isLoading`, `_errorMessage`
-  - [x] Implement `loadPreferences()` with auto-create defaults
-  - [x] Implement `updateBudget()` with optimistic updates
-  - [x] Convenience getters (monthlyBudget, language, theme)
-  - [x] Future-ready methods (updateLanguage, updateTheme)
-  - [x] Add resetToDefaults() method
-
-- [x] **1.6 Integration in Main**
-  - [x] Modify `lib/main.dart`
-  - [x] Add import for UserPreferencesProvider
-  - [x] Add to MultiProvider (after ExpenseProvider)
-  - [x] Initialize with loadPreferences() on creation
-  - [x] Update comments to reflect 3 providers
-
-**Testing**:
-- [x] All files compile without errors
-- [x] Flutter analyze passes for budget files
-- [x] main.dart compiles successfully
-- [x] Ready for runtime testing in Phase 5
-
-**Files Created**:
-- `lib/models/user_preferences.dart` (156 lines)
-- `lib/repositories/user_preferences_repository.dart` (75 lines)
-- `lib/repositories/supabase_user_preferences_repository.dart` (166 lines)
-- `lib/providers/user_preferences_provider.dart` (228 lines)
-
-**Files Modified**:
-- `lib/main.dart` (+13 lines)
-
-**Commit**: Ready to commit
+**Testing:** ✅ Works perfectly
+- Settings screen loads
+- Budget displays: "20.000.000₫"
+- Edit & save functionality works
+- Data persists after restart
 
 ---
 
-## Phase 2: Settings UI ⏳ NOT STARTED
+## 📚 Documentation Created
 
-**Estimated Duration:** 1.5 hours
-**Status:** ⏳ Pending
+**Critical Reference:**
+- `claudedocs/supabase_rls_checklist.md` - Complete RLS setup guide
+- `scripts/database/03_user_preferences_rls.sql` - RLS with GRANT
+- `scripts/database/04_grant_permissions.sql` - Permissions template
 
-### Tasks:
-- [ ] **2.1 Settings Screen**
-  - [ ] Create `lib/screens/settings_screen.dart`
-  - [ ] Build Scaffold with AppBar
-  - [ ] Add ListView with categories
-  - [ ] Section 1: Budget & Finance
-  - [ ] Section 2: Appearance (placeholders)
-  - [ ] Section 3: Advanced (placeholders)
-  - [ ] Style with Material Design 3
+**Serena Memories:**
+- `budget_feature_phase_1_complete.md` - Backend details
+- `budget_feature_phase_2_FINAL.md` - Settings UI + RLS fix
+- `supabase_rls_setup_lesson.md` - RLS two-layer security lesson
 
-- [ ] **2.2 Budget Setting Tile**
-  - [ ] Create `lib/widgets/settings/budget_setting_tile.dart`
-  - [ ] ListTile with icon, title, subtitle
-  - [ ] Display current budget (formatted)
-  - [ ] Add trailing edit icon
-  - [ ] Connect to UserPreferencesProvider
-
-- [ ] **2.3 Budget Edit Dialog**
-  - [ ] Create `lib/widgets/settings/budget_edit_dialog.dart`
-  - [ ] TextField with Vietnamese currency input
-  - [ ] Validation: min 0, max 1 billion
-  - [ ] Save button calls provider.updateBudget()
-  - [ ] Cancel button dismisses dialog
-
-- [ ] **2.4 Navigation Integration**
-  - [ ] Modify `lib/screens/expense_list_screen.dart`
-  - [ ] Add Settings icon to AppBar (before logout)
-  - [ ] Navigate to SettingsScreen on tap
-
-**Testing**:
-- [ ] Settings icon navigates correctly
-- [ ] Budget displays with formatting
-- [ ] Edit dialog validates input
-- [ ] Save persists to Supabase
-- [ ] Cancel preserves old value
-
-**Commit Message**: `feat: create settings screen with budget configuration`
+**Value:** Saves ~1 hour debugging per future table!
 
 ---
 
-## Phase 3: Analytics Integration ⏳ NOT STARTED
+## 🎯 Next: Phase 3 - Analytics Integration
 
-**Estimated Duration:** 1.5 hours
-**Status:** ⏳ Pending
+### Goal
+Display budget vs actual spending in Analytics screen
 
-### Tasks:
-- [ ] **3.1 Monthly Total Card Enhancement**
-  - [ ] Modify `lib/widgets/summary_cards/monthly_total_card.dart`
-  - [ ] Add Consumer<UserPreferencesProvider>
-  - [ ] Add budget display section
-  - [ ] Display: "X.XM / 20M đ • Y.YM left"
-  - [ ] Add progress bar (LinearProgressIndicator)
-  - [ ] Implement color logic (green/yellow/red)
-  - [ ] Add pace indicator
-  - [ ] Calculate: `(spending / daysPassed) × daysInMonth`
-  - [ ] Display: "At this rate: XXM đ by month-end"
-  - [ ] Hide for past months (show only current)
+### Tasks (Estimated: 1-1.5 hours)
 
-**Testing**:
-- [ ] Green bar at 50% spending
-- [ ] Yellow bar at 70% spending
-- [ ] Red bar at 90% spending
-- [ ] Pace accurate on day 1, 15, 30
-- [ ] Past months hide budget section
-- [ ] Zero spending shows 0%
+1. **Read Analytics Screen** (15 min)
+   - Understand current layout and card patterns
+   - File: `lib/screens/analytics_screen.dart`
 
-**Commit Message**: `feat: add budget progress tracking to analytics card`
+2. **Create Budget Comparison Card** (30 min)
+   - New file: `lib/widgets/summary_cards/budget_comparison_card.dart`
+   - Display: Budget / Spent / Remaining
+   - Calculate percentage used
+   - Color indicators (green/yellow/red)
 
----
+3. **Calculate Monthly Spending** (15 min)
+   - Filter current month expenses
+   - Sum total amount
 
-## Phase 4: Alert Banners ⏳ NOT STARTED
+4. **Integration** (20 min)
+   - Add card to Analytics GridView
+   - Consumer<UserPreferencesProvider>
+   - Test with different budgets
 
-**Estimated Duration:** 1 hour
-**Status:** ⏳ Pending
+5. **Polish** (10 min)
+   - Icons, colors, spacing
+   - Loading states
 
-### Tasks:
-- [ ] **4.1 Budget Alert Banner**
-  - [ ] Create `lib/widgets/budget_alert_banner.dart`
-  - [ ] StatefulWidget (tracks dismissal)
-  - [ ] 80% variant: warning message
-  - [ ] 100% variant: exceeded message
-  - [ ] Dismiss button
-  - [ ] Session-only state management
-
-- [ ] **4.2 Integration in Expense List**
-  - [ ] Modify `lib/screens/expense_list_screen.dart`
-  - [ ] Add state: `_budgetBannerDismissed = false`
-  - [ ] Calculate current month spending
-  - [ ] Get budget from UserPreferencesProvider
-  - [ ] Show banner when ≥80% and not dismissed
-  - [ ] Position above expense list
-
-**Testing**:
-- [ ] 80% banner shows at threshold
-- [ ] 100% banner shows when exceeded
-- [ ] Dismiss works for session
-- [ ] Banner reappears on restart
-- [ ] Correct amounts displayed
-
-**Commit Message**: `feat: implement budget alert banners with dismissal`
+### Expected Result
+```
+Analytics Screen
+├── Monthly Total: 15.000.000₫
+├── Budget Status: 15M / 20M (75% used) ← NEW!
+├── Type Breakdown Card
+└── ... other cards
+```
 
 ---
 
-## Phase 5: Comprehensive Testing ⏳ NOT STARTED
+## 🚀 Quick Start for Next Session
 
-**Estimated Duration:** 1 hour
-**Status:** ⏳ Pending
+### Step 1: Load Context
+```bash
+/sc:load
+```
 
-### Tasks:
-- [ ] **5.1 Integration Testing**
-  - [ ] Full user flow test
-  - [ ] New user → 20M default
-  - [ ] Navigate to Settings → Edit to 15M
-  - [ ] Add expenses → Progress updates
-  - [ ] Reach 80% → Banner appears
-  - [ ] Dismiss → Stays dismissed
-  - [ ] Reach 100% → New banner
-  - [ ] Analytics → Red progress bar
+### Step 2: Verify Status
+```bash
+git status
+# Should show: On branch feature/budget-tracking
+# Should show: nothing to commit, working tree clean
 
-- [ ] **5.2 Edge Case Testing**
-  - [ ] Zero budget (prevent errors)
-  - [ ] Negative budget (validation blocks)
-  - [ ] Large budget (1B+)
-  - [ ] No expenses (0%)
-  - [ ] Day 1 pace calculation
-  - [ ] Day 30 pace calculation
+git log --oneline -3
+# Should show recent commits
+```
 
-- [ ] **5.3 Supabase Testing**
-  - [ ] Persists across sessions
-  - [ ] Network error handling
-  - [ ] RLS policies work correctly
+### Step 3: Read Memories
+- `.serena/memories/budget_feature_phase_2_FINAL.md` (most important!)
+- `.serena/memories/budget_feature_phase_1_complete.md` (backend context)
 
-- [ ] **5.4 UI/UX Testing**
-  - [ ] Responsive design
-  - [ ] Vietnamese formatting
-  - [ ] Color accessibility
-  - [ ] Touch targets ≥44pts
-
-**Commit Message**: `test: add comprehensive budget feature validation`
+### Step 4: Start Implementation
+```bash
+# Read Analytics screen to understand layout
+# File: lib/screens/analytics_screen.dart
+```
 
 ---
 
-## Phase 6: Documentation ⏳ NOT STARTED
+## 📊 Overall Progress
 
-**Estimated Duration:** 30 min
-**Status:** ⏳ Pending
+**Phases:** 3/8 (37.5%)
+- ✅ Phase 0: Documentation setup
+- ✅ Phase 1: Backend foundation (2h)
+- ✅ Phase 2: Settings UI + RLS fix (2.5h)
+- 🔄 Phase 3: Analytics integration ← **YOU ARE HERE**
+- ⏳ Phase 4: Alert banners
+- ⏳ Phase 5: Testing
+- ⏳ Phase 6: Docs finalization
+- ⏳ Phase 7: GitHub push
 
-### Tasks:
-- [ ] **6.1 Update Feature Spec**
-  - [ ] Add implementation notes to spec.md
-  - [ ] Document deviations from plan
-  - [ ] Update architecture diagrams
-
-- [ ] **6.2 Code Comments**
-  - [ ] Explain complex logic
-  - [ ] Document formulas (pace calculation)
-  - [ ] Note future improvements
-
-- [ ] **6.3 Project Memory**
-  - [ ] Write Serena memory: `budget_feature_complete.md`
-  - [ ] Document lessons learned
-  - [ ] Note scalability considerations
-
-**Commit Message**: `docs: finalize budget feature documentation`
+**Time Spent:** 4.5 hours
+**Remaining:** ~4 hours
+**Next Milestone:** Analytics with budget comparison
 
 ---
 
-## Phase 7: Git Finalization ⏳ NOT STARTED
+## 🎓 Key Knowledge
 
-**Estimated Duration:** 15 min
-**Status:** ⏳ Pending
+### Supabase RLS (Critical!)
+**Two layers required:**
+1. **GRANT** (table-level) - "Can access table?"
+2. **Policies** (row-level) - "Which rows?"
 
-### Tasks:
-- [ ] **7.1 Pre-Push Verification**
-  - [ ] `git status` - Review changes
-  - [ ] `git log --oneline` - Verify commits
-  - [ ] `git diff main` - Review full diff
+**Missing GRANT = Error 42501**
 
-- [ ] **7.2 Push to GitHub**
-  - [ ] `git push -u origin feature/budget-tracking`
-  - [ ] Verify push success
+### Database Checklist
+1. Table structure ✅
+2. RLS enabled ✅
+3. **GRANT permissions** ✅ (don't forget!)
+4. RLS policies ✅
+5. Indexes ✅
+6. Foreign keys ✅
 
-- [ ] **7.3 Ready for Merge**
-  - [ ] All tests passing
-  - [ ] Documentation complete
-  - [ ] Ready for PR/merge to main
-
----
-
-## 📈 Statistics
-
-| Metric | Value |
-|--------|-------|
-| Total Phases | 8 |
-| Completed Phases | 1 |
-| In Progress | 0 |
-| Pending | 7 |
-| Completion | 12.5% |
-| Estimated Remaining | 7-8 hours |
+### Provider Pattern
+```dart
+Consumer<UserPreferencesProvider>(
+  builder: (context, prefs, child) {
+    return Widget(budget: prefs.monthlyBudget);
+  },
+)
+```
 
 ---
 
-## 🎯 Next Action
+## 💬 Continuation Prompt
 
-**Phase 1, Task 1.1**: Create Supabase `user_preferences` table
+Copy this to start your next session:
 
-**Command to run**:
-1. Open Supabase Dashboard
-2. Navigate to SQL Editor
-3. Execute schema creation SQL
-4. Verify table creation
-5. Set up RLS policies
+```
+Resume: Budget Feature - Phase 3 Analytics 📊
+
+Quick context:
+- Branch: feature/budget-tracking (clean, all committed)
+- Phase 2: Complete (Settings UI working!)
+- Phase 3: Add budget comparison to Analytics screen
+- Estimate: 1-1.5 hours
+
+Instructions:
+1. Load project: /sc:load
+2. Read: .serena/memories/budget_feature_phase_2_FINAL.md
+3. Start: Analyze lib/screens/analytics_screen.dart
+4. Build: Budget comparison card
+
+Goal: Show "15M / 20M đ (75%)" with color indicators
+
+Settings:
+- Keep explanatory output style: YES
+- Use TodoWrite for tracking
+- Test as we build
+
+Ready to add budget insights to Analytics! 🚀
+```
 
 ---
 
-## 📝 Session Notes
-
-### Session 2025-11-02
-- ✅ Created feature branch
-- ✅ Set up documentation structure
-- ✅ Explained Pace Predictor concept
-- 🎯 Next: Begin Phase 1 (Backend Foundation)
-
----
-
-**Last Updated**: 2025-11-02
-**Current Phase**: Phase 1 (Backend)
-**Overall Status**: On track 🟢
+**Saved:** 2025-11-02 23:00 UTC
+**Status:** Ready for Phase 3
+**All changes committed:** ✅
+**Documentation complete:** ✅
