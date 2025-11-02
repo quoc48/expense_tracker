@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/expense_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/user_preferences_provider.dart';
 import 'widgets/auth_gate.dart';
 
 // This is the entry point of the Flutter app
@@ -36,8 +37,11 @@ class ExpenseTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // MultiProvider allows us to provide multiple providers to the widget tree
-    // We now have two providers: AuthProvider (authentication) and ExpenseProvider (data)
-    // Both are available to all descendant widgets
+    // We now have three providers:
+    // 1. AuthProvider - handles user authentication and session
+    // 2. ExpenseProvider - manages expense data (CRUD operations)
+    // 3. UserPreferencesProvider - manages user settings and budget configuration
+    // All providers are available to all descendant widgets
     return MultiProvider(
       providers: [
         // AuthProvider must be first because other providers may depend on auth state
@@ -51,6 +55,16 @@ class ExpenseTrackerApp extends StatelessWidget {
             // Load expenses from storage when the provider is created
             // This happens asynchronously, so the app will show loading state initially
             provider.loadExpenses();
+            return provider;
+          },
+        ),
+        // UserPreferencesProvider handles user settings and budget configuration
+        ChangeNotifierProvider(
+          create: (context) {
+            final provider = UserPreferencesProvider();
+            // Load user preferences (budget, language, theme) when provider is created
+            // Creates default preferences (20M VND budget) for new users automatically
+            provider.loadPreferences();
             return provider;
           },
         ),
