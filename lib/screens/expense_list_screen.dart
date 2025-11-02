@@ -6,6 +6,7 @@ import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/currency_formatter.dart';
 import 'add_expense_screen.dart';
+import 'settings_screen.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
 ///
@@ -30,6 +31,19 @@ class ExpenseListScreen extends StatelessWidget {
           appBar: AppBar(
             title: const Text('Expense Tracker'),
             actions: [
+              // Settings button
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: 'Settings',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
+                },
+              ),
               // Logout button
               IconButton(
                 icon: const Icon(Icons.logout),
