@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_preferences.dart';
 import '../repositories/user_preferences_repository.dart';
 import '../repositories/supabase_user_preferences_repository.dart';
@@ -71,6 +72,12 @@ class UserPreferencesProvider extends ChangeNotifier {
     try {
       // Get current logged-in user
       final currentUser = supabase.auth.currentUser;
+      
+      // DEBUG: Print auth state
+      debugPrint('🔍 DEBUG loadPreferences():');
+      debugPrint('  - Current user: ${currentUser?.id}');
+      debugPrint('  - User email: ${currentUser?.email}');
+      debugPrint('  - Session exists: ${supabase.auth.currentSession != null}');
 
       if (currentUser == null) {
         throw Exception('No user logged in');

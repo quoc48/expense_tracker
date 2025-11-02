@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_preferences.dart';
 import '../services/supabase_service.dart';
 import 'user_preferences_repository.dart';
@@ -17,6 +18,11 @@ class SupabaseUserPreferencesRepository implements UserPreferencesRepository {
   @override
   Future<UserPreferences?> getPreferences(String userId) async {
     try {
+      // DEBUG: Print what we're querying
+      debugPrint('🔍 DEBUG getPreferences():');
+      debugPrint('  - Querying for userId: $userId');
+      debugPrint('  - Auth session exists: ${supabase.auth.currentSession != null}');
+      
       // Query user_preferences table for this user
       // RLS policy ensures we only get rows where user_id matches auth.uid()
       final response = await supabase
