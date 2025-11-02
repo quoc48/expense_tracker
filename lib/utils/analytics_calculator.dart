@@ -59,42 +59,42 @@ class AnalyticsCalculator {
   /// - expenses: Full list of all expenses
   /// - month: The month to analyze
   ///
-  /// Returns: Map where keys are categories and values are total amounts
-  /// Example: {Category.food: 250.0, Category.transport: 100.0, ...}
-  static Map<Category, double> getCategoryBreakdown(
+  /// Returns: Map where keys are Vietnamese category names and values are total amounts
+  /// Example: {"Cà phê": 250.0, "Đi lại": 100.0, ...} (UPDATED - Phase 5.5.1)
+  static Map<String, double> getCategoryBreakdown(
     List<Expense> expenses,
     DateTime month,
   ) {
     final monthExpenses = getExpensesForMonth(expenses, month);
-    final breakdown = <Category, double>{};
+    final breakdown = <String, double>{};
 
-    // Group expenses by category and sum amounts
+    // Group expenses by category (Vietnamese name) and sum amounts
     for (final expense in monthExpenses) {
-      breakdown[expense.category] =
-          (breakdown[expense.category] ?? 0.0) + expense.amount;
+      breakdown[expense.categoryNameVi] =
+          (breakdown[expense.categoryNameVi] ?? 0.0) + expense.amount;
     }
 
     return breakdown;
   }
 
-  /// Get spending breakdown by expense type for a specific month
+  /// Get spending breakdown by expense type for a specific month (UPDATED - Phase 5.5.1)
   ///
   /// Parameters:
   /// - expenses: Full list of all expenses
   /// - month: The month to analyze
   ///
-  /// Returns: Map where keys are expense types and values are total amounts
-  /// Example: {ExpenseType.mustHave: 500.0, ExpenseType.niceToHave: 200.0, ...}
-  static Map<ExpenseType, double> getTypeBreakdown(
+  /// Returns: Map where keys are Vietnamese type names and values are total amounts
+  /// Example: {"Phải chi": 500.0, "Phát sinh": 200.0, ...}
+  static Map<String, double> getTypeBreakdown(
     List<Expense> expenses,
     DateTime month,
   ) {
     final monthExpenses = getExpensesForMonth(expenses, month);
-    final breakdown = <ExpenseType, double>{};
+    final breakdown = <String, double>{};
 
     for (final expense in monthExpenses) {
-      breakdown[expense.type] =
-          (breakdown[expense.type] ?? 0.0) + expense.amount;
+      breakdown[expense.typeNameVi] =
+          (breakdown[expense.typeNameVi] ?? 0.0) + expense.amount;
     }
 
     return breakdown;
@@ -193,5 +193,23 @@ class AnalyticsCalculator {
   static DateTime get currentMonth {
     final now = DateTime.now();
     return DateTime(now.year, now.month, 1);
+  }
+
+  /// Get the number of days in a given month
+  ///
+  /// Different months have different lengths:
+  /// - January, March, May, July, August, October, December: 31 days
+  /// - April, June, September, November: 30 days
+  /// - February: 28 days (29 in leap years)
+  ///
+  /// Learning: DateTime trick for getting days in month
+  /// DateTime(year, month + 1, 0) gives us the last day of the current month
+  /// Example: DateTime(2025, 11, 0) = October 31, 2025
+  ///
+  /// Why? Because day 0 of November = last day of October
+  static int daysInMonth(DateTime month) {
+    // Get the last day of this month by going to day 0 of next month
+    final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
+    return lastDayOfMonth.day;
   }
 }

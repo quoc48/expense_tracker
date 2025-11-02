@@ -4,8 +4,11 @@ import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../utils/analytics_calculator.dart';
+import '../utils/currency_formatter.dart';
 import '../widgets/category_chart.dart';
 import '../widgets/trends_chart.dart';
+import '../widgets/summary_cards/monthly_total_card.dart';
+import '../widgets/summary_cards/type_breakdown_card.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -72,7 +75,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
           return SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0), // Material Design 3: 20px edge padding
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -80,21 +83,47 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   _buildMonthSelector(),
                   const SizedBox(height: 20),
 
-                  // Summary card
-                  _buildSummaryCard(expenseProvider.expenses),
+                  // Summary cards grid with fade transition
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                    child: _buildSummaryCardsGrid(
+                      allExpenses: expenseProvider.expenses,
+                      monthExpenses: monthExpenses,
+                      // Use month as key to trigger animation on month change
+                      key: ValueKey(_selectedMonth.toString()),
+                    ),
+                  ),
                   const SizedBox(height: 20),
 
-                  // Empty state if no expenses this month
-                  if (monthExpenses.isEmpty)
-                    _buildEmptyState()
-                  else ...[
-                    // Category Breakdown Chart
-                    _buildCategoryBreakdownCard(monthExpenses),
-                    const SizedBox(height: 20),
+                  // Charts with fade transition
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                    child: monthExpenses.isEmpty
+                        ? _buildEmptyState()
+                        : Column(
+                            key: ValueKey(_selectedMonth.toString() + '_charts'),
+                            children: [
+                              // Category Breakdown Chart
+                              _buildCategoryBreakdownCard(monthExpenses),
+                              const SizedBox(height: 20),
 
-                    // Spending Trends Chart
-                    _buildSpendingTrendsCard(expenseProvider.expenses),
-                  ],
+                              // Spending Trends Chart
+                              _buildSpendingTrendsCard(expenseProvider.expenses),
+                            ],
+                          ),
+                  ),
                 ],
               ),
             ),
@@ -146,135 +175,72 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  /// Summary card showing this month vs last month comparison
-  Widget _buildSummaryCard(List<Expense> expenses) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
-
+  /// Summary cards showing consolidated monthly metrics
+  ///
+  /// **Learning: Simplified Card Layout**
+  /// Instead of 5 separate mini-cards, we consolidated related metrics:
+  /// - MonthlyTotalCard now includes daily average and previous month inline
+  /// - TypeBreakdownCard shows spending type distribution
+  /// This reduces visual clutter and improves information hierarchy.
+  ///
+  /// **Material Design: Information Density**
+  /// - Full-width cards for better readability on mobile
+  /// - Related metrics grouped together logically
+  /// - Consistent spacing and padding throughout
+  Widget _buildSummaryCardsGrid({
+    required List<Expense> allExpenses,
+    required List<Expense> monthExpenses,
+    Key? key,
+  }) {
     // Calculate this month's total
     final thisMonthTotal = AnalyticsCalculator.getTotalForMonth(
-      expenses,
+      allExpenses,
       _selectedMonth,
     );
 
-    // Calculate previous month's total
+    // Calculate previous month data
     final previousMonth = AnalyticsCalculator.getPreviousMonth(_selectedMonth);
     final lastMonthTotal = AnalyticsCalculator.getTotalForMonth(
-      expenses,
+      allExpenses,
       previousMonth,
     );
 
-    // Calculate percentage change
-    final percentChange = AnalyticsCalculator.percentageChange(
-      lastMonthTotal,
-      thisMonthTotal,
+    // Calculate type breakdown (Phải chi, Phát sinh, Lãng phí)
+    final typeBreakdown = AnalyticsCalculator.getTypeBreakdown(
+      monthExpenses,
+      _selectedMonth,
     );
 
-    // Determine if spending increased or decreased
-    final isIncrease = percentChange > 0;
-    final changeColor = isIncrease ? Colors.red : Colors.green;
-    final changeIcon = isIncrease ? Icons.arrow_upward : Icons.arrow_downward;
+    // Get days in selected month for daily average
+    final daysInMonth = AnalyticsCalculator.daysInMonth(_selectedMonth);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Text(
-              'Monthly Summary',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-            const SizedBox(height: 16),
+    // Calculate daily average
+    final dailyAverage = daysInMonth > 0 ? thisMonthTotal / daysInMonth : 0.0;
 
-            // This month total (large, prominent)
-            Text(
-              currencyFormat.format(thisMonthTotal),
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-            ),
-            Text(
-              'Total Spending',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-            const SizedBox(height: 20),
+    // Format previous month name (short format: "October")
+    final monthFormat = DateFormat('MMMM');
+    final previousMonthName = monthFormat.format(previousMonth);
 
-            // Divider
-            Divider(color: Colors.grey[300]),
-            const SizedBox(height: 12),
-
-            // Comparison with previous month
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Previous month info
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Previous Month',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      currencyFormat.format(lastMonthTotal),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Change indicator
-                if (lastMonthTotal > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: changeColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: changeColor.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          changeIcon,
-                          size: 16,
-                          color: changeColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${percentChange.abs().toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: changeColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ],
+    return Column(
+      children: [
+        // 1. Enhanced Monthly Total (full width)
+        // Shows: total amount + daily average + previous month comparison
+        MonthlyTotalCard(
+          totalAmount: thisMonthTotal,
+          dailyAverage: dailyAverage,
+          daysInMonth: daysInMonth,
+          previousMonthAmount: lastMonthTotal,
+          previousMonthName: previousMonthName,
         ),
-      ),
+        const SizedBox(height: 12), // Material Design 3: improved spacing
+
+        // 2. Type Breakdown (full width)
+        // Shows: Phải chi, Phát sinh, Lãng phí percentages (sorted by highest)
+        TypeBreakdownCard(
+          typeBreakdown: typeBreakdown,
+          totalAmount: thisMonthTotal,
+        ),
+      ],
     );
   }
 
@@ -383,7 +349,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             const SizedBox(height: 12),
 
             // Chart
-            TrendsChart(monthlyTrends: monthlyTrends),
+            TrendsChart(
+              monthlyTrends: monthlyTrends,
+              selectedMonth: _selectedMonth,
+            ),
           ],
         ),
       ),

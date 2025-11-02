@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/expense.dart';
-import '../models/dummy_data.dart';
-import '../services/storage_service.dart';
+import '../repositories/expense_repository.dart';
+import '../repositories/supabase_expense_repository.dart';
 
 /// ExpenseProvider manages the global state for all expenses in the app.
 /// It extends ChangeNotifier which is part of Flutter's built-in state management.
@@ -20,8 +20,8 @@ class ExpenseProvider extends ChangeNotifier {
   List<Expense> _expenses = [];
   bool _isLoading = false;
 
-  // Storage service for persistence
-  final StorageService _storageService = StorageService();
+  // Repository for data access (now using Supabase instead of SharedPreferences)
+  final ExpenseRepository _repository = SupabaseExpenseRepository();
 
   // Public getters - allow read-only access to private state
   // This is a common pattern: private state, public getters
@@ -35,9 +35,9 @@ class ExpenseProvider extends ChangeNotifier {
     return _expenses.fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  /// Load all expenses from storage
+  /// Load all expenses from Supabase
   /// This should be called once when the app starts
-  /// If no saved expenses exist, loads dummy data for testing
+  /// Fetches all expenses for the authenticated user
   Future<void> loadExpenses() async {
     _isLoading = true;
     // Notify listeners that loading has started
@@ -45,16 +45,8 @@ class ExpenseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _expenses = await _storageService.loadExpenses();
-
-      // If no saved expenses, load dummy data for testing
-      // This makes the app look populated when you first run it
-      if (_expenses.isEmpty) {
-        _expenses = DummyData.getExpenses();
-        // Save dummy data so it persists across app restarts
-        await _storageService.saveExpenses(_expenses);
-        debugPrint('Loaded ${_expenses.length} dummy expenses for testing');
-      }
+      _expenses = await _repository.getAll();
+      debugPrint('Loaded ${_expenses.length} expenses from Supabase');
     } catch (e) {
       // In production, you'd want proper error handling here
       debugPrint('Error loading expenses: $e');
@@ -66,8 +58,9 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-  /// Add a new expense to the list
+  /// Add a new expense to the list (SIMPLIFIED - Phase 5.5.1)
   /// Returns true if successful, false otherwise
+  /// Vietnamese names are now part of the Expense object itself!
   Future<bool> addExpense(Expense expense) async {
     try {
       // Add to in-memory list
@@ -76,8 +69,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Sort by date (newest first)
       _expenses.sort((a, b) => b.date.compareTo(a.date));
 
-      // Save to storage
-      await _storageService.saveExpenses(_expenses);
+      // Save to Supabase (Vietnamese names are in the expense object)
+      await _repository.create(expense);
 
       // Notify listeners that the data has changed
       // This will trigger a rebuild in all listening widgets
@@ -93,8 +86,9 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-  /// Update an existing expense
+  /// Update an existing expense (SIMPLIFIED - Phase 5.5.1)
   /// Returns true if successful, false otherwise
+  /// Vietnamese names are now part of the Expense object itself!
   Future<bool> updateExpense(Expense updatedExpense) async {
     try {
       // Find the index of the expense to update
@@ -111,8 +105,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Re-sort by date
       _expenses.sort((a, b) => b.date.compareTo(a.date));
 
-      // Save to storage
-      await _storageService.saveExpenses(_expenses);
+      // Save to Supabase (Vietnamese names are in the expense object)
+      await _repository.update(updatedExpense);
 
       // Notify listeners
       notifyListeners();
@@ -141,15 +135,20 @@ class ExpenseProvider extends ChangeNotifier {
       // Remove from list and store for undo
       final deletedExpense = _expenses.removeAt(index);
 
-      // Save to storage
-      await _storageService.saveExpenses(_expenses);
+      // Save to Supabase (DELETE operation)
+      debugPrint('🗑️ Deleting expense from Supabase: $expenseId');
+      await _repository.delete(expenseId);
+      debugPrint('✅ Successfully deleted from Supabase: $expenseId');
 
       // Notify listeners
       notifyListeners();
 
       return deletedExpense;
     } catch (e) {
-      debugPrint('Error deleting expense: $e');
+      debugPrint('❌ Error deleting expense: $e');
+      debugPrint('❌ Error details: ${e.runtimeType}');
+      // Restore the expense to the list if delete failed
+      // Don't restore yet - let's see the error first
       return null;
     }
   }
@@ -161,8 +160,8 @@ class ExpenseProvider extends ChangeNotifier {
       // Insert at the original position
       _expenses.insert(index, expense);
 
-      // Save to storage
-      await _storageService.saveExpenses(_expenses);
+      // Save to Supabase
+      await _repository.create(expense);
 
       // Notify listeners
       notifyListeners();

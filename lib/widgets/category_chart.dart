@@ -1,17 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
-import '../models/expense.dart';
+import '../utils/currency_formatter.dart';
 
-/// A bar chart showing expense breakdown by category
+/// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
 /// Uses fl_chart for beautiful and interactive visualizations
+/// Now uses Vietnamese category names directly instead of enums
 class CategoryChart extends StatelessWidget {
-  final Map<Category, double> categoryBreakdown;
+  final Map<String, double> categoryBreakdown;  // Changed from Map<Category, double>
 
   const CategoryChart({
     super.key,
     required this.categoryBreakdown,
   });
+
+  /// Helper: Get icon for Vietnamese category name
+  IconData _getCategoryIcon(String categoryNameVi) {
+    switch (categoryNameVi) {
+      case 'Thực phẩm':
+      case 'Cà phê':
+        return Icons.restaurant;
+      case 'Đi lại':
+        return Icons.directions_car;
+      case 'Hoá đơn':
+      case 'Tiền nhà':
+        return Icons.lightbulb;
+      case 'Giải trí':
+      case 'Du lịch':
+        return Icons.movie;
+      case 'Tạp hoá':
+      case 'Thời trang':
+        return Icons.shopping_bag;
+      case 'Sức khỏe':
+        return Icons.medical_services;
+      case 'Giáo dục':
+        return Icons.school;
+      case 'Quà vật':
+      case 'TẾT':
+      case 'Biểu gia đình':
+        return Icons.card_giftcard;
+      default:
+        return Icons.more_horiz;
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +63,6 @@ class CategoryChart extends StatelessWidget {
     final sortedEntries = categoryBreakdown.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final currencyFormat = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
     final theme = Theme.of(context);
 
     return SizedBox(
@@ -50,10 +80,10 @@ class CategoryChart extends StatelessWidget {
                 tooltipPadding: const EdgeInsets.all(8),
                 tooltipMargin: 8,
                 getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  final category = sortedEntries[groupIndex].key;
+                  final categoryNameVi = sortedEntries[groupIndex].key;  // Now a String
                   final amount = sortedEntries[groupIndex].value;
                   return BarTooltipItem(
-                    '${category.displayName}\n',
+                    '$categoryNameVi\n',  // Already in Vietnamese!
                     TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
@@ -61,7 +91,7 @@ class CategoryChart extends StatelessWidget {
                     ),
                     children: [
                       TextSpan(
-                        text: currencyFormat.format(amount),
+                        text: CurrencyFormatter.format(amount, context: CurrencyContext.compact),
                         style: TextStyle(
                           color: theme.colorScheme.primary,
                           fontSize: 16,
@@ -82,11 +112,11 @@ class CategoryChart extends StatelessWidget {
                     if (value.toInt() >= sortedEntries.length) {
                       return const Text('');
                     }
-                    final category = sortedEntries[value.toInt()].key;
+                    final categoryNameVi = sortedEntries[value.toInt()].key;  // Now a String
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Icon(
-                        category.icon,
+                        _getCategoryIcon(categoryNameVi),  // Use helper method
                         size: 20,
                         color: theme.colorScheme.primary,
                       ),
@@ -99,19 +129,12 @@ class CategoryChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 50,
+                  interval: sortedEntries.first.value * 0.25, // Match grid interval to prevent overlap
                   getTitlesWidget: (value, meta) {
-                    if (value == 0) return const Text('\$0');
-                    if (value >= 1000) {
-                      return Text(
-                        '\$${(value / 1000).toStringAsFixed(1)}k',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface.withAlpha(178),
-                        ),
-                      );
-                    }
+                    if (value == 0) return const Text('0');
+                    // Use compact format for chart axis labels
                     return Text(
-                      '\$${value.toInt()}',
+                      CurrencyFormatter.format(value, context: CurrencyContext.compact),
                       style: TextStyle(
                         fontSize: 11,
                         color: theme.colorScheme.onSurface.withAlpha(178),
@@ -131,7 +154,7 @@ class CategoryChart extends StatelessWidget {
               show: true,
               drawHorizontalLine: true,
               drawVerticalLine: false,
-              horizontalInterval: sortedEntries.first.value * 0.2,
+              horizontalInterval: sortedEntries.first.value * 0.25, // Increased to reduce label density
               getDrawingHorizontalLine: (value) {
                 return FlLine(
                   color: Colors.grey.withAlpha(51),
@@ -140,6 +163,7 @@ class CategoryChart extends StatelessWidget {
               },
             ),
             borderData: FlBorderData(show: false),
+            groupsSpace: 40, // Significantly increased spacing between bar columns for better readability
             barGroups: sortedEntries.asMap().entries.map((entry) {
               return BarChartGroupData(
                 x: entry.key,
@@ -147,7 +171,7 @@ class CategoryChart extends StatelessWidget {
                   BarChartRodData(
                     toY: entry.value.value,
                     color: theme.colorScheme.primary,
-                    width: 24,
+                    width: 20,
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(4),
                     ),

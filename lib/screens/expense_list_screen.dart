@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
+import '../providers/auth_provider.dart';
+import '../utils/currency_formatter.dart';
 import 'add_expense_screen.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
@@ -27,6 +29,14 @@ class ExpenseListScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Expense Tracker'),
+            actions: [
+              // Logout button
+              IconButton(
+                icon: const Icon(Icons.logout),
+                tooltip: 'Sign Out',
+                onPressed: () => _showLogoutDialog(context),
+              ),
+            ],
           ),
           body: expenseProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -84,7 +94,6 @@ class ExpenseListScreen extends StatelessWidget {
 
   Widget _buildExpenseCard(BuildContext context, Expense expense, int index) {
     final dateFormat = DateFormat('MMM dd, yyyy');
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
 
     return Dismissible(
       key: Key(expense.id),
@@ -113,10 +122,10 @@ class ExpenseListScreen extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor: expense.type.color.withOpacity(0.2),
+            backgroundColor: expense.typeColor.withOpacity(0.2),  // Fixed: Use getter
             child: Icon(
-              expense.category.icon,
-              color: expense.type.color,
+              expense.categoryIcon,  // Fixed: Use getter
+              color: expense.typeColor,  // Fixed: Use getter
             ),
           ),
           title: Text(
@@ -133,7 +142,7 @@ class ExpenseListScreen extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      expense.category.displayName,
+                      expense.categoryNameVi,  // NEW: Use Vietnamese string directly
                       style: TextStyle(color: Colors.grey[600]),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -170,7 +179,7 @@ class ExpenseListScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                currencyFormat.format(expense.amount),
+                CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -180,18 +189,18 @@ class ExpenseListScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: expense.type.color.withOpacity(0.1),
+                  color: expense.typeColor.withOpacity(0.1),  // NEW: Use getter
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: expense.type.color.withOpacity(0.5),
+                    color: expense.typeColor.withOpacity(0.5),  // NEW: Use getter
                     width: 1,
                   ),
                 ),
                 child: Text(
-                  expense.type.displayName,
+                  expense.typeNameVi,  // NEW: Use Vietnamese string directly
                   style: TextStyle(
                     fontSize: 10,
-                    color: expense.type.color,
+                    color: expense.typeColor,  // NEW: Use getter
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -205,7 +214,7 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Future<void> _addExpense(BuildContext context) async {
-    final result = await Navigator.push<Expense>(
+    final result = await Navigator.push<Expense>(  // NEW: Return Expense directly
       context,
       MaterialPageRoute(
         builder: (context) => const AddExpenseScreen(),
@@ -216,18 +225,18 @@ class ExpenseListScreen extends StatelessWidget {
       // Access the provider without listening (we don't need rebuilds here)
       // listen: false tells Provider we just want to call a method, not listen to changes
       final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.addExpense(result);
+      final success = await provider.addExpense(result);  // NEW: Simplified API
 
       if (success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added: ${result.description}'),
+            content: Text('Added: ${result.description}'),  // Fixed: result IS the expense
             duration: const Duration(seconds: 2),
             action: SnackBarAction(
               label: 'Undo',
               onPressed: () async {
                 // Delete the just-added expense to undo
-                await provider.deleteExpense(result.id);
+                await provider.deleteExpense(result.id);  // Fixed: result IS the expense
               },
             ),
           ),
@@ -237,7 +246,7 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Future<void> _editExpense(BuildContext context, Expense expense) async {
-    final result = await Navigator.push<Expense>(
+    final result = await Navigator.push<Expense>(  // NEW: Return Expense directly
       context,
       MaterialPageRoute(
         builder: (context) => AddExpenseScreen(expense: expense),
@@ -246,12 +255,12 @@ class ExpenseListScreen extends StatelessWidget {
 
     if (result != null && context.mounted) {
       final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.updateExpense(result);
+      final success = await provider.updateExpense(result);  // NEW: Simplified API
 
       if (success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Updated: ${result.description}'),
+            content: Text('Updated: ${result.description}'),  // Fixed: result IS the expense
             duration: const Duration(seconds: 2),
           ),
         );
@@ -310,6 +319,43 @@ class ExpenseListScreen extends StatelessWidget {
           ),
         ),
       );
+    }
+  }
+
+  /// Show logout confirmation dialog
+  ///
+  /// Confirms the user wants to sign out before calling AuthProvider.signOut()
+  /// After successful logout, AuthGate will automatically show LoginScreen
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sign Out'),
+          content: const Text('Are you sure you want to sign out?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text('Sign Out'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user confirmed, sign out
+    if (confirmed == true && context.mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signOut();
+      // No need to navigate - AuthGate will automatically show LoginScreen
     }
   }
 }

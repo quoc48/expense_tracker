@@ -1,6 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'expense_list_screen.dart';
 import 'analytics_screen.dart';
+import '../providers/expense_provider.dart';
+import '../services/supabase_service.dart';
 
 /// MainNavigationScreen is the root screen that contains the bottom navigation bar.
 /// It manages which screen is currently displayed based on the selected tab.
@@ -25,6 +30,45 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const ExpenseListScreen(),
     const AnalyticsScreen(),
   ];
+
+  // Auth subscription to listen for sign-in events
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for auth state changes and load expenses once authenticated
+    // This prevents querying Supabase before the session is fully restored
+    _setupAuthListener();
+  }
+
+  /// Set up auth listener to load expenses when authentication is ready
+  void _setupAuthListener() {
+    // Listen to auth state changes
+    _authSubscription = supabase.auth.onAuthStateChange.listen((data) async {
+      final event = data.event;
+      final session = data.session;
+
+      // Load expenses when authenticated (either new sign-in or restored session)
+      // initialSession: Session restored from storage (app restart with existing session)
+      // signedIn: New login completed
+      if ((event == AuthChangeEvent.initialSession || event == AuthChangeEvent.signedIn) &&
+          session != null &&
+          mounted) {
+        // Small delay to ensure Supabase client has applied the session token
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (mounted) {
+          Provider.of<ExpenseProvider>(context, listen: false).loadExpenses();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

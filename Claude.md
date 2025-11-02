@@ -49,6 +49,94 @@ This is a **learning project** for building a Flutter expense tracker app from s
   2. During: Update todos, explain concepts as we code
   3. End: Update memories, commit work, document learnings
 
+#### Session Cleanup: "Compact Mode"
+
+**Trigger**: When I say **"compact mode"** or **"compact"**
+
+**Automatic workflow:**
+
+1. **Analyze State** - Check git status and determine WIP vs Complete
+   - Run: `git status`, `git branch`, `git log -1`
+   - Read: `.serena/memories/current_phase.md` and project files
+   - If ambiguous → Ask me to confirm WIP or Complete
+
+2. **Save Serena Memory**
+   - **WIP** → `session_YYYY_MM_DD_phase_X_partial.md` with:
+     - Progress percentage and current state
+     - Completed vs remaining tasks (detailed)
+     - Files modified and next files to work on
+     - Specific next action
+   - **Complete** → `session_YYYY_MM_DD_phase_X_COMPLETE.md` with:
+     - All completed tasks summary
+     - Testing results
+     - High-level what's next
+
+3. **Git Commit**
+   - **WIP format**:
+     ```
+     WIP: Phase X - description (Y% complete)
+
+     Progress:
+     - ✅ [completed items]
+     - ⏳ [in-progress items]
+
+     Remaining:
+     - [ ] [pending tasks]
+
+     Next: [specific next action]
+     ```
+   - **Complete format**:
+     ```
+     feat: Phase X Complete - description
+
+     Implemented:
+     - [feature list]
+
+     Testing: [results]
+     Ready for: Phase Y
+     ```
+   - Always show commit preview and ask **"Proceed? (y/n)"**
+
+4. **Display Continuation Prompt** (detailed for WIP, concise for Complete)
+
+   **WIP Example:**
+   ```
+   Resume Phase 2: Summary Cards (60% complete)
+
+   Completed:
+   ✅ SummaryStatCard base component
+   ✅ MonthlyTotalCard (primary)
+   ✅ TypeBreakdownCard
+
+   Remaining:
+   1. Create lib/widgets/summary_cards/daily_average_card.dart
+   2. Create lib/widgets/summary_cards/previous_month_card.dart
+   3. Update analytics_screen.dart GridView layout
+   4. Test all 5 cards
+
+   Files to work on:
+   - lib/widgets/summary_cards/daily_average_card.dart (NEW)
+   - lib/widgets/summary_cards/previous_month_card.dart (NEW)
+
+   Next action: Create daily_average_card.dart with total/days calculation
+
+   Branch: feature/ui-polish | Last commit: a1b2c3d
+   ```
+
+   **Complete Example:**
+   ```
+   Phase 2: Summary Cards ✅ COMPLETE
+
+   Next: Phase 3 - Interactive Charts
+
+   Quick start: /sc:load, git status, read current_phase.md
+   ```
+
+**Edge cases:**
+- No uncommitted changes → Skip commit, save memories only
+- Tests failing → Warn and confirm before WIP commit
+- Wrong branch (main/master) → Error: switch to feature branch first
+
 ### 6. Communication Preferences
 - **Ask when uncertain**: Don't guess - investigate or ask me
 - **Show options**: When multiple approaches exist, present them and recommend one
@@ -89,9 +177,10 @@ This is a **learning project** for building a Flutter expense tracker app from s
 - ✅ Celebrate learning milestones
 - ✅ Encourage questions and exploration
 - ✅ Build production-quality code from the start
+- ✅ Use "compact mode" to auto-save session state and prepare for next session
 
 ---
 
 **Remember**: This is a learning journey. Speed is secondary to understanding. Quality explanations are more valuable than quick implementations.
 
-**Last Updated**: 2025-10-25
+**Last Updated**: 2025-10-30
