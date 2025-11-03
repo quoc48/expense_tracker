@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../utils/analytics_calculator.dart';
-import '../utils/currency_formatter.dart';
 import '../widgets/category_chart.dart';
 import '../widgets/trends_chart.dart';
-import '../widgets/summary_cards/monthly_total_card.dart';
+import '../widgets/summary_cards/monthly_overview_card.dart';
 import '../widgets/summary_cards/type_breakdown_card.dart';
+import '../providers/user_preferences_provider.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -113,7 +113,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     child: monthExpenses.isEmpty
                         ? _buildEmptyState()
                         : Column(
-                            key: ValueKey(_selectedMonth.toString() + '_charts'),
+                            key: ValueKey('${_selectedMonth.toString()}_charts'),
                             children: [
                               // Category Breakdown Chart
                               _buildCategoryBreakdownCard(monthExpenses),
@@ -192,6 +192,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     required List<Expense> monthExpenses,
     Key? key,
   }) {
+    // Get user preferences for budget
+    final prefsProvider = Provider.of<UserPreferencesProvider>(context);
+    final budget = prefsProvider.preferences?.monthlyBudget ?? 0.0;
+
+    // Check if viewing current month (budget tracking only relevant for current month)
+    final isCurrentMonth = AnalyticsCalculator.isSameMonth(
+      _selectedMonth,
+      DateTime.now(),
+    );
+
     // Calculate this month's total
     final thisMonthTotal = AnalyticsCalculator.getTotalForMonth(
       allExpenses,
@@ -211,28 +221,25 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       _selectedMonth,
     );
 
-    // Get days in selected month for daily average
-    final daysInMonth = AnalyticsCalculator.daysInMonth(_selectedMonth);
-
-    // Calculate daily average
-    final dailyAverage = daysInMonth > 0 ? thisMonthTotal / daysInMonth : 0.0;
-
     // Format previous month name (short format: "October")
     final monthFormat = DateFormat('MMMM');
     final previousMonthName = monthFormat.format(previousMonth);
 
     return Column(
       children: [
-        // 1. Enhanced Monthly Total (full width)
-        // Shows: total amount + daily average + previous month comparison
-        MonthlyTotalCard(
-          totalAmount: thisMonthTotal,
-          dailyAverage: dailyAverage,
-          daysInMonth: daysInMonth,
-          previousMonthAmount: lastMonthTotal,
-          previousMonthName: previousMonthName,
-        ),
-        const SizedBox(height: 12), // Material Design 3: improved spacing
+        // 1. Monthly Overview (show for all months if budget is set)
+        // Current month: Full mode with budget tracking
+        // Past months: Simplified mode with only spending facts
+        if (budget > 0) ...[
+          MonthlyOverviewCard(
+            totalAmount: thisMonthTotal,
+            budgetAmount: budget,
+            previousMonthAmount: lastMonthTotal,
+            previousMonthName: previousMonthName,
+            isCurrentMonth: isCurrentMonth,
+          ),
+          const SizedBox(height: 12),
+        ],
 
         // 2. Type Breakdown (full width)
         // Shows: Phải chi, Phát sinh, Lãng phí percentages (sorted by highest)
