@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/user_preferences_provider.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/budget_alert_banner.dart';
 import 'add_expense_screen.dart';
 import 'settings_screen.dart';
 
@@ -56,7 +58,7 @@ class ExpenseListScreen extends StatelessWidget {
               ? const Center(child: CircularProgressIndicator())
               : expenseProvider.expenses.isEmpty
                   ? _buildEmptyState(context)
-                  : _buildExpenseList(expenseProvider.expenses),
+                  : _buildExpenseList(context, expenseProvider.expenses),
           floatingActionButton: FloatingActionButton(
             onPressed: () => _addExpense(context),
             tooltip: 'Add Expense',
@@ -96,12 +98,40 @@ class ExpenseListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildExpenseList(List<Expense> expenses) {
+  Widget _buildExpenseList(BuildContext context, List<Expense> expenses) {
+    // Get budget data to show alert banner
+    final userPreferences = Provider.of<UserPreferencesProvider>(context);
+    final budgetAmount = userPreferences.monthlyBudget;
+    
+    // Calculate current month's total spending
+    final now = DateTime.now();
+    final currentMonthExpenses = expenses.where((expense) {
+      return expense.date.year == now.year && expense.date.month == now.month;
+    }).toList();
+    
+    final totalSpending = currentMonthExpenses.fold<double>(
+      0.0,
+      (sum, expense) => sum + expense.amount,
+    );
+    
+    // Calculate budget percentage
+    final budgetPercentage = budgetAmount > 0 ? (totalSpending / budgetAmount) * 100 : 0.0;
+
     return ListView.builder(
-      itemCount: expenses.length,
+      // +1 for the alert banner (shown conditionally at index 0)
+      itemCount: expenses.length + 1,
       itemBuilder: (context, index) {
-        final expense = expenses[index];
-        return _buildExpenseCard(context, expense, index);
+        // First item: Budget Alert Banner
+        if (index == 0) {
+          return BudgetAlertBanner(
+            budgetPercentage: budgetPercentage,
+          );
+        }
+        
+        // Remaining items: Expense cards (adjust index by -1)
+        final expenseIndex = index - 1;
+        final expense = expenses[expenseIndex];
+        return _buildExpenseCard(context, expense, expenseIndex);
       },
     );
   }
