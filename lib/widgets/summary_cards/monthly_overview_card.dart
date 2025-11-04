@@ -172,8 +172,8 @@ class MonthlyOverviewCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // RIGHT: Status badge (only for current month)
-              if (isCurrentMonth)
+              // RIGHT: Status badge (only for current month with budget set)
+              if (isCurrentMonth && budgetAmount > 0)
                 Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -201,8 +201,8 @@ class MonthlyOverviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Budget Context Section (only for current month)
-          if (isCurrentMonth)
+          // Budget Context Section (only for current month with budget set)
+          if (isCurrentMonth && budgetAmount > 0)
             Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -238,7 +238,7 @@ class MonthlyOverviewCard extends StatelessWidget {
               ),
             ],
           ),
-          if (isCurrentMonth) const SizedBox(height: 16),
+          if (isCurrentMonth && budgetAmount > 0) const SizedBox(height: 16),
 
           // Divider
           Divider(color: Colors.grey[300], height: 1),
@@ -247,8 +247,8 @@ class MonthlyOverviewCard extends StatelessWidget {
           // Bottom Metrics Row: Remaining + Previous (or just Previous for past months)
           Row(
             children: [
-              // LEFT: Remaining Budget (only for current month)
-              if (isCurrentMonth)
+              // LEFT: Remaining Budget (only for current month with budget set)
+              if (isCurrentMonth && budgetAmount > 0)
                 Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,8 +287,8 @@ class MonthlyOverviewCard extends StatelessWidget {
                 ),
               ),
 
-              // Vertical divider (only for current month)
-              if (isCurrentMonth)
+              // Vertical divider (only for current month with budget set)
+              if (isCurrentMonth && budgetAmount > 0)
                 Container(
                 height: 40,
                 width: 1,

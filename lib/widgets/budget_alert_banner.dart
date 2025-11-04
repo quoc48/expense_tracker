@@ -31,6 +31,10 @@ class BudgetAlertBanner extends StatefulWidget {
 class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
   /// Local state tracking whether user dismissed the banner
   bool _isDismissed = false;
+  
+  /// Track which alert level was active when user dismissed the banner
+  /// Used to reset dismissal when alert level changes
+  String? _dismissedAtLevel;
 
   /// Determine if banner should be shown
   /// Shows when: percentage >= 70% AND not dismissed
@@ -103,7 +107,26 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
   void _handleDismiss() {
     setState(() {
       _isDismissed = true;
+      _dismissedAtLevel = _alertLevel; // Remember which level was dismissed
     });
+  }
+  
+  @override
+  void didUpdateWidget(BudgetAlertBanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Check if alert level changed
+    // If user dismissed at 'warning' and now we're at 'critical', show banner again
+    if (_isDismissed && _dismissedAtLevel != null) {
+      final currentLevel = _alertLevel;
+      if (currentLevel != _dismissedAtLevel) {
+        // Alert level changed - reset dismissal so banner reappears
+        setState(() {
+          _isDismissed = false;
+          _dismissedAtLevel = null;
+        });
+      }
+    }
   }
 
   @override

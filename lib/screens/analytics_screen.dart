@@ -227,19 +227,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
     return Column(
       children: [
-        // 1. Monthly Overview (show for all months if budget is set)
-        // Current month: Full mode with budget tracking
+        // 1. Monthly Overview (always show - it displays spending data)
+        // Budget sections hidden when budget = 0
+        // Current month: Full mode with budget tracking (if budget > 0)
         // Past months: Simplified mode with only spending facts
-        if (budget > 0) ...[
-          MonthlyOverviewCard(
-            totalAmount: thisMonthTotal,
-            budgetAmount: budget,
-            previousMonthAmount: lastMonthTotal,
-            previousMonthName: previousMonthName,
-            isCurrentMonth: isCurrentMonth,
-          ),
-          const SizedBox(height: 12),
-        ],
+        MonthlyOverviewCard(
+          totalAmount: thisMonthTotal,
+          budgetAmount: budget,
+          previousMonthAmount: lastMonthTotal,
+          previousMonthName: previousMonthName,
+          isCurrentMonth: isCurrentMonth,
+        ),
+        const SizedBox(height: 12),
 
         // 2. Type Breakdown (full width)
         // Shows: Phải chi, Phát sinh, Lãng phí percentages (sorted by highest)
