@@ -56,6 +56,12 @@ dependencies:
   # UUID generator for creating unique identifiers
   uuid: ^4.0.0
 
+  # Google Fonts for beautiful typography (Inter font family)
+  google_fonts: ^6.1.0
+
+  # Loading skeleton animations for better UX
+  shimmer: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

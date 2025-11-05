@@ -6,6 +6,7 @@ import 'providers/expense_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_preferences_provider.dart';
 import 'widgets/auth_gate.dart';
+import 'theme/app_theme.dart';
 
 // This is the entry point of the Flutter app
 // The main() function is called when the app starts
@@ -70,51 +71,19 @@ class ExpenseTrackerApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-      // App title (shown in task switcher on Android)
-      title: 'Expense Tracker',
+        // App title (shown in task switcher on Android)
+        title: 'Expense Tracker',
 
-      // Disable the debug banner in the top-right corner
-      debugShowCheckedModeBanner: false,
+        // Disable the debug banner in the top-right corner
+        debugShowCheckedModeBanner: false,
 
-      // Material Design 3 theme configuration
-      theme: ThemeData(
-        // Use Material 3 design system
-        useMaterial3: true,
+        // Use our new centralized theme system
+        // AppTheme provides consistent design tokens throughout the app
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
 
-        // Define color scheme - we'll use a teal/green theme (fits expense tracking)
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF00897B), // Teal 600
-          brightness: Brightness.light,
-        ),
-
-        // Card styling
-        cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-
-        // AppBar styling
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-        ),
-
-        // Input decoration theme (for forms)
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          filled: true,
-          fillColor: Colors.grey[50],
-        ),
-
-        // FloatingActionButton theme
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          elevation: 4,
-        ),
-      ),
+        // Automatically switch between light and dark based on system settings
+        themeMode: ThemeMode.system,
 
         // Set AuthGate as the home screen (instead of MainNavigationScreen)
         // AuthGate checks authentication and shows:

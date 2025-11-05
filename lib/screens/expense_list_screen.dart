@@ -9,6 +9,10 @@ import '../utils/currency_formatter.dart';
 import '../widgets/budget_alert_banner.dart';
 import 'add_expense_screen.dart';
 import 'settings_screen.dart';
+import '../theme/typography/app_typography.dart';
+import '../theme/colors/app_colors.dart';
+import '../theme/constants/app_spacing.dart';
+import '../theme/constants/app_constants.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
 ///
@@ -70,28 +74,27 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.receipt_long,
-            size: 80,
-            color: Colors.grey[400],
+            size: AppConstants.iconSize3xl * 1.5, // 72
+            color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.spaceLg),
           Text(
             'No expenses yet',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.grey[600],
-                ),
+            style: ComponentTextStyles.emptyTitle(theme.textTheme),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: AppSpacing.spaceXs),
           Text(
             'Tap + to add your first expense',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[500],
-                ),
+            style: ComponentTextStyles.emptyMessage(theme.textTheme),
           ),
         ],
       ),
@@ -138,22 +141,27 @@ class ExpenseListScreen extends StatelessWidget {
 
   Widget _buildExpenseCard(BuildContext context, Expense expense, int index) {
     final dateFormat = DateFormat('MMM dd, yyyy');
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Dismissible(
       key: Key(expense.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(12),
+        padding: EdgeInsets.only(right: AppSpacing.spaceLg),
+        margin: EdgeInsets.symmetric(
+          horizontal: AppSpacing.spaceMd,
+          vertical: AppSpacing.spaceXs,
         ),
-        child: const Icon(
+        decoration: BoxDecoration(
+          color: AppColors.error,
+          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+        ),
+        child: Icon(
           Icons.delete,
           color: Colors.white,
-          size: 32,
+          size: AppConstants.iconSizeLg,
         ),
       ),
       confirmDismiss: (direction) async {
@@ -163,60 +171,77 @@ class ExpenseListScreen extends StatelessWidget {
         _deleteExpense(context, expense, index);
       },
       child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: EdgeInsets.symmetric(
+          horizontal: AppSpacing.spaceMd,
+          vertical: AppSpacing.spaceXs,
+        ),
         child: ListTile(
+          contentPadding: EdgeInsets.all(AppSpacing.spaceMd),
           leading: CircleAvatar(
-            backgroundColor: expense.typeColor.withOpacity(0.2),  // Fixed: Use getter
+            backgroundColor: expense.typeColor.withValues(alpha: 0.2),
+            radius: 20,
             child: Icon(
-              expense.categoryIcon,  // Fixed: Use getter
-              color: expense.typeColor,  // Fixed: Use getter
+              expense.categoryIcon,
+              color: expense.typeColor,
+              size: AppConstants.iconSizeSm,
             ),
           ),
           title: Text(
             expense.description,
-            style: const TextStyle(fontWeight: FontWeight.w500),
+            style: ComponentTextStyles.expenseTitle(theme.textTheme),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.category, size: 14, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      expense.categoryNameVi,  // NEW: Use Vietnamese string directly
-                      style: TextStyle(color: Colors.grey[600]),
-                      overflow: TextOverflow.ellipsis,
+          subtitle: Padding(
+            padding: EdgeInsets.only(top: AppSpacing.space2xs),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.category_outlined,
+                      size: AppConstants.iconSizeXs,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      dateFormat.format(expense.date),
-                      style: TextStyle(color: Colors.grey[600]),
-                      overflow: TextOverflow.ellipsis,
+                    SizedBox(width: AppSpacing.space2xs),
+                    Flexible(
+                      child: Text(
+                        expense.categoryNameVi,
+                        style: ComponentTextStyles.expenseCategory(theme.textTheme),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                    SizedBox(width: AppSpacing.spaceSm),
+                    Icon(
+                      Icons.today_outlined,
+                      size: AppConstants.iconSizeXs,
+                      color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                    ),
+                    SizedBox(width: AppSpacing.space2xs),
+                    Flexible(
+                      child: Text(
+                        dateFormat.format(expense.date),
+                        style: ComponentTextStyles.expenseDate(theme.textTheme),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                if (expense.note != null) ...[
+                  SizedBox(height: AppSpacing.space2xs),
+                  Text(
+                    expense.note!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ),
-              if (expense.note != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  expense.note!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                    fontStyle: FontStyle.italic,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
               ],
-            ],
+            ),
           ),
           trailing: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -224,28 +249,29 @@ class ExpenseListScreen extends StatelessWidget {
             children: [
               Text(
                 CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                style: AppTypography.currencyMedium(
+                  color: expense.typeColor,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: AppSpacing.space2xs),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.spaceXs,
+                  vertical: AppSpacing.space2xs,
+                ),
                 decoration: BoxDecoration(
-                  color: expense.typeColor.withOpacity(0.1),  // NEW: Use getter
-                  borderRadius: BorderRadius.circular(12),
+                  color: expense.typeColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppConstants.chipRadius),
                   border: Border.all(
-                    color: expense.typeColor.withOpacity(0.5),  // NEW: Use getter
-                    width: 1,
+                    color: expense.typeColor.withValues(alpha: 0.5),
+                    width: AppConstants.borderDefault,
                   ),
                 ),
                 child: Text(
-                  expense.typeNameVi,  // NEW: Use Vietnamese string directly
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: expense.typeColor,  // NEW: Use getter
-                    fontWeight: FontWeight.w500,
+                  expense.typeNameVi,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: expense.typeColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
