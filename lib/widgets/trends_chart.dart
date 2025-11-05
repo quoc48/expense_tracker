@@ -90,9 +90,8 @@ class TrendsChart extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   '${trendPercentage.abs().toStringAsFixed(1)}%',
-                  style: theme.textTheme.labelLarge?.copyWith(
+                  style: AppTypography.currencyMedium(color: lineColor).copyWith(
                     fontWeight: FontWeight.bold,
-                    color: lineColor,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -137,8 +136,9 @@ class TrendsChart extends StatelessWidget {
                       children: [
                         TextSpan(
                           text: CurrencyFormatter.format(monthTotal.total, context: CurrencyContext.compact),
-                          style: theme.textTheme.labelLarge!.copyWith(
+                          style: AppTypography.currencyMedium(
                             color: theme.colorScheme.primary,
+                          ).copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -181,11 +181,18 @@ class TrendsChart extends StatelessWidget {
                   reservedSize: 50,
                   interval: maxValue * 0.25, // Match grid line interval
                   getTitlesWidget: (value, meta) {
-                    if (value == 0) return const Text('0');
-                    // Use compact format for chart axis labels
+                    if (value == 0) {
+                      return Text(
+                        '0',
+                        style: AppTypography.currencySmall(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      );
+                    }
+                    // Use compact format for chart axis labels with monospace font
                     return Text(
                       CurrencyFormatter.format(value, context: CurrencyContext.compact),
-                      style: theme.textTheme.labelSmall!.copyWith(
+                      style: AppTypography.currencySmall(
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     );

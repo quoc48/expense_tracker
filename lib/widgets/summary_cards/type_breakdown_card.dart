@@ -112,8 +112,7 @@ class TypeBreakdownCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         '${percentage.toStringAsFixed(0)}%',  // Show as "50%"
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: color,
+                        style: AppTypography.currencySmall(color: color).copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),

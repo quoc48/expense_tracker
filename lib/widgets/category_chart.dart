@@ -130,11 +130,18 @@ class CategoryChart extends StatelessWidget {
                   reservedSize: 50,
                   interval: sortedEntries.first.value * 0.25, // Match grid interval to prevent overlap
                   getTitlesWidget: (value, meta) {
-                    if (value == 0) return const Text('0');
-                    // Use compact format for chart axis labels
+                    if (value == 0) {
+                      return Text(
+                        '0',
+                        style: AppTypography.currencySmall(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      );
+                    }
+                    // Use compact format for chart axis labels with monospace font
                     return Text(
                       CurrencyFormatter.format(value, context: CurrencyContext.compact),
-                      style: theme.textTheme.labelSmall!.copyWith(
+                      style: AppTypography.currencySmall(
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     );

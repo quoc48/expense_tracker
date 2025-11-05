@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Typography system for the Expense Tracker app
-/// Uses Inter font family for optimal readability and modern aesthetics
+/// Uses Inter font family (bundled locally) for optimal readability and modern aesthetics
+/// JetBrains Mono used for currency values with tabular figures for perfect alignment
 class AppTypography {
   // Private constructor to prevent instantiation
   AppTypography._();
@@ -15,160 +15,161 @@ class AppTypography {
   }) {
     return TextTheme(
       // Display styles - For hero numbers and large totals
-      displayLarge: GoogleFonts.inter(
+      displayLarge: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 48,
         fontWeight: FontWeight.bold,
         letterSpacing: -0.25,
         height: 1.2,
-        color: textPrimary,
-      ),
-      displayMedium: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      displayMedium: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 36,
         fontWeight: FontWeight.w600, // SemiBold
         letterSpacing: 0,
         height: 1.2,
-        color: textPrimary,
-      ),
-      displaySmall: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      displaySmall: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 28,
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
         height: 1.3,
-        color: textPrimary,
-      ),
+      ).copyWith(color: textPrimary),
 
       // Headline styles - For screen and section titles
-      headlineLarge: GoogleFonts.inter(
+      headlineLarge: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 24,
         fontWeight: FontWeight.w500, // Medium
         letterSpacing: 0,
         height: 1.3,
-        color: textPrimary,
-      ),
-      headlineMedium: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      headlineMedium: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 20,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.15,
         height: 1.3,
-        color: textPrimary,
-      ),
-      headlineSmall: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      headlineSmall: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 18,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.15,
         height: 1.3,
-        color: textPrimary,
-      ),
+      ).copyWith(color: textPrimary),
 
       // Title styles - For cards and list items
-      titleLarge: GoogleFonts.inter(
+      titleLarge: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w600,  // Slightly bolder for primary items
         letterSpacing: 0.1,
         height: 1.4,
-        color: textPrimary,
-      ),
-      titleMedium: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      titleMedium: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         height: 1.4,
-        color: textPrimary,
-      ),
-      titleSmall: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      titleSmall: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         height: 1.4,
-        color: textSecondary, // Overlines are secondary
-      ),
+      ).copyWith(color: textSecondary), // Overlines are secondary
 
       // Body styles - For general content
-      bodyLarge: GoogleFonts.inter(
+      bodyLarge: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.normal,
         letterSpacing: 0.5,
         height: 1.5,
-        color: textPrimary,
-      ),
-      bodyMedium: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      bodyMedium: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.normal,
         letterSpacing: 0.25,
         height: 1.5,
-        color: textPrimary,
-      ),
-      bodySmall: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      bodySmall: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.normal,
         letterSpacing: 0.4,
         height: 1.5,
-        color: textSecondary,
-      ),
+      ).copyWith(color: textSecondary),
 
       // Label styles - For buttons, chips, badges
-      labelLarge: GoogleFonts.inter(
+      labelLarge: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         height: 1.4,
-        color: textPrimary,
-      ),
-      labelMedium: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      labelMedium: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.5,
         height: 1.4,
-        color: textPrimary,
-      ),
-      labelSmall: GoogleFonts.inter(
+      ).copyWith(color: textPrimary),
+      labelSmall: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 11,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.5,
         height: 1.4,
-        color: textTertiary,
-      ),
+      ).copyWith(color: textTertiary),
     );
   }
 
   /// Custom currency text styles with monospace font
+  /// Uses JetBrains Mono with tabular figures for perfect number alignment
   static TextStyle currencyLarge({Color? color}) {
-    return GoogleFonts.jetBrainsMono(
+    return const TextStyle(
+      fontFamily: 'JetBrainsMono',
       fontSize: 24,
       fontWeight: FontWeight.bold,
       letterSpacing: 0,
       height: 1.2,
-      color: color,
-      fontFeatures: const [
+      fontFeatures: [
         FontFeature.tabularFigures(), // Align numbers in tables
       ],
-    );
+    ).copyWith(color: color);
   }
 
   static TextStyle currencyMedium({Color? color}) {
-    return GoogleFonts.jetBrainsMono(
+    return const TextStyle(
+      fontFamily: 'JetBrainsMono',
       fontSize: 18,
       fontWeight: FontWeight.w500,
       letterSpacing: 0,
       height: 1.3,
-      color: color,
-      fontFeatures: const [
+      fontFeatures: [
         FontFeature.tabularFigures(),
       ],
-    );
+    ).copyWith(color: color);
   }
 
   static TextStyle currencySmall({Color? color}) {
-    return GoogleFonts.jetBrainsMono(
+    return const TextStyle(
+      fontFamily: 'JetBrainsMono',
       fontSize: 14,
       fontWeight: FontWeight.normal,
       letterSpacing: 0,
       height: 1.4,
-      color: color,
-      fontFeatures: const [
+      fontFeatures: [
         FontFeature.tabularFigures(),
       ],
-    );
+    ).copyWith(color: color);
   }
 
   /// Helper method to apply custom opacity to text

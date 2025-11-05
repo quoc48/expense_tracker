@@ -209,8 +209,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                   ),
                   Text(
                     '${_percentageUsed.toStringAsFixed(1)}%',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: statusColor,
+                    style: AppTypography.currencySmall(color: statusColor).copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -328,9 +327,8 @@ class MonthlyOverviewCard extends StatelessWidget {
                                 const SizedBox(width: 2),
                                 Text(
                                   '${percentageChange.abs().toStringAsFixed(1)}%',
-                                  style: theme.textTheme.labelSmall?.copyWith(
+                                  style: AppTypography.currencySmall(color: trendColor).copyWith(
                                     fontSize: 10,
-                                    color: trendColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
