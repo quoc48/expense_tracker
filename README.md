@@ -2,11 +2,11 @@
 
 A beautiful, feature-rich expense tracking application built with Flutter. Track your spending, analyze patterns, and make better financial decisions.
 
-## ✅ MVP Complete!
+## ✅ Production-Ready App!
 
-**Status**: Milestones 1-3 Complete | Production-Ready MVP
+**Status**: Milestones 1-5 Complete | Full-Featured Expense Tracker
 
-This app has evolved from a learning project into a fully functional expense tracker with comprehensive analytics and data visualization.
+This app has evolved from a learning project into a fully functional expense tracker with comprehensive analytics, budget tracking, and cloud synchronization.
 
 ---
 
@@ -14,10 +14,19 @@ This app has evolved from a learning project into a fully functional expense tra
 
 ### Core Functionality
 - ✅ **Complete CRUD Operations**: Create, read, update, and delete expenses
-- ✅ **Local Data Persistence**: All data saved locally using shared_preferences
+- ✅ **Cloud Sync with Supabase**: Real-time data synchronization across devices
+- ✅ **User Authentication**: Secure login with email/password
 - ✅ **Category Management**: 8 pre-defined categories (Food, Transportation, Utilities, etc.)
 - ✅ **Expense Types**: Classify spending as Must Have, Nice to Have, or Wasted
 - ✅ **Form Validation**: Smart input validation with error handling
+
+### Budget Tracking 🆕
+- ✅ **Monthly Budget Setting**: Set and edit monthly spending budgets via Settings
+- ✅ **Real-Time Progress Tracking**: Visual progress bars with color-coded indicators (green/orange/red)
+- ✅ **Smart Alert System**: Warning banners at 70%, 90%, and 100% budget thresholds
+- ✅ **Context-Aware Display**: Full budget view for current month, simplified for past months
+- ✅ **Intelligent Alerts**: Dismissed banners reappear when budget severity changes
+- ✅ **Graceful Degradation**: Works with or without budget set
 
 ### Analytics Dashboard
 - ✅ **Month-by-Month Navigation**: Browse spending history by month
@@ -41,10 +50,11 @@ This app has evolved from a learning project into a fully functional expense tra
 - **Framework**: Flutter (latest stable)
 - **Language**: Dart
 - **State Management**: Provider pattern
-- **Local Storage**: shared_preferences
+- **Backend**: Supabase (PostgreSQL, Authentication, Real-time subscriptions)
 - **Charts**: fl_chart (v0.69.0)
 - **Design**: Material Design 3
-- **Architecture**: Clean separation of concerns (Models, Providers, Screens, Widgets, Services, Utils)
+- **Architecture**: Repository pattern with clean separation of concerns
+  - Models, Providers, Repositories, Screens, Widgets, Services, Utils
 
 ---
 
@@ -82,25 +92,35 @@ The app will automatically load sample data (40+ expenses across 6 months) on fi
 
 ```
 lib/
-├── main.dart                          # App entry point with Provider setup
+├── main.dart                          # App entry point with Providers
 ├── models/
-│   ├── expense.dart                  # Expense data model with enums
-│   ├── month_total.dart              # Monthly analytics model
-│   └── dummy_data.dart               # Sample data for testing
+│   ├── expense.dart                  # Expense data model
+│   └── user_preferences.dart         # User settings model (budget, etc.)
 ├── providers/
-│   └── expense_provider.dart         # Global state management
+│   ├── auth_provider.dart            # Authentication state
+│   ├── expense_provider.dart         # Expense state management
+│   └── user_preferences_provider.dart # Budget & settings state
+├── repositories/
+│   ├── expense_repository.dart       # Expense data interface
+│   ├── user_preferences_repository.dart # Preferences interface
+│   └── supabase_*.dart               # Supabase implementations
 ├── screens/
-│   ├── main_navigation_screen.dart   # Bottom navigation container
-│   ├── expense_list_screen.dart      # Main expense list view
+│   ├── auth_gate.dart                # Authentication routing
+│   ├── login_screen.dart             # Login/signup UI
+│   ├── expense_list_screen.dart      # Main expense list
 │   ├── add_expense_screen.dart       # Add/Edit expense form
-│   └── analytics_screen.dart         # Analytics dashboard
-├── services/
-│   └── storage_service.dart          # Local data persistence
+│   ├── analytics_screen.dart         # Analytics dashboard
+│   └── settings_screen.dart          # Settings & budget config
 ├── utils/
-│   └── analytics_calculator.dart     # Analytics calculation utilities
+│   ├── analytics_calculator.dart     # Analytics utilities
+│   └── currency_formatter.dart       # VND formatting
 └── widgets/
-    ├── category_chart.dart           # Category breakdown bar chart
-    └── trends_chart.dart             # Spending trends line chart
+    ├── budget_alert_banner.dart      # Budget warning banners
+    ├── category_chart.dart           # Category breakdown chart
+    ├── trends_chart.dart             # Spending trends chart
+    └── summary_cards/                # Analytics summary cards
+        ├── monthly_overview_card.dart # Budget progress card
+        └── type_breakdown_card.dart   # Spending type breakdown
 ```
 
 ---
@@ -131,6 +151,19 @@ lib/
 3. View category breakdown and spending trends
 4. Tap on charts for detailed tooltips
 
+### Managing Monthly Budget
+1. Tap the **Settings** icon (⚙️) in the top-right corner
+2. Under "Budget", tap **Monthly Budget**
+3. Enter your desired budget amount (e.g., 20,000,000 VND)
+4. Tap **Save**
+5. Budget progress will appear in Analytics and alert banners in Expense List
+
+**Alert Thresholds:**
+- **Green** (< 70%): On track
+- **Orange** (70-90%): ⚠️ "Approaching budget limit"
+- **Red** (90-100%): 🚨 "Near budget limit"
+- **Dark Red** (> 100%): 🚨 "Budget exceeded"
+
 ---
 
 ## 📊 Milestones Completed
@@ -154,20 +187,34 @@ lib/
 - Month navigation and summaries
 - Interactive fl_chart visualizations
 
+### Milestone 4: Supabase Integration ✅
+- User authentication (email/password)
+- Cloud database migration
+- Real-time data synchronization
+- Row Level Security (RLS) policies
+- Repository pattern implementation
+
+### Milestone 5: Budget Tracking ✅
+- Monthly budget settings
+- Budget progress visualization
+- Smart alert banners (70%, 90%, 100%)
+- Context-aware displays
+- Alert level change detection
+- Production-ready with comprehensive testing
+
 ---
 
 ## 🔮 Future Roadmap
 
 ### Potential Next Features
-- **Budget Tracking**: Set monthly budgets with alerts
-- **Advanced Filtering**: Search and filter expenses
-- **Data Export**: Export to CSV/PDF
-- **Custom Categories**: Create your own expense categories
-- **Recurring Expenses**: Set up repeating transactions
-- **Cloud Sync**: Firebase integration for multi-device sync
-- **Multi-Currency**: Support for different currencies
-- **Reports**: Advanced analytics and insights
-- **Widgets**: Home screen widgets for quick expense entry
+- **Advanced Filtering**: Search and filter expenses by category, type, or date range
+- **Data Export**: Export to CSV/PDF for external analysis
+- **Custom Categories**: Create your own expense categories beyond the 8 defaults
+- **Recurring Expenses**: Set up repeating transactions (subscriptions, rent, etc.)
+- **Multi-Currency**: Support for different currencies with conversion rates
+- **Advanced Reports**: Deeper insights and trend analysis
+- **Home Screen Widgets**: Quick expense entry widgets
+- **Category-Level Budgets**: Set separate budgets for each category
 
 See `spec.md` for detailed feature planning.
 
@@ -198,5 +245,5 @@ This project is for educational purposes.
 Built as a learning project to master Flutter development, from basics to production-ready features.
 
 **Created**: October 2025
-**Last Updated**: October 26, 2025
-**Status**: MVP Complete - Ready for Advanced Features
+**Last Updated**: November 4, 2025
+**Status**: Production-Ready - Budget Tracking Complete
