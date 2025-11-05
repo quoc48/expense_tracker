@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/typography/app_typography.dart';
 import 'summary_stat_card.dart';
 
 /// Card showing expense breakdown by type (Phải chi, Phát sinh, Lãng phí)
@@ -56,7 +57,7 @@ class TypeBreakdownCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'No spending data',
-              style: TextStyle(color: Colors.grey[600]),
+              style: ComponentTextStyles.emptyMessage(Theme.of(context).textTheme),
             ),
           ],
         ),
@@ -75,9 +76,7 @@ class TypeBreakdownCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   'Type Breakdown',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: theme.textTheme.titleSmall,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -106,16 +105,14 @@ class TypeBreakdownCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           typeNameVi,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: theme.textTheme.bodySmall,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         '${percentage.toStringAsFixed(0)}%',  // Show as "50%"
-                        style: theme.textTheme.bodySmall?.copyWith(
+                        style: theme.textTheme.labelSmall?.copyWith(
                           color: color,
                           fontWeight: FontWeight.bold,
                         ),

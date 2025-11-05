@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/currency_formatter.dart';
+import '../../theme/typography/app_typography.dart';
 import 'summary_stat_card.dart';
 
 /// Unified card showing spending overview with budget context
@@ -133,7 +134,6 @@ class MonthlyOverviewCard extends StatelessWidget {
               Text(
                 'Monthly Overview',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
                   color: theme.colorScheme.primary,
                 ),
               ),
@@ -156,18 +156,12 @@ class MonthlyOverviewCard extends StatelessWidget {
                         totalAmount,
                         context: CurrencyContext.full,
                       ),
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                        fontSize: 32,
-                      ),
+                      style: AppTypography.currencyLarge(color: theme.colorScheme.primary),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Total Spending',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: ComponentTextStyles.cardTitle(theme.textTheme),
                     ),
                   ],
                 ),
@@ -188,8 +182,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       statusText,
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: theme.textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: statusColor,
                       ),
@@ -212,14 +205,11 @@ class MonthlyOverviewCard extends StatelessWidget {
                 children: [
                   Text(
                     'Budget (${CurrencyFormatter.format(budgetAmount, context: CurrencyContext.compact)})',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: theme.textTheme.bodySmall,
                   ),
                   Text(
                     '${_percentageUsed.toStringAsFixed(1)}%',
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: theme.textTheme.labelSmall?.copyWith(
                       color: statusColor,
                       fontWeight: FontWeight.bold,
                     ),
@@ -263,10 +253,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           'Remaining',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: theme.textTheme.bodySmall,
                         ),
                       ],
                     ),
@@ -276,8 +263,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                         _remainingAmount.abs(),
                         context: CurrencyContext.compact,
                       ),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      style: AppTypography.currencyMedium(
                         color: _remainingAmount >= 0
                             ? Colors.green
                             : Colors.red,
@@ -308,10 +294,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                             'Previous',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: theme.textTheme.bodySmall,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -326,8 +309,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                             previousMonthAmount,
                             context: CurrencyContext.compact,
                           ),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                          style: AppTypography.currencyMedium(
                             color: theme.colorScheme.primary,
                           ),
                         ),
@@ -346,7 +328,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                                 const SizedBox(width: 2),
                                 Text(
                                   '${percentageChange.abs().toStringAsFixed(1)}%',
-                                  style: TextStyle(
+                                  style: theme.textTheme.labelSmall?.copyWith(
                                     fontSize: 10,
                                     color: trendColor,
                                     fontWeight: FontWeight.bold,

@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../models/month_total.dart';
 import '../utils/currency_formatter.dart';
+import '../theme/typography/app_typography.dart';
 
 /// A line chart showing spending trends over multiple months
 /// Displays monthly totals with interactive tooltips
@@ -21,12 +22,12 @@ class TrendsChart extends StatelessWidget {
   Widget build(BuildContext context) {
     // If no data, show empty state
     if (monthlyTrends.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 200,
         child: Center(
           child: Text(
             'No trend data available',
-            style: TextStyle(color: Colors.grey),
+            style: ComponentTextStyles.emptyMessage(Theme.of(context).textTheme),
           ),
         ),
       );
@@ -89,8 +90,7 @@ class TrendsChart extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   '${trendPercentage.abs().toStringAsFixed(1)}%',
-                  style: TextStyle(
-                    fontSize: 16,
+                  style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: lineColor,
                   ),
@@ -98,9 +98,8 @@ class TrendsChart extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   isIncreasing ? 'vs last month' : 'vs last month',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withAlpha(178),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -131,17 +130,15 @@ class TrendsChart extends StatelessWidget {
 
                     return LineTooltipItem(
                       '$monthStr\n',
-                      TextStyle(
+                      theme.textTheme.labelMedium!.copyWith(
                         color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w500,
-                        fontSize: 12,
                       ),
                       children: [
                         TextSpan(
                           text: CurrencyFormatter.format(monthTotal.total, context: CurrencyContext.compact),
-                          style: TextStyle(
+                          style: theme.textTheme.labelLarge!.copyWith(
                             color: theme.colorScheme.primary,
-                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -169,9 +166,8 @@ class TrendsChart extends StatelessWidget {
                         angle: -0.5, // Slight angle for better readability
                         child: Text(
                           monthStr,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: theme.colorScheme.onSurface.withAlpha(178),
+                          style: theme.textTheme.labelSmall!.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ),
@@ -189,9 +185,8 @@ class TrendsChart extends StatelessWidget {
                     // Use compact format for chart axis labels
                     return Text(
                       CurrencyFormatter.format(value, context: CurrencyContext.compact),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.colorScheme.onSurface.withAlpha(178),
+                      style: theme.textTheme.labelSmall!.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     );
                   },

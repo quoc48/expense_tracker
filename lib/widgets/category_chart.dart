@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../utils/currency_formatter.dart';
+import '../theme/typography/app_typography.dart';
 
 /// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
 /// Uses fl_chart for beautiful and interactive visualizations
@@ -48,12 +49,12 @@ class CategoryChart extends StatelessWidget {
   Widget build(BuildContext context) {
     // If no data, show empty state
     if (categoryBreakdown.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 200,
         child: Center(
           child: Text(
             'No category data available',
-            style: TextStyle(color: Colors.grey),
+            style: ComponentTextStyles.emptyMessage(Theme.of(context).textTheme),
           ),
         ),
       );
@@ -84,17 +85,15 @@ class CategoryChart extends StatelessWidget {
                   final amount = sortedEntries[groupIndex].value;
                   return BarTooltipItem(
                     '$categoryNameVi\n',  // Already in Vietnamese!
-                    TextStyle(
+                    theme.textTheme.labelMedium!.copyWith(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
                     ),
                     children: [
                       TextSpan(
                         text: CurrencyFormatter.format(amount, context: CurrencyContext.compact),
-                        style: TextStyle(
+                        style: theme.textTheme.labelLarge!.copyWith(
                           color: theme.colorScheme.primary,
-                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -135,9 +134,8 @@ class CategoryChart extends StatelessWidget {
                     // Use compact format for chart axis labels
                     return Text(
                       CurrencyFormatter.format(value, context: CurrencyContext.compact),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.colorScheme.onSurface.withAlpha(178),
+                      style: theme.textTheme.labelSmall!.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     );
                   },

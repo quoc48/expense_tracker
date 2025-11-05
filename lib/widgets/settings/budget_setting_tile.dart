@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/currency_formatter.dart';
+import '../../theme/typography/app_typography.dart';
 import 'budget_edit_dialog.dart';
 
 /// Budget setting tile that displays current budget and opens edit dialog
@@ -32,9 +33,8 @@ class BudgetSettingTile extends StatelessWidget {
           currentBudget,
           context: CurrencyContext.full,
         ),
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
+        style: AppTypography.currencyMedium(
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
       trailing: const Icon(Icons.edit, color: Colors.grey),

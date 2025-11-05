@@ -9,6 +9,7 @@ import '../widgets/trends_chart.dart';
 import '../widgets/summary_cards/monthly_overview_card.dart';
 import '../widgets/summary_cards/type_breakdown_card.dart';
 import '../providers/user_preferences_provider.dart';
+import '../theme/typography/app_typography.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -158,9 +159,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             // Month display
             Text(
               monthFormat.format(_selectedMonth),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
 
             // Next month button (disabled if current month)
@@ -252,6 +251,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   /// Empty state when no expenses exist for the selected month
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(40.0),
@@ -260,24 +261,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Icon(
               Icons.insights_outlined,
               size: 64,
-              color: Colors.grey[400],
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
             ),
             const SizedBox(height: 16),
             Text(
               'No expenses this month',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
+              style: ComponentTextStyles.emptyTitle(theme.textTheme),
             ),
             const SizedBox(height: 8),
             Text(
               'Add some expenses to see analytics',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: ComponentTextStyles.emptyMessage(theme.textTheme),
             ),
           ],
         ),
@@ -309,9 +303,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 const SizedBox(width: 8),
                 Text(
                   'Category Breakdown',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),
@@ -346,9 +338,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 const SizedBox(width: 8),
                 Text(
                   'Spending Trends (Last 6 Months)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),

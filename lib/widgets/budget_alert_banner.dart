@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/typography/app_typography.dart';
 
 /// Alert banner shown at the top of expense list when approaching or exceeding budget
 ///
@@ -163,10 +164,9 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
           Expanded(
             child: Text(
               _message,
-              style: TextStyle(
+              style: ComponentTextStyles.alertMessage(Theme.of(context).textTheme).copyWith(
                 color: _borderColor.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w500,
-                fontSize: 14,
               ),
             ),
           ),

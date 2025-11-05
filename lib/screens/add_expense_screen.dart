@@ -6,6 +6,7 @@ import '../models/expense.dart';
 import '../repositories/expense_repository.dart';
 import '../repositories/supabase_expense_repository.dart';
 import '../utils/currency_formatter.dart';
+import '../theme/typography/app_typography.dart';
 
 /// AddExpenseScreen: Form for creating new expenses OR editing existing ones (SIMPLIFIED - Phase 5.5.1)
 ///
@@ -257,12 +258,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     const SizedBox(height: 16),
 
                     // Expense Type
-                    const Text(
+                    Text(
                       'Expense Type',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: ComponentTextStyles.fieldLabel(Theme.of(context).textTheme),
                     ),
                     const SizedBox(height: 8),
                     SegmentedButton<String>(
@@ -286,11 +284,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       },
                     ),
                     if (_selectedTypeVi == null)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 8, left: 12),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, left: 12),
                         child: Text(
                           'Please select an expense type',
-                          style: TextStyle(color: Colors.red, fontSize: 12),
+                          style: ComponentTextStyles.fieldError(Theme.of(context).textTheme).copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     const SizedBox(height: 16),
@@ -306,7 +306,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         ),
                         child: Text(
                           DateFormat('MMMM dd, yyyy').format(_selectedDate),
-                          style: const TextStyle(fontSize: 16),
+                          style: ComponentTextStyles.fieldInput(Theme.of(context).textTheme),
                         ),
                       ),
                     ),
@@ -333,7 +333,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         padding: const EdgeInsets.all(16),
                         child: Text(
                           isEditing ? 'Update Expense' : 'Save Expense',
-                          style: const TextStyle(fontSize: 16),
+                          style: ComponentTextStyles.buttonPrimary(Theme.of(context).textTheme),
                         ),
                       ),
                     ),
