@@ -47,6 +47,9 @@ dependencies:
   # Beautiful and interactive charts for Flutter
   fl_chart: ^0.69.0
 
+  # Modern minimalist icon library with 5 weights
+  phosphor_flutter: ^2.1.0
+
   # Supabase client for Flutter (PostgreSQL, Auth, Realtime)
   supabase_flutter: ^2.0.0
 
