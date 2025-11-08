@@ -10,6 +10,7 @@ import '../widgets/summary_cards/monthly_overview_card.dart';
 import '../widgets/summary_cards/type_breakdown_card.dart';
 import '../providers/user_preferences_provider.dart';
 import '../theme/typography/app_typography.dart';
+import '../theme/constants/app_spacing.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -75,14 +76,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           );
 
           return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0), // Material Design 3: 20px edge padding
-              child: Column(
+            child: Column(  // NO outer padding, like Expenses page
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Month selector
+                  // Month selector (has its own margin)
                   _buildMonthSelector(),
-                  const SizedBox(height: 20),
 
                   // Summary cards grid with fade transition
                   AnimatedSwitcher(
@@ -100,9 +98,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       key: ValueKey(_selectedMonth.toString()),
                     ),
                   ),
-                  const SizedBox(height: 20),
 
-                  // Charts with fade transition
+                  // Charts with fade transition (cards have their own margins)
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     transitionBuilder: (child, animation) {
@@ -118,7 +115,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             children: [
                               // Category Breakdown Chart
                               _buildCategoryBreakdownCard(monthExpenses),
-                              const SizedBox(height: 20),
+                              // No SizedBox - cards have margins
 
                               // Spending Trends Chart
                               _buildSpendingTrendsCard(expenseProvider.expenses),
@@ -127,7 +124,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                 ],
               ),
-            ),
           );
         },
       ),
@@ -136,6 +132,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   /// Month selector widget with previous/next buttons
   Widget _buildMonthSelector() {
+    // Add margin like Expenses cards
     // Format: "October 2025"
     final monthFormat = DateFormat('MMMM yyyy');
     final isCurrentMonth = AnalyticsCalculator.isSameMonth(
@@ -144,6 +141,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
 
     return Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,  // 16px like Expenses
+        vertical: AppSpacing.spaceXs,     // 8px like Expenses
+      ),
+      // Enhanced shadow matching all cards
+      elevation: 6,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
@@ -237,7 +244,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           previousMonthName: previousMonthName,
           isCurrentMonth: isCurrentMonth,
         ),
-        const SizedBox(height: 12),
+        // No SizedBox needed - cards have their own vertical margins
 
         // 2. Type Breakdown (full width)
         // Shows: Phải chi, Phát sinh, Lãng phí percentages (sorted by highest)
@@ -254,8 +261,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final theme = Theme.of(context);
 
     return Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,
+        vertical: AppSpacing.spaceXs,
+      ),
+      // Enhanced shadow matching all cards
+      elevation: 6,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(AppSpacing.space3xl),  // Extra large padding for empty state
         child: Column(
           children: [
             Icon(
@@ -288,8 +305,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
 
     return Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,
+        vertical: AppSpacing.spaceXs,
+      ),
+      // Enhanced shadow matching all cards
+      elevation: 6,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -323,8 +350,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final monthlyTrends = AnalyticsCalculator.getMonthlyTrend(allExpenses, 6);
 
     return Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,
+        vertical: AppSpacing.spaceXs,
+      ),
+      // Enhanced shadow matching all cards
+      elevation: 6,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

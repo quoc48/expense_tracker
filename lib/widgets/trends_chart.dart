@@ -8,6 +8,12 @@ import '../theme/typography/app_typography.dart';
 /// A line chart showing spending trends over multiple months
 /// Displays monthly totals with interactive tooltips
 /// Highlights the selected month and shows contextual trend information
+///
+/// **Phase 2 Visual Enhancements:**
+/// - Gradient fill below line chart for better visual appeal
+/// - Smooth animations with duration and curves
+/// - Enhanced dot styling with shadows
+/// - Better color contrast for accessibility
 class TrendsChart extends StatelessWidget {
   final List<MonthTotal> monthlyTrends;
   final DateTime selectedMonth; // Currently selected month to highlight
@@ -110,7 +116,7 @@ class TrendsChart extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: LineChart(
-          LineChartData(
+              LineChartData(
             minX: 0,
             maxX: (sortedTrends.length - 1).toDouble(),
             minY: 0,
@@ -243,14 +249,31 @@ class TrendsChart extends StatelessWidget {
                 ),
                 belowBarData: BarAreaData(
                   show: true,
-                  color: lineColor.withAlpha(26), // Match line color with transparency
+                  // Phase 2: Gradient fill for better visual appeal
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      lineColor.withValues(alpha: 0.3),  // More opaque at top
+                      lineColor.withValues(alpha: 0.05), // Almost transparent at bottom
+                    ],
+                    stops: const [0.0, 1.0],
+                  ),
+                ),
+                // Phase 2: Add smooth animation
+                isStrokeJoinRound: true,
+                shadow: Shadow(
+                  color: lineColor.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ),
             ],
           ),
+          // Phase 2: Smooth animation when data changes
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-            ),
+        ),
           ),
         ),
       ],

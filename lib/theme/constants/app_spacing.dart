@@ -22,7 +22,7 @@ class AppSpacing {
   // Component-specific spacing values
   static const double cardPadding = spaceMd;          // 16px inside cards
   static const double cardMargin = spaceSm;           // 12px between cards
-  static const double screenPadding = spaceLg;        // 20px screen edges
+  static const double screenPadding = spaceMd;        // 16px screen edges (matches Expenses)
   static const double listItemGap = spaceSm;          // 12px between list items
   static const double sectionGap = spaceXl;           // 24px between sections
   static const double inputSpacing = spaceSm;         // 12px between form fields

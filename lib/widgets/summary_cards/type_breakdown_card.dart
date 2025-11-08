@@ -68,15 +68,15 @@ class TypeBreakdownCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header (matching Category Chart style)
           Row(
             children: [
-              Icon(Icons.donut_small, size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
+              Icon(Icons.donut_small, color: theme.colorScheme.primary),  // Default icon size
+              const SizedBox(width: 8),  // Consistent icon-text spacing
               Flexible(
                 child: Text(
                   'Type Breakdown',
-                  style: theme.textTheme.titleSmall,
+                  style: theme.textTheme.titleMedium,  // Match Category Chart
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

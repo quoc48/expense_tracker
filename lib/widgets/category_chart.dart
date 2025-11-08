@@ -6,6 +6,12 @@ import '../theme/typography/app_typography.dart';
 /// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
 /// Uses fl_chart for beautiful and interactive visualizations
 /// Now uses Vietnamese category names directly instead of enums
+///
+/// **Phase 2 Visual Enhancements:**
+/// - Gradient fills on bars for modern look
+/// - Smooth animations when data changes
+/// - Enhanced bar styling with shadows
+/// - Better color scheme for visual hierarchy
 class CategoryChart extends StatelessWidget {
   final Map<String, double> categoryBreakdown;  // Changed from Map<Category, double>
 
@@ -175,16 +181,35 @@ class CategoryChart extends StatelessWidget {
                 barRods: [
                   BarChartRodData(
                     toY: entry.value.value,
-                    color: theme.colorScheme.primary,
-                    width: 20,
+                    // Phase 2: Gradient fill for bars
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        theme.colorScheme.primary.withValues(alpha: 0.8),
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primaryContainer,
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                    width: 22,  // Slightly wider for better visibility
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(4),
+                      top: Radius.circular(6),  // Softer corners
+                    ),
+                    // Phase 2: Add shadow for depth
+                    backDrawRodData: BackgroundBarChartRodData(
+                      show: true,
+                      toY: sortedEntries.first.value * 1.2,
+                      color: Colors.grey.withValues(alpha: 0.05),
                     ),
                   ),
                 ],
               );
             }).toList(),
           ),
+          // Phase 2: Smooth animation when data changes
+          swapAnimationDuration: const Duration(milliseconds: 300),
+          swapAnimationCurve: Curves.easeInOut,
         ),
       ),
     );

@@ -175,6 +175,12 @@ class ExpenseListScreen extends StatelessWidget {
           horizontal: AppSpacing.spaceMd,
           vertical: AppSpacing.spaceXs,
         ),
+        // Enhanced shadow matching Analytics cards
+        elevation: 6,
+        shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),  // Rounded corners
+        ),
         child: ListTile(
           contentPadding: EdgeInsets.all(AppSpacing.spaceMd),
           leading: CircleAvatar(

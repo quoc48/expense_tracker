@@ -2,9 +2,16 @@ import 'package:flutter/material.dart';
 import '../theme/typography/app_typography.dart';
 
 /// Alert banner shown at the top of expense list when approaching or exceeding budget
+/// **Phase 2 Enhanced** with gradients and animations
 ///
 /// **Purpose:**
 /// Provides immediate visual feedback when user's spending approaches budget limits
+///
+/// **Phase 2 Visual Enhancements:**
+/// - Gradient backgrounds (warning: orange→yellow, critical/over: red→orange)
+/// - Pulse animation when budget exceeded (continuous subtle scale effect)
+/// - Enhanced shadows for better depth perception
+/// - Softer border radius (8px) for modern aesthetic
 ///
 /// **Display Logic:**
 /// - < 70%: No banner (all good)
@@ -53,16 +60,40 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
     }
   }
 
-  /// Get background color based on alert level
-  Color get _backgroundColor {
+  /// Get gradient background based on alert level
+  /// Phase 2: Using gradients instead of flat colors for more visual interest
+  LinearGradient get _backgroundGradient {
     switch (_alertLevel) {
       case 'over':
-        return Colors.red.shade50;
+        return LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.red.shade100,
+            Colors.red.shade50,
+            Colors.orange.shade50,
+          ],
+        );
       case 'critical':
-        return Colors.red.shade50;
+        return LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.red.shade100,
+            Colors.red.shade50,
+          ],
+        );
       case 'warning':
       default:
-        return Colors.orange.shade50;
+        return LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.orange.shade100,
+            Colors.orange.shade50,
+            Colors.yellow.shade50,
+          ],
+        );
     }
   }
 
@@ -137,18 +168,29 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
       return const SizedBox.shrink();
     }
 
-    return Container(
+    // Pulse animation for critical alerts (over budget)
+    final shouldPulse = _alertLevel == 'over';
+    
+    final banner = Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: _backgroundColor,
+        gradient: _backgroundGradient,  // Gradient background instead of flat color
         border: Border(
           left: BorderSide(
             color: _borderColor,
             width: 4,
           ),
         ),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),  // Softer corners (was 4)
+        // Add subtle shadow for depth
+        boxShadow: [
+          BoxShadow(
+            color: _borderColor.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -187,5 +229,32 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
         ],
       ),
     );
+
+    // Wrap with pulse animation for "over budget" state
+    if (shouldPulse) {
+      return TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 1500),
+        curve: Curves.easeInOut,
+        builder: (context, value, child) {
+          // Pulse effect: scale slightly (subtle breathing effect)
+          final scale = 1.0 + (0.02 * (0.5 + 0.5 * (1.0 - value.clamp(0.0, 1.0))));
+          
+          return Transform.scale(
+            scale: scale,
+            child: child,
+          );
+        },
+        onEnd: () {
+          // Restart animation for continuous pulse
+          if (mounted) {
+            setState(() {});
+          }
+        },
+        child: banner,
+      );
+    }
+
+    return banner;
   }
 }
