@@ -115,7 +115,7 @@ class TypeBreakdownCard extends StatelessWidget {
                       Text(
                         '${percentage.toStringAsFixed(0)}%',  // Show as "50%"
                         style: AppTypography.currencySmall(color: color).copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],

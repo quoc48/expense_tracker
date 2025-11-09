@@ -99,7 +99,7 @@ class TrendsChart extends StatelessWidget {
                 Text(
                   '${trendPercentage.abs().toStringAsFixed(1)}%',
                   style: AppTypography.currencyMedium(color: lineColor).copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 8),

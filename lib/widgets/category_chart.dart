@@ -71,7 +71,7 @@ class CategoryChart extends StatelessWidget {
                     '$categoryNameVi\n',  // Already in Vietnamese!
                     theme.textTheme.labelMedium!.copyWith(
                       color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                     children: [
                       TextSpan(
