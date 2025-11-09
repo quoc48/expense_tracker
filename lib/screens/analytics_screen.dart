@@ -147,9 +147,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         horizontal: AppSpacing.spaceMd,  // 16px like Expenses
         vertical: AppSpacing.spaceXs,     // 8px like Expenses
       ),
-      // Enhanced shadow matching all cards
-      elevation: 6,
-      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+      // Minimalist: Subtle elevation for depth
+      elevation: 1,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -267,9 +267,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         horizontal: AppSpacing.spaceMd,
         vertical: AppSpacing.spaceXs,
       ),
-      // Enhanced shadow matching all cards
-      elevation: 6,
-      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+      // Minimalist: Subtle elevation for depth
+      elevation: 1,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -311,9 +311,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         horizontal: AppSpacing.spaceMd,
         vertical: AppSpacing.spaceXs,
       ),
-      // Enhanced shadow matching all cards
-      elevation: 6,
-      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+      // Minimalist: Subtle elevation for depth
+      elevation: 1,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -356,9 +356,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         horizontal: AppSpacing.spaceMd,
         vertical: AppSpacing.spaceXs,
       ),
-      // Enhanced shadow matching all cards
-      elevation: 6,
-      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+      // Minimalist: Subtle elevation for depth
+      elevation: 1,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
