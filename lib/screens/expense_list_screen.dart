@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
@@ -13,6 +14,7 @@ import '../theme/typography/app_typography.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_spacing.dart';
 import '../theme/constants/app_constants.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
 ///
@@ -39,7 +41,7 @@ class ExpenseListScreen extends StatelessWidget {
             actions: [
               // Settings button
               IconButton(
-                icon: const Icon(Icons.settings),
+                icon: const Icon(PhosphorIconsLight.gear),
                 tooltip: 'Settings',
                 onPressed: () {
                   Navigator.push(
@@ -66,7 +68,7 @@ class ExpenseListScreen extends StatelessWidget {
           floatingActionButton: FloatingActionButton(
             onPressed: () => _addExpense(context),
             tooltip: 'Add Expense',
-            child: const Icon(Icons.add),
+            child: const Icon(PhosphorIconsRegular.plus), // Regular for FAB (slightly bolder)
           ),
         );
       },
@@ -82,7 +84,7 @@ class ExpenseListScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.receipt_long,
+            PhosphorIconsLight.receipt,
             size: AppConstants.iconSize3xl * 1.5, // 72
             color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
           ),
@@ -142,7 +144,6 @@ class ExpenseListScreen extends StatelessWidget {
   Widget _buildExpenseCard(BuildContext context, Expense expense, int index) {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Dismissible(
       key: Key(expense.id),
@@ -159,8 +160,8 @@ class ExpenseListScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppConstants.cardRadius),
         ),
         child: Icon(
-          Icons.delete,
-          color: Colors.white,
+          PhosphorIconsLight.trash,
+          color: MinimalistColors.gray50,  // Main background - for delete icon on red background
           size: AppConstants.iconSizeLg,
         ),
       ),
@@ -173,115 +174,48 @@ class ExpenseListScreen extends StatelessWidget {
       child: Card(
         margin: EdgeInsets.symmetric(
           horizontal: AppSpacing.spaceMd,
-          vertical: AppSpacing.spaceXs,
+          vertical: AppSpacing.space2xs,  // 4px - creates 8px total gap between cards
         ),
-        // Enhanced shadow matching Analytics cards
-        elevation: 6,
-        shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.15),
+        // Minimalist: Subtle elevation for depth
+        elevation: 2,
+        shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),  // Rounded corners
         ),
         child: ListTile(
-          contentPadding: EdgeInsets.all(AppSpacing.spaceMd),
+          dense: true,  // Enable dense mode for tighter spacing
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.spaceMd,   // 16px
+            vertical: AppSpacing.space2xs,    // 4px - ultra-compact
+          ),
+          minVerticalPadding: 0,  // Remove default ListTile vertical padding
           leading: CircleAvatar(
-            backgroundColor: expense.typeColor.withValues(alpha: 0.2),
+            backgroundColor: MinimalistColors.gray100,  // Card background
             radius: 20,
             child: Icon(
               expense.categoryIcon,
-              color: expense.typeColor,
+              color: MinimalistColors.gray800,  // Subheadings
               size: AppConstants.iconSizeSm,
             ),
           ),
           title: Text(
             expense.description,
-            style: ComponentTextStyles.expenseTitle(theme.textTheme),
+            style: ComponentTextStyles.expenseTitleCompact(theme.textTheme),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Padding(
-            padding: EdgeInsets.only(top: AppSpacing.space2xs),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.category_outlined,
-                      size: AppConstants.iconSizeXs,
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                    ),
-                    SizedBox(width: AppSpacing.space2xs),
-                    Flexible(
-                      child: Text(
-                        expense.categoryNameVi,
-                        style: ComponentTextStyles.expenseCategory(theme.textTheme),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: AppSpacing.spaceSm),
-                    Icon(
-                      Icons.today_outlined,
-                      size: AppConstants.iconSizeXs,
-                      color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
-                    ),
-                    SizedBox(width: AppSpacing.space2xs),
-                    Flexible(
-                      child: Text(
-                        dateFormat.format(expense.date),
-                        style: ComponentTextStyles.expenseDate(theme.textTheme),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                if (expense.note != null) ...[
-                  SizedBox(height: AppSpacing.space2xs),
-                  Text(
-                    expense.note!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
+            padding: EdgeInsets.only(top: AppSpacing.space2xs),  // 4px minimal gap
+            child: Text(
+              dateFormat.format(expense.date),
+              style: ComponentTextStyles.expenseDateCompact(theme.textTheme),
             ),
           ),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
-                style: AppTypography.currencyMedium(
-                  color: expense.typeColor,
-                ),
-              ),
-              SizedBox(height: AppSpacing.space2xs),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.spaceXs,
-                  vertical: AppSpacing.space2xs,
-                ),
-                decoration: BoxDecoration(
-                  color: expense.typeColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppConstants.chipRadius),
-                  border: Border.all(
-                    color: expense.typeColor.withValues(alpha: 0.5),
-                    width: AppConstants.borderDefault,
-                  ),
-                ),
-                child: Text(
-                  expense.typeNameVi,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: expense.typeColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          trailing: Text(
+            CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
+            style: AppTypography.currencyMedium(
+              color: MinimalistColors.gray900,  // Primary text
+            ),
           ),
           onTap: () => _editExpense(context, expense),
         ),

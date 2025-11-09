@@ -26,6 +26,7 @@ class MinimalistColors {
   static const Color gray600 = Color(0xFF757575);  // Labels
   static const Color gray700 = Color(0xFF616161);  // Body text
   static const Color gray800 = Color(0xFF424242);  // Subheadings
+  static const Color gray850 = Color(0xFF2D2D2D);  // Strong emphasis (added)
   static const Color gray900 = Color(0xFF212121);  // Primary text
 
   /// Pure black and white
@@ -51,6 +52,19 @@ class MinimalistColors {
   /// Info state (subtle)
   static const Color infoBackground = Color(0xFFE8F4FD);
   static const Color infoText = Color(0xFF0D47A1);
+
+  // ==========================================
+  // Alert Colors (warm minimalist earth tones)
+  // ==========================================
+
+  /// Budget warning (70-90%) - Sandy gold
+  static const Color alertWarning = Color(0xFFE9C46A);
+
+  /// Budget critical (90-100%) - Peachy orange
+  static const Color alertCritical = Color(0xFFF4A261);
+
+  /// Budget over/error (>100%) - Coral terracotta
+  static const Color alertError = Color(0xFFE76F51);
 
   // ==========================================
   // Helper Methods
@@ -94,26 +108,30 @@ class MinimalistColors {
   // ==========================================
 
   /// Get budget progress color based on percentage
+  /// Uses minimalist alert colors (warm earth tones)
   static Color getBudgetColor(double percentage) {
     if (percentage >= 100) {
-      return errorText; // Over budget - red
+      return alertError;     // Over budget - coral terracotta
     } else if (percentage >= 90) {
-      return gray900;   // Near limit - black
+      return alertCritical;  // Near limit - peachy orange
     } else if (percentage >= 70) {
-      return gray700;   // Getting close - dark gray
+      return alertWarning;   // Approaching - sandy gold
     } else {
-      return gray500;   // Safe - medium gray
+      return gray500;        // Safe - medium gray (no alert)
     }
   }
 
   /// Get budget background based on percentage
+  /// Returns subtle tints of alert colors for cohesive look
   static Color getBudgetBackground(double percentage) {
     if (percentage >= 100) {
-      return errorBackground; // Over budget
+      return alertError.withValues(alpha: 0.05);     // Subtle coral tint
     } else if (percentage >= 90) {
-      return warningBackground; // Warning zone
+      return alertCritical.withValues(alpha: 0.05);  // Subtle orange tint
+    } else if (percentage >= 70) {
+      return alertWarning.withValues(alpha: 0.05);   // Subtle gold tint
     } else {
-      return white; // Normal
+      return white;  // Normal - no tint needed
     }
   }
 

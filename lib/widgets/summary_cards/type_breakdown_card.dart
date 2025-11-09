@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../theme/typography/app_typography.dart';
+import '../../theme/minimalist/minimalist_colors.dart';
 import 'summary_stat_card.dart';
 
 /// Card showing expense breakdown by type (Phải chi, Phát sinh, Lãng phí)
@@ -30,17 +32,17 @@ class TypeBreakdownCard extends StatelessWidget {
     required this.totalAmount,
   });
 
-  /// Get color for expense type (reusing logic from Expense model)
+  /// Get color for expense type - minimalist grayscale approach
   Color _getTypeColor(String typeNameVi) {
     switch (typeNameVi) {
       case 'Phải chi':
-        return Colors.blue;      // Necessary expenses (calm color)
+        return MinimalistColors.gray850;  // Strong emphasis - darkest (most important)
       case 'Phát sinh':
-        return Colors.orange;    // Unexpected expenses (warning color)
+        return MinimalistColors.gray600;  // Labels - medium
       case 'Lãng phí':
-        return Colors.red;       // Wasteful expenses (alert color)
+        return MinimalistColors.gray500;  // Secondary - lightest
       default:
-        return Colors.grey;
+        return MinimalistColors.gray400;  // Disabled
     }
   }
 
@@ -53,7 +55,7 @@ class TypeBreakdownCard extends StatelessWidget {
       return SummaryStatCard(
         child: Column(
           children: [
-            Icon(Icons.pie_chart_outline, size: 48, color: Colors.grey[400]),
+            Icon(PhosphorIconsLight.chartPie, size: 48, color: MinimalistColors.gray400),  // Disabled
             const SizedBox(height: 8),
             Text(
               'No spending data',
@@ -71,7 +73,7 @@ class TypeBreakdownCard extends StatelessWidget {
           // Header (matching Category Chart style)
           Row(
             children: [
-              Icon(Icons.donut_small, color: theme.colorScheme.primary),  // Default icon size
+              Icon(PhosphorIconsLight.chartDonut, color: MinimalistColors.gray700),  // Body text - subtle
               const SizedBox(width: 8),  // Consistent icon-text spacing
               Flexible(
                 child: Text(

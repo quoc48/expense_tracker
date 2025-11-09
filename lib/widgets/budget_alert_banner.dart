@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
 import '../theme/typography/app_typography.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// Alert banner shown at the top of expense list when approaching or exceeding budget
-/// **Phase 2 Enhanced** with gradients and animations
+/// **Phase 2 Enhanced** with minimalist alert colors
 ///
 /// **Purpose:**
 /// Provides immediate visual feedback when user's spending approaches budget limits
 ///
-/// **Phase 2 Visual Enhancements:**
-/// - Gradient backgrounds (warning: orange→yellow, critical/over: red→orange)
+/// **Phase 2 Visual Design:**
+/// - Warm earth-tone accents (sandy gold → peachy orange → coral terracotta)
+/// - Subtle color-tinted backgrounds (5-10% opacity)
+/// - Dark text for excellent readability (gray900/gray700)
 /// - Pulse animation when budget exceeded (continuous subtle scale effect)
-/// - Enhanced shadows for better depth perception
+/// - Enhanced shadows using accent color
 /// - Softer border radius (8px) for modern aesthetic
 ///
-/// **Display Logic:**
+/// **Display Logic & Colors:**
 /// - < 70%: No banner (all good)
-/// - 70-90%: Warning (yellow/orange) - "Approaching budget limit"
-/// - 90-100%: Critical (red) - "Near budget limit"
-/// - > 100%: Over (dark red) - "Budget exceeded"
+/// - 70-90%: Warning (sandy gold #E9C46A) - "Approaching budget limit"
+/// - 90-100%: Critical (peachy orange #F4A261) - "Near budget limit"
+/// - > 100%: Over (coral terracotta #E76F51) - "Budget exceeded"
 ///
 /// **User Control:**
 /// - Dismissible with close button (✕)
@@ -61,54 +64,65 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
   }
 
   /// Get gradient background based on alert level
-  /// Phase 2: Using gradients instead of flat colors for more visual interest
+  /// Minimalist: Subtle tint of alert color for cohesive look
   LinearGradient get _backgroundGradient {
     switch (_alertLevel) {
       case 'over':
+        // Coral terracotta tint - subtle red background
         return LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.red.shade100,
-            Colors.red.shade50,
-            Colors.orange.shade50,
+            MinimalistColors.alertError.withValues(alpha: 0.05),  // Very subtle red tint
+            MinimalistColors.alertError.withValues(alpha: 0.1),   // Slightly stronger
+            MinimalistColors.alertError.withValues(alpha: 0.05),
           ],
         );
       case 'critical':
+        // Peachy orange tint - subtle orange background
         return LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.red.shade100,
-            Colors.red.shade50,
+            MinimalistColors.alertCritical.withValues(alpha: 0.05),
+            MinimalistColors.alertCritical.withValues(alpha: 0.08),
           ],
         );
       case 'warning':
       default:
+        // Sandy gold tint - subtle yellow background
         return LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.orange.shade100,
-            Colors.orange.shade50,
-            Colors.yellow.shade50,
+            MinimalistColors.alertWarning.withValues(alpha: 0.08),
+            MinimalistColors.alertWarning.withValues(alpha: 0.05),
+            MinimalistColors.alertWarning.withValues(alpha: 0.08),
           ],
         );
     }
   }
 
-  /// Get border color based on alert level
-  Color get _borderColor {
+  /// Get accent color (border + icon) based on alert level
+  /// Minimalist: Warm earth tones for functional alerts
+  Color get _accentColor {
     switch (_alertLevel) {
       case 'over':
-        return Colors.red.shade700;
+        return MinimalistColors.alertError;     // Coral terracotta - budget exceeded
       case 'critical':
-        return Colors.red;
+        return MinimalistColors.alertCritical;  // Peachy orange - near limit
       case 'warning':
       default:
-        return Colors.orange;
+        return MinimalistColors.alertWarning;   // Sandy gold - approaching limit
     }
   }
+
+  /// Get text color (message + close button)
+  /// Always dark for readability
+  Color get _textColor => MinimalistColors.gray900;
+
+  /// Get close button color (slightly lighter than text)
+  Color get _closeColor => MinimalistColors.gray700;
 
   /// Get icon based on alert level
   IconData get _icon {
@@ -178,7 +192,7 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
         gradient: _backgroundGradient,  // Gradient background instead of flat color
         border: Border(
           left: BorderSide(
-            color: _borderColor,
+            color: _accentColor,  // Use alert color for accent
             width: 4,
           ),
         ),
@@ -186,7 +200,7 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
         // Add subtle shadow for depth
         boxShadow: [
           BoxShadow(
-            color: _borderColor.withValues(alpha: 0.2),
+            color: _accentColor.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -194,26 +208,26 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
       ),
       child: Row(
         children: [
-          // Alert icon
+          // Alert icon (uses accent color)
           Icon(
             _icon,
-            color: _borderColor,
+            color: _accentColor,
             size: 20,
           ),
           const SizedBox(width: 12),
 
-          // Message text
+          // Message text (uses dark gray for readability)
           Expanded(
             child: Text(
               _message,
               style: ComponentTextStyles.alertMessage(Theme.of(context).textTheme).copyWith(
-                color: _borderColor.withValues(alpha: 0.9),
+                color: _textColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
 
-          // Close button
+          // Close button (uses medium gray)
           InkWell(
             onTap: _handleDismiss,
             borderRadius: BorderRadius.circular(16),
@@ -221,7 +235,7 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
               padding: const EdgeInsets.all(4),
               child: Icon(
                 Icons.close,
-                color: _borderColor.withValues(alpha: 0.7),
+                color: _closeColor,
                 size: 18,
               ),
             ),

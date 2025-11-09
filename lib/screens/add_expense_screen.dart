@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
 import '../repositories/expense_repository.dart';
 import '../repositories/supabase_expense_repository.dart';
 import '../utils/currency_formatter.dart';
 import '../theme/typography/app_typography.dart';
+import '../theme/minimalist/minimalist_icons.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// AddExpenseScreen: Form for creating new expenses OR editing existing ones (SIMPLIFIED - Phase 5.5.1)
 ///
@@ -109,46 +112,22 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   /// Get icon for a category (helper method for dropdown)
   IconData _getIconForCategory(String categoryNameVi) {
-    // Reuse the same logic as Expense.categoryIcon
-    switch (categoryNameVi) {
-      case 'Thực phẩm':
-      case 'Cà phê':
-        return Icons.restaurant;
-      case 'Đi lại':
-        return Icons.directions_car;
-      case 'Hoá đơn':
-      case 'Tiền nhà':
-        return Icons.lightbulb;
-      case 'Giải trí':
-      case 'Du lịch':
-        return Icons.movie;
-      case 'Tạp hoá':
-      case 'Thời trang':
-        return Icons.shopping_bag;
-      case 'Sức khỏe':
-        return Icons.medical_services;
-      case 'Giáo dục':
-        return Icons.school;
-      case 'Quà vật':
-      case 'TẾT':
-      case 'Biểu gia đình':
-        return Icons.card_giftcard;
-      default:
-        return Icons.more_horiz;
-    }
+    // Use centralized Phosphor icon mapping
+    return MinimalistIcons.getCategoryIcon(categoryNameVi);
   }
 
   /// Get color for expense type (helper method for segmented button)
+  /// Updated for minimalist design: uses centralized grayscale colors
   Color _getColorForType(String typeNameVi) {
     switch (typeNameVi) {
-      case 'Phải chi':
-        return Colors.green;
-      case 'Phát sinh':
-        return Colors.orange;
-      case 'Lãng phí':
-        return Colors.red;
+      case 'Phải chi':  // Must have - darkest
+        return MinimalistColors.gray850;  // Strong emphasis
+      case 'Phát sinh': // Nice to have - medium
+        return MinimalistColors.gray600;  // Labels
+      case 'Lãng phí':  // Wasted - lightest
+        return MinimalistColors.gray500;  // Secondary
       default:
-        return Colors.grey;
+        return MinimalistColors.gray400;  // Disabled
     }
   }
 
@@ -184,7 +163,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         labelText: 'Description',
                         hintText: 'e.g., Grocery shopping',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.description),
+                        prefixIcon: Icon(PhosphorIconsLight.textT),
                       ),
                       textCapitalization: TextCapitalization.sentences,
                       validator: (value) {
@@ -204,7 +183,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         hintText: '50000',  // Vietnamese đồng example
                         helperText: 'Enter amount in Vietnamese đồng',
                         border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.payments),  // Generic currency icon
+                        prefixIcon: const Icon(PhosphorIconsLight.currencyDollar),  // Currency icon
                       ),
                       keyboardType: TextInputType.number,  // Integer only, no decimals
                       inputFormatters: [
@@ -228,7 +207,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Category',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.category),
+                        prefixIcon: Icon(PhosphorIconsLight.tag),
                       ),
                       value: _selectedCategoryVi,
                       items: _categories.map((categoryName) {
@@ -302,7 +281,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Date',
                           border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.calendar_today),
+                          prefixIcon: Icon(PhosphorIconsLight.calendarBlank),
                         ),
                         child: Text(
                           DateFormat('MMMM dd, yyyy').format(_selectedDate),
@@ -319,7 +298,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         labelText: 'Note (Optional)',
                         hintText: 'Add additional details...',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.note),
+                        prefixIcon: Icon(PhosphorIconsLight.note),
                       ),
                       maxLines: 3,
                       textCapitalization: TextCapitalization.sentences,

@@ -34,28 +34,37 @@ class MinimalistIcons {
   // ==========================================
   // Category Icons (Vietnamese)
   // ==========================================
+  // EXACTLY 14 categories as defined in Supabase database
+  // No "Other" category - users must choose specific categories
 
-  /// Map of category names to their icons
+  /// Map of category names to their icons (14 total)
   static const Map<String, IconData> categoryIcons = {
-    'Thực phẩm': PhosphorIconsLight.forkKnife,      // Food
-    'Đi lại': PhosphorIconsLight.car,               // Transportation
-    'Hoá đơn': PhosphorIconsLight.lightning,        // Bills/Utilities
-    'Giải trí': PhosphorIconsLight.popcorn,         // Entertainment
-    'Mua sắm': PhosphorIconsLight.shoppingBag,      // Shopping
-    'Sức khỏe': PhosphorIconsLight.heartbeat,       // Health
-    'Giáo dục': PhosphorIconsLight.graduationCap,   // Education
-    'Quà tặng': PhosphorIconsLight.gift,            // Gifts
-    'Lương': PhosphorIconsLight.wallet,             // Salary/Income
-    'Đồ uống': PhosphorIconsLight.coffee,           // Drinks
-    'Thời trang': PhosphorIconsLight.tShirt,        // Fashion
-    'Công nghệ': PhosphorIconsLight.devices,        // Technology
-    'Cá nhân': PhosphorIconsLight.user,             // Personal
-    'Khác': PhosphorIconsLight.dotsThree,           // Others
+    // 1-7: Core spending categories
+    'Thực phẩm': PhosphorIconsLight.forkKnife,      // 1. Food
+    'Cà phê': PhosphorIconsLight.coffee,            // 2. Coffee
+    'Đi lại': PhosphorIconsLight.car,               // 3. Transportation
+    'Hoá đơn': PhosphorIconsLight.lightning,        // 4. Bills
+    'Tiền nhà': PhosphorIconsLight.house,           // 5. Housing
+    'Giải trí': PhosphorIconsLight.popcorn,         // 6. Entertainment
+    'Du lịch': PhosphorIconsLight.airplane,         // 7. Travel
+
+    // 8-11: Shopping & Personal
+    'Tạp hoá': PhosphorIconsLight.shoppingBag,      // 8. Groceries
+    'Thời trang': PhosphorIconsLight.tShirt,        // 9. Fashion
+    'Sức khỏe': PhosphorIconsLight.heartbeat,       // 10. Health
+    'Giáo dục': PhosphorIconsLight.graduationCap,   // 11. Education
+
+    // 12-14: Special occasions
+    'Quà vật': PhosphorIconsLight.gift,             // 12. Gifts
+    'TẾT': PhosphorIconsLight.sparkle,              // 13. Holiday/Tet
+    'Biểu gia đình': PhosphorIconsLight.users,      // 14. Family
   };
 
-  /// Get icon for a category with fallback
+  /// Get icon for a category (no fallback since we have exactly 14)
+  /// If category not found, returns a warning icon to indicate data issue
   static IconData getCategoryIcon(String categoryName) {
-    return categoryIcons[categoryName] ?? PhosphorIconsLight.tag;
+    // Return the icon if found, otherwise warning to indicate unmapped category
+    return categoryIcons[categoryName] ?? PhosphorIconsLight.warning;
   }
 
   // ==========================================

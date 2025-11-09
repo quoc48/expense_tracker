@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../utils/currency_formatter.dart';
 import '../theme/typography/app_typography.dart';
+import '../theme/minimalist/minimalist_icons.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
 /// Uses fl_chart for beautiful and interactive visualizations
@@ -22,32 +24,8 @@ class CategoryChart extends StatelessWidget {
 
   /// Helper: Get icon for Vietnamese category name
   IconData _getCategoryIcon(String categoryNameVi) {
-    switch (categoryNameVi) {
-      case 'Thực phẩm':
-      case 'Cà phê':
-        return Icons.restaurant;
-      case 'Đi lại':
-        return Icons.directions_car;
-      case 'Hoá đơn':
-      case 'Tiền nhà':
-        return Icons.lightbulb;
-      case 'Giải trí':
-      case 'Du lịch':
-        return Icons.movie;
-      case 'Tạp hoá':
-      case 'Thời trang':
-        return Icons.shopping_bag;
-      case 'Sức khỏe':
-        return Icons.medical_services;
-      case 'Giáo dục':
-        return Icons.school;
-      case 'Quà vật':
-      case 'TẾT':
-      case 'Biểu gia đình':
-        return Icons.card_giftcard;
-      default:
-        return Icons.more_horiz;
-    }
+    // Use centralized Phosphor icon mapping
+    return MinimalistIcons.getCategoryIcon(categoryNameVi);
   }
 
 
@@ -99,7 +77,7 @@ class CategoryChart extends StatelessWidget {
                       TextSpan(
                         text: CurrencyFormatter.format(amount, context: CurrencyContext.compact),
                         style: theme.textTheme.labelLarge!.copyWith(
-                          color: theme.colorScheme.primary,
+                          color: MinimalistColors.gray900,  // Primary text - strong contrast for amounts
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -123,7 +101,7 @@ class CategoryChart extends StatelessWidget {
                       child: Icon(
                         _getCategoryIcon(categoryNameVi),  // Use helper method
                         size: 20,
-                        color: theme.colorScheme.primary,
+                        color: MinimalistColors.gray700,  // Body text - subtle but visible
                       ),
                     );
                   },
@@ -168,7 +146,7 @@ class CategoryChart extends StatelessWidget {
               horizontalInterval: sortedEntries.first.value * 0.25, // Increased to reduce label density
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: Colors.grey.withAlpha(51),
+                  color: MinimalistColors.gray300.withValues(alpha: 0.2),  // Inactive borders with transparency
                   strokeWidth: 1,
                 );
               },
@@ -181,14 +159,14 @@ class CategoryChart extends StatelessWidget {
                 barRods: [
                   BarChartRodData(
                     toY: entry.value.value,
-                    // Phase 2: Gradient fill for bars
+                    // Minimalist: Subtle monochrome gradient
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        theme.colorScheme.primary.withValues(alpha: 0.8),
-                        theme.colorScheme.primary,
-                        theme.colorScheme.primaryContainer,
+                        MinimalistColors.gray700,  // Body text - bottom
+                        MinimalistColors.gray600,  // Labels - middle
+                        MinimalistColors.gray500,  // Secondary - top
                       ],
                       stops: const [0.0, 0.5, 1.0],
                     ),
@@ -200,7 +178,7 @@ class CategoryChart extends StatelessWidget {
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: sortedEntries.first.value * 1.2,
-                      color: Colors.grey.withValues(alpha: 0.05),
+                      color: MinimalistColors.gray200.withValues(alpha: 0.05),  // Dividers with very low opacity
                     ),
                   ),
                 ],

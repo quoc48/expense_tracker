@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../utils/analytics_calculator.dart';
@@ -11,6 +12,7 @@ import '../widgets/summary_cards/type_breakdown_card.dart';
 import '../providers/user_preferences_provider.dart';
 import '../theme/typography/app_typography.dart';
 import '../theme/constants/app_spacing.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -158,7 +160,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           children: [
             // Previous month button
             IconButton(
-              icon: const Icon(Icons.chevron_left),
+              icon: const Icon(PhosphorIconsLight.caretLeft),
               onPressed: _previousMonth,
               tooltip: 'Previous month',
             ),
@@ -171,7 +173,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
             // Next month button (disabled if current month)
             IconButton(
-              icon: const Icon(Icons.chevron_right),
+              icon: const Icon(PhosphorIconsLight.caretRight),
               onPressed: isCurrentMonth ? null : _nextMonth,
               tooltip: isCurrentMonth ? 'Cannot view future months' : 'Next month',
             ),
@@ -276,7 +278,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         child: Column(
           children: [
             Icon(
-              Icons.insights_outlined,
+              PhosphorIconsLight.chartLineUp,
               size: 64,
               color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
             ),
@@ -324,8 +326,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.pie_chart,
-                  color: Theme.of(context).colorScheme.primary,
+                  PhosphorIconsLight.chartPie,
+                  color: MinimalistColors.gray700,  // Body text - subtle
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -369,8 +371,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.show_chart,
-                  color: Theme.of(context).colorScheme.primary,
+                  PhosphorIconsLight.chartLineUp,
+                  color: MinimalistColors.gray700,  // Body text - subtle
                 ),
                 const SizedBox(width: 8),
                 Text(

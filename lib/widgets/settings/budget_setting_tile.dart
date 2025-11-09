@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../utils/currency_formatter.dart';
 import '../../theme/typography/app_typography.dart';
+import '../../theme/minimalist/minimalist_colors.dart';
 import 'budget_edit_dialog.dart';
 
 /// Budget setting tile that displays current budget and opens edit dialog
@@ -23,9 +25,9 @@ class BudgetSettingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const Icon(
-        Icons.account_balance_wallet,
-        color: Colors.green,
+      leading: Icon(
+        PhosphorIconsLight.wallet,
+        color: MinimalistColors.gray700,  // Body text - subtle icon
       ),
       title: const Text('Monthly Budget'),
       subtitle: Text(
@@ -34,10 +36,10 @@ class BudgetSettingTile extends StatelessWidget {
           context: CurrencyContext.full,
         ),
         style: AppTypography.currencyMedium(
-          color: Theme.of(context).colorScheme.primary,
+          color: MinimalistColors.gray900,  // Primary text - strong contrast for amounts
         ),
       ),
-      trailing: const Icon(Icons.edit, color: Colors.grey),
+      trailing: Icon(PhosphorIconsLight.pencilSimple, color: MinimalistColors.gray500),  // Secondary - subtle edit icon
       onTap: () => _showBudgetDialog(context),
     );
   }

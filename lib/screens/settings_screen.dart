@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../providers/user_preferences_provider.dart';
 import '../widgets/settings/budget_setting_tile.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// Settings screen with category-based organization
 ///
@@ -36,7 +38,7 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  Icon(PhosphorIconsLight.warningCircle, size: 48, color: MinimalistColors.gray800),  // Subheadings
                   const SizedBox(height: 16),
                   Text(
                     'Error loading settings',
@@ -46,7 +48,7 @@ class SettingsScreen extends StatelessWidget {
                   Text(
                     prefsProvider.errorMessage!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
+                          color: MinimalistColors.gray600,  // Labels
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -81,7 +83,7 @@ class SettingsScreen extends StatelessWidget {
               ),
               _buildPlaceholderTile(
                 context,
-                icon: Icons.currency_exchange,
+                icon: PhosphorIconsLight.currencyCircleDollar,
                 title: 'Currency',
                 subtitle: 'VND (Vietnamese đồng)',
               ),
@@ -91,13 +93,13 @@ class SettingsScreen extends StatelessWidget {
               _buildSectionHeader(context, 'Appearance'),
               _buildPlaceholderTile(
                 context,
-                icon: Icons.language,
+                icon: PhosphorIconsLight.globe,
                 title: 'Language',
                 subtitle: 'Vietnamese',
               ),
               _buildPlaceholderTile(
                 context,
-                icon: Icons.palette,
+                icon: PhosphorIconsLight.palette,
                 title: 'Theme',
                 subtitle: 'System default',
               ),
@@ -107,13 +109,13 @@ class SettingsScreen extends StatelessWidget {
               _buildSectionHeader(context, 'Advanced'),
               _buildPlaceholderTile(
                 context,
-                icon: Icons.repeat,
+                icon: PhosphorIconsLight.repeat,
                 title: 'Recurring Expenses',
                 subtitle: 'Manage automatic expenses',
               ),
               _buildPlaceholderTile(
                 context,
-                icon: Icons.file_download,
+                icon: PhosphorIconsLight.downloadSimple,
                 title: 'Export Data',
                 subtitle: 'Download expenses as CSV',
               ),
@@ -131,7 +133,7 @@ class SettingsScreen extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
+              color: MinimalistColors.gray700,  // Body text - subtle section headers
             ),
       ),
     );
@@ -149,10 +151,10 @@ class SettingsScreen extends StatelessWidget {
     required String subtitle,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Colors.grey[400]),
+      leading: Icon(icon, color: MinimalistColors.gray500),  // Secondary - subtle icons
       title: Text(title),
       subtitle: Text(subtitle),
-      trailing: Icon(Icons.chevron_right, color: Colors.grey[400]),
+      trailing: Icon(PhosphorIconsLight.caretRight, color: MinimalistColors.gray500),  // Secondary
       enabled: false, // Grayed out to indicate not yet implemented
     );
   }

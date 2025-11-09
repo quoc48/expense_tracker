@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../minimalist/minimalist_colors.dart';
 
 /// Typography system for the Expense Tracker app
 /// Uses Inter font family (bundled locally) for optimal readability and modern aesthetics
@@ -190,6 +191,14 @@ class ComponentTextStyles {
   static TextStyle expenseAmount(TextTheme theme) => AppTypography.currencyMedium();
   static TextStyle expenseCategory(TextTheme theme) => theme.bodySmall!;
   static TextStyle expenseDate(TextTheme theme) => theme.labelSmall!;
+
+  // Compact expense list item (tight line height without clipping)
+  static TextStyle expenseTitleCompact(TextTheme theme) => theme.titleLarge!.copyWith(height: 1.2);  // Balanced: tight yet readable
+  static TextStyle expenseDateCompact(TextTheme theme) => theme.labelSmall!.copyWith(
+    height: 1.0,  // Tight but no clipping
+    fontSize: 12,  // Increased from 11px for better readability
+    color: MinimalistColors.gray700,  // Body text level - stronger contrast than textTertiary
+  );
 
   // Analytics card
   static TextStyle cardTitle(TextTheme theme) =>

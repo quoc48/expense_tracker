@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// Loading skeleton widgets with shimmer effect for better UX
 ///
@@ -36,8 +37,8 @@ class SkeletonShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,      // Background color
-      highlightColor: Colors.grey[100]!,  // Shimmer highlight color
+      baseColor: MinimalistColors.gray300,      // Inactive borders - background color
+      highlightColor: MinimalistColors.gray100,  // Card background - shimmer highlight color
       period: const Duration(milliseconds: 1500),  // Animation speed
       child: child,
     );
