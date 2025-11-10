@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'expense_list_screen.dart';
@@ -97,16 +98,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         destinations: const [
           // Expenses tab
           NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
+            icon: Icon(PhosphorIconsLight.receipt),
+            selectedIcon: Icon(PhosphorIconsFill.receipt),
             label: 'Expenses',
             tooltip: 'View and manage expenses',
           ),
 
           // Analytics tab
           NavigationDestination(
-            icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon: Icon(Icons.bar_chart),
+            icon: Icon(PhosphorIconsLight.chartPie),
+            selectedIcon: Icon(PhosphorIconsFill.chartPie),
             label: 'Analytics',
             tooltip: 'View spending analytics',
           ),

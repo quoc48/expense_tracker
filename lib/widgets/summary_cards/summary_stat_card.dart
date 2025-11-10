@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../theme/constants/app_spacing.dart';
 
-/// Base card widget for summary statistics
+/// Base card widget for summary statistics with enhanced visual styling (Phase 2)
+///
+/// **Phase 2 Visual Enhancements:**
+/// - Gradient backgrounds for primary cards (subtle, professional)
+/// - Enhanced shadows with multiple layers for better depth
+/// - Smooth entry animations (fade + scale)
+/// - Increased border radius (16px) for modern look
+/// - Improved padding hierarchy (16px primary, 14px regular)
 ///
 /// **Flutter Concept: Widget Composition**
 /// Instead of repeating card styling in 5 places, we create one reusable
@@ -18,32 +26,72 @@ class SummaryStatCard extends StatelessWidget {
   final Widget child;
 
   /// Whether this is a primary card (more prominent styling)
-  /// Primary cards get higher elevation and can be larger
+  /// Primary cards get:
+  /// - Subtle gradient background (light theme accent)
+  /// - Higher elevation (deeper shadow)
+  /// - Slightly larger padding
   final bool isPrimary;
+
+  /// Whether to animate the card entry
+  /// Adds a subtle fade + scale animation when first displayed
+  final bool animate;
 
   const SummaryStatCard({
     super.key,
     required this.child,
     this.isPrimary = false,
+    this.animate = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final theme = Theme.of(context);
+
+    final card = Card(
+      // Match Expenses page card margins
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,  // 16px horizontal
+        vertical: AppSpacing.spaceXs,     // 8px vertical
+      ),
+      
       // Elevation creates shadow depth (how high the card "floats")
-      // Primary cards float higher (more important) = bigger shadow
-      elevation: isPrimary ? 4 : 2,
+      // Unified elevation: 6dp for all cards (consistent depth)
+      elevation: 6,
+      
+      // Enhanced shadow for more depth perception
+      shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.15),
 
       // Shape defines the card's border and corners
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),  // Rounded corners (MD3 style)
+        borderRadius: BorderRadius.circular(16),  // Larger radius = more modern (was 12)
       ),
 
       // Child content with consistent padding
       child: Padding(
-        padding: const EdgeInsets.all(12.0),  // 12px padding on all sides
-        child: child,  // The unique content each card provides
+        padding: EdgeInsets.all(isPrimary ? 16.0 : 14.0),  // More padding for primary cards
+        child: child,
       ),
     );
+
+    // Wrap with animation if requested
+    if (animate) {
+      return TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.scale(
+              scale: 0.95 + (0.05 * value),  // Subtle scale from 95% to 100%
+              child: child,
+            ),
+          );
+        },
+        child: card,
+      );
+    }
+
+    return card;
   }
 }

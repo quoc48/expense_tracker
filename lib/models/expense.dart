@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/minimalist/minimalist_icons.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 // Legacy enums kept for backward compatibility and icon/color lookup
 // These are NO LONGER used as data fields, only for UI helpers
@@ -33,14 +35,16 @@ extension ExpenseTypeExtension on ExpenseType {
     }
   }
 
+  /// Old color getter - kept for backward compatibility but using grayscale
+  /// Use Expense.typeColor instead for consistent minimalist colors
   Color get color {
     switch (this) {
       case ExpenseType.mustHave:
-        return Colors.green;
+        return MinimalistColors.gray850;  // Strong emphasis
       case ExpenseType.niceToHave:
-        return Colors.orange;
+        return MinimalistColors.gray600;  // Labels
       case ExpenseType.wasted:
-        return Colors.red;
+        return MinimalistColors.gray500;  // Secondary
     }
   }
 }
@@ -68,24 +72,8 @@ extension CategoryExtension on Category {
   }
 
   IconData get icon {
-    switch (this) {
-      case Category.food:
-        return Icons.restaurant;
-      case Category.transportation:
-        return Icons.directions_car;
-      case Category.utilities:
-        return Icons.lightbulb;
-      case Category.entertainment:
-        return Icons.movie;
-      case Category.shopping:
-        return Icons.shopping_bag;
-      case Category.health:
-        return Icons.medical_services;
-      case Category.education:
-        return Icons.school;
-      case Category.other:
-        return Icons.more_horiz;
-    }
+    // Use centralized Phosphor icons via Vietnamese display name
+    return MinimalistIcons.getCategoryIcon(displayName);
   }
 }
 
@@ -123,48 +111,24 @@ class Expense {
   });
 
   /// Get icon for category based on Vietnamese name
-  /// Uses a flexible mapping that can be extended without changing data
+  /// Now uses centralized Phosphor icon mapping from MinimalistIcons
   IconData get categoryIcon {
-    // Map common Vietnamese category names to icons
-    switch (categoryNameVi) {
-      case 'Thực phẩm':
-      case 'Cà phê':
-        return Icons.restaurant;
-      case 'Đi lại':
-        return Icons.directions_car;
-      case 'Hoá đơn':
-      case 'Tiền nhà':
-        return Icons.lightbulb;
-      case 'Giải trí':
-      case 'Du lịch':
-        return Icons.movie;
-      case 'Tạp hoá':
-      case 'Thời trang':
-        return Icons.shopping_bag;
-      case 'Sức khỏe':
-        return Icons.medical_services;
-      case 'Giáo dục':
-        return Icons.school;
-      case 'Quà vật':
-      case 'TẾT':
-      case 'Biểu gia đình':
-        return Icons.card_giftcard;
-      default:
-        return Icons.more_horiz;
-    }
+    // Use centralized icon mapping (exactly 14 categories)
+    return MinimalistIcons.getCategoryIcon(categoryNameVi);
   }
 
   /// Get color for expense type based on Vietnamese name
+  /// Updated for minimalist design: subtle grayscale variations
   Color get typeColor {
     switch (typeNameVi) {
-      case 'Phải chi':
-        return Colors.green;
-      case 'Phát sinh':
-        return Colors.orange;
-      case 'Lãng phí':
-        return Colors.red;
+      case 'Phải chi':  // Must have - darkest (most important)
+        return MinimalistColors.gray850;  // Strong emphasis
+      case 'Phát sinh': // Nice to have - medium
+        return MinimalistColors.gray600;  // Labels
+      case 'Lãng phí':  // Wasted - lightest (least desirable)
+        return MinimalistColors.gray500;  // Secondary
       default:
-        return Colors.grey;
+        return MinimalistColors.gray400;  // Disabled
     }
   }
 

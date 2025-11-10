@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/analytics_calculator.dart';
 import '../widgets/category_chart.dart';
 import '../widgets/trends_chart.dart';
 import '../widgets/summary_cards/monthly_overview_card.dart';
-import '../widgets/summary_cards/type_breakdown_card.dart';
+// import '../widgets/summary_cards/type_breakdown_card.dart';  // Hidden for simplified layout
 import '../providers/user_preferences_provider.dart';
+import 'settings_screen.dart';
+import '../theme/typography/app_typography.dart';
+import '../theme/constants/app_spacing.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -59,6 +65,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analytics'),
+        actions: [
+          // Settings button
+          IconButton(
+            icon: const Icon(PhosphorIconsLight.gear),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+          // Logout button
+          IconButton(
+            icon: const Icon(PhosphorIconsLight.signOut),
+            tooltip: 'Sign Out',
+            onPressed: () => _showLogoutDialog(context),
+          ),
+        ],
       ),
       body: Consumer<ExpenseProvider>(
         builder: (context, expenseProvider, child) {
@@ -74,14 +101,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           );
 
           return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0), // Material Design 3: 20px edge padding
-              child: Column(
+            child: Column(  // NO outer padding, like Expenses page
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Month selector
+                  // Month selector (has its own margin)
                   _buildMonthSelector(),
-                  const SizedBox(height: 20),
 
                   // Summary cards grid with fade transition
                   AnimatedSwitcher(
@@ -99,9 +123,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       key: ValueKey(_selectedMonth.toString()),
                     ),
                   ),
-                  const SizedBox(height: 20),
 
-                  // Charts with fade transition
+                  // Charts with fade transition (cards have their own margins)
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     transitionBuilder: (child, animation) {
@@ -117,7 +140,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             children: [
                               // Category Breakdown Chart
                               _buildCategoryBreakdownCard(monthExpenses),
-                              const SizedBox(height: 20),
+                              // No SizedBox - cards have margins
 
                               // Spending Trends Chart
                               _buildSpendingTrendsCard(expenseProvider.expenses),
@@ -126,7 +149,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                 ],
               ),
-            ),
           );
         },
       ),
@@ -135,6 +157,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   /// Month selector widget with previous/next buttons
   Widget _buildMonthSelector() {
+    // Add margin like Expenses cards
     // Format: "October 2025"
     final monthFormat = DateFormat('MMMM yyyy');
     final isCurrentMonth = AnalyticsCalculator.isSameMonth(
@@ -143,6 +166,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
 
     return Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,  // 16px like Expenses
+        vertical: AppSpacing.spaceXs,     // 8px like Expenses
+      ),
+      // Minimalist: Subtle elevation for depth
+      elevation: 1,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
@@ -150,7 +183,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           children: [
             // Previous month button
             IconButton(
-              icon: const Icon(Icons.chevron_left),
+              icon: const Icon(PhosphorIconsLight.caretLeft),
               onPressed: _previousMonth,
               tooltip: 'Previous month',
             ),
@@ -158,14 +191,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             // Month display
             Text(
               monthFormat.format(_selectedMonth),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
 
             // Next month button (disabled if current month)
             IconButton(
-              icon: const Icon(Icons.chevron_right),
+              icon: const Icon(PhosphorIconsLight.caretRight),
               onPressed: isCurrentMonth ? null : _nextMonth,
               tooltip: isCurrentMonth ? 'Cannot view future months' : 'Next month',
             ),
@@ -215,11 +246,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       previousMonth,
     );
 
-    // Calculate type breakdown (Phải chi, Phát sinh, Lãng phí)
-    final typeBreakdown = AnalyticsCalculator.getTypeBreakdown(
-      monthExpenses,
-      _selectedMonth,
-    );
+    // Calculate type breakdown (Phải chi, Phát sinh, Lãng phí) - UNUSED (Type card hidden)
+    // final typeBreakdown = AnalyticsCalculator.getTypeBreakdown(
+    //   monthExpenses,
+    //   _selectedMonth,
+    // );
 
     // Format previous month name (short format: "October")
     final monthFormat = DateFormat('MMMM');
@@ -238,46 +269,51 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           previousMonthName: previousMonthName,
           isCurrentMonth: isCurrentMonth,
         ),
-        const SizedBox(height: 12),
+        // No SizedBox needed - cards have their own vertical margins
 
-        // 2. Type Breakdown (full width)
+        // 2. Type Breakdown (full width) - HIDDEN for simplified layout
         // Shows: Phải chi, Phát sinh, Lãng phí percentages (sorted by highest)
-        TypeBreakdownCard(
-          typeBreakdown: typeBreakdown,
-          totalAmount: thisMonthTotal,
-        ),
+        // TypeBreakdownCard(
+        //   typeBreakdown: typeBreakdown,
+        //   totalAmount: thisMonthTotal,
+        // ),
       ],
     );
   }
 
   /// Empty state when no expenses exist for the selected month
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+
     return Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,
+        vertical: AppSpacing.spaceXs,
+      ),
+      // Minimalist: Subtle elevation for depth
+      elevation: 1,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(AppSpacing.space3xl),  // Extra large padding for empty state
         child: Column(
           children: [
             Icon(
-              Icons.insights_outlined,
+              PhosphorIconsLight.chartLineUp,
               size: 64,
-              color: Colors.grey[400],
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
             ),
             const SizedBox(height: 16),
             Text(
               'No expenses this month',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
+              style: ComponentTextStyles.emptyTitle(theme.textTheme),
             ),
             const SizedBox(height: 8),
             Text(
               'Add some expenses to see analytics',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: ComponentTextStyles.emptyMessage(theme.textTheme),
             ),
           ],
         ),
@@ -294,8 +330,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
 
     return Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,
+        vertical: AppSpacing.spaceXs,
+      ),
+      // Minimalist: Subtle elevation for depth
+      elevation: 1,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -303,15 +349,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.pie_chart,
-                  color: Theme.of(context).colorScheme.primary,
+                  PhosphorIconsLight.chartPie,
+                  color: MinimalistColors.gray700,  // Body text - subtle
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Category Breakdown',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),
@@ -331,8 +375,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final monthlyTrends = AnalyticsCalculator.getMonthlyTrend(allExpenses, 6);
 
     return Card(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,
+        vertical: AppSpacing.spaceXs,
+      ),
+      // Minimalist: Subtle elevation for depth
+      elevation: 1,
+      shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -340,15 +394,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.show_chart,
-                  color: Theme.of(context).colorScheme.primary,
+                  PhosphorIconsLight.chartLineUp,
+                  color: MinimalistColors.gray700,  // Body text - subtle
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Spending Trends (Last 6 Months)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),
@@ -363,5 +415,34 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
       ),
     );
+  }
+
+  /// Show logout confirmation dialog
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sign Out'),
+          content: const Text('Are you sure you want to sign out?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sign Out'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && context.mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signOut();
+      // AuthGate automatically shows LoginScreen
+    }
   }
 }

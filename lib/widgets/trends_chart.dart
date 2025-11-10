@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/month_total.dart';
 import '../utils/currency_formatter.dart';
+import '../theme/typography/app_typography.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// A line chart showing spending trends over multiple months
 /// Displays monthly totals with interactive tooltips
 /// Highlights the selected month and shows contextual trend information
+///
+/// **Phase 2 Visual Enhancements:**
+/// - Gradient fill below line chart for better visual appeal
+/// - Smooth animations with duration and curves
+/// - Enhanced dot styling with shadows
+/// - Better color contrast for accessibility
 class TrendsChart extends StatelessWidget {
   final List<MonthTotal> monthlyTrends;
   final DateTime selectedMonth; // Currently selected month to highlight
@@ -21,12 +30,12 @@ class TrendsChart extends StatelessWidget {
   Widget build(BuildContext context) {
     // If no data, show empty state
     if (monthlyTrends.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 200,
         child: Center(
           child: Text(
             'No trend data available',
-            style: TextStyle(color: Colors.grey),
+            style: ComponentTextStyles.emptyMessage(Theme.of(context).textTheme),
           ),
         ),
       );
@@ -64,12 +73,12 @@ class TrendsChart extends StatelessWidget {
       return FlSpot(entry.key.toDouble(), entry.value.total);
     }).toList();
 
-    // Determine line color based on trend (green = spending down, red = spending up)
+    // Minimalist: Use darker grayscale for better contrast (darker = worse trend)
     final lineColor = isIncreasing == null
-        ? theme.colorScheme.primary // Default if no trend data
+        ? MinimalistColors.gray700 // Body text - default if no trend data
         : isIncreasing
-            ? const Color(0xFFE74C3C) // Red - spending increased (bad)
-            : const Color(0xFF2ECC71); // Green - spending decreased (good)
+            ? MinimalistColors.gray900 // Primary text - spending increased (worse) - darker for emphasis
+            : MinimalistColors.gray800; // Subheadings - spending decreased (better) - darker for readability
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -82,25 +91,22 @@ class TrendsChart extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  isIncreasing ? Icons.arrow_upward : Icons.arrow_downward,
+                  isIncreasing ? PhosphorIconsLight.arrowUp : PhosphorIconsLight.arrowDown,
                   size: 20,
                   color: lineColor,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${trendPercentage.abs().toStringAsFixed(1)}%',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: lineColor,
+                  style: AppTypography.currencyMedium(color: lineColor).copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   isIncreasing ? 'vs last month' : 'vs last month',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withAlpha(178),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -112,7 +118,7 @@ class TrendsChart extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: LineChart(
-          LineChartData(
+              LineChartData(
             minX: 0,
             maxX: (sortedTrends.length - 1).toDouble(),
             minY: 0,
@@ -131,17 +137,16 @@ class TrendsChart extends StatelessWidget {
 
                     return LineTooltipItem(
                       '$monthStr\n',
-                      TextStyle(
+                      theme.textTheme.labelMedium!.copyWith(
                         color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w500,
-                        fontSize: 12,
                       ),
                       children: [
                         TextSpan(
                           text: CurrencyFormatter.format(monthTotal.total, context: CurrencyContext.compact),
-                          style: TextStyle(
-                            color: theme.colorScheme.primary,
-                            fontSize: 16,
+                          style: AppTypography.currencyMedium(
+                            color: MinimalistColors.gray900,  // Primary text - strong contrast for amounts
+                          ).copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -169,9 +174,8 @@ class TrendsChart extends StatelessWidget {
                         angle: -0.5, // Slight angle for better readability
                         child: Text(
                           monthStr,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: theme.colorScheme.onSurface.withAlpha(178),
+                          style: theme.textTheme.labelSmall!.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ),
@@ -185,13 +189,19 @@ class TrendsChart extends StatelessWidget {
                   reservedSize: 50,
                   interval: maxValue * 0.25, // Match grid line interval
                   getTitlesWidget: (value, meta) {
-                    if (value == 0) return const Text('0');
-                    // Use compact format for chart axis labels
+                    if (value == 0) {
+                      return Text(
+                        '0',
+                        style: AppTypography.currencySmall(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      );
+                    }
+                    // Use compact format for chart axis labels with monospace font
                     return Text(
                       CurrencyFormatter.format(value, context: CurrencyContext.compact),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.colorScheme.onSurface.withAlpha(178),
+                      style: AppTypography.currencySmall(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     );
                   },
@@ -211,7 +221,7 @@ class TrendsChart extends StatelessWidget {
               horizontalInterval: maxValue * 0.25,
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: Colors.grey.withAlpha(51),
+                  color: MinimalistColors.gray300.withValues(alpha: 0.2),  // Inactive borders with transparency
                   strokeWidth: 1,
                 );
               },
@@ -232,7 +242,7 @@ class TrendsChart extends StatelessWidget {
                     return FlDotCirclePainter(
                       radius: isSelectedMonth ? 6 : 4,
                       color: isSelectedMonth
-                          ? const Color(0xFF2196F3) // Blue for selected month
+                          ? MinimalistColors.gray900 // Primary text - selected month emphasized
                           : lineColor, // Trend color for other months
                       strokeWidth: isSelectedMonth ? 3 : 2,
                       strokeColor: theme.colorScheme.surface,
@@ -241,14 +251,31 @@ class TrendsChart extends StatelessWidget {
                 ),
                 belowBarData: BarAreaData(
                   show: true,
-                  color: lineColor.withAlpha(26), // Match line color with transparency
+                  // Phase 2: Gradient fill for better visual appeal
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      lineColor.withValues(alpha: 0.3),  // More opaque at top
+                      lineColor.withValues(alpha: 0.05), // Almost transparent at bottom
+                    ],
+                    stops: const [0.0, 1.0],
+                  ),
+                ),
+                // Phase 2: Add smooth animation
+                isStrokeJoinRound: true,
+                shadow: Shadow(
+                  color: lineColor.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ),
             ],
           ),
+          // Phase 2: Smooth animation when data changes
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-            ),
+        ),
           ),
         ),
       ],

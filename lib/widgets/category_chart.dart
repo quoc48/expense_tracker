@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../utils/currency_formatter.dart';
+import '../theme/typography/app_typography.dart';
+import '../theme/minimalist/minimalist_icons.dart';
+import '../theme/minimalist/minimalist_colors.dart';
 
 /// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
 /// Uses fl_chart for beautiful and interactive visualizations
 /// Now uses Vietnamese category names directly instead of enums
+///
+/// **Phase 2 Visual Enhancements:**
+/// - Gradient fills on bars for modern look
+/// - Smooth animations when data changes
+/// - Enhanced bar styling with shadows
+/// - Better color scheme for visual hierarchy
 class CategoryChart extends StatelessWidget {
   final Map<String, double> categoryBreakdown;  // Changed from Map<Category, double>
 
@@ -15,32 +24,8 @@ class CategoryChart extends StatelessWidget {
 
   /// Helper: Get icon for Vietnamese category name
   IconData _getCategoryIcon(String categoryNameVi) {
-    switch (categoryNameVi) {
-      case 'Thực phẩm':
-      case 'Cà phê':
-        return Icons.restaurant;
-      case 'Đi lại':
-        return Icons.directions_car;
-      case 'Hoá đơn':
-      case 'Tiền nhà':
-        return Icons.lightbulb;
-      case 'Giải trí':
-      case 'Du lịch':
-        return Icons.movie;
-      case 'Tạp hoá':
-      case 'Thời trang':
-        return Icons.shopping_bag;
-      case 'Sức khỏe':
-        return Icons.medical_services;
-      case 'Giáo dục':
-        return Icons.school;
-      case 'Quà vật':
-      case 'TẾT':
-      case 'Biểu gia đình':
-        return Icons.card_giftcard;
-      default:
-        return Icons.more_horiz;
-    }
+    // Use centralized Phosphor icon mapping
+    return MinimalistIcons.getCategoryIcon(categoryNameVi);
   }
 
 
@@ -48,12 +33,12 @@ class CategoryChart extends StatelessWidget {
   Widget build(BuildContext context) {
     // If no data, show empty state
     if (categoryBreakdown.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 200,
         child: Center(
           child: Text(
             'No category data available',
-            style: TextStyle(color: Colors.grey),
+            style: ComponentTextStyles.emptyMessage(Theme.of(context).textTheme),
           ),
         ),
       );
@@ -84,17 +69,15 @@ class CategoryChart extends StatelessWidget {
                   final amount = sortedEntries[groupIndex].value;
                   return BarTooltipItem(
                     '$categoryNameVi\n',  // Already in Vietnamese!
-                    TextStyle(
+                    theme.textTheme.labelMedium!.copyWith(
                       color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                     children: [
                       TextSpan(
                         text: CurrencyFormatter.format(amount, context: CurrencyContext.compact),
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontSize: 16,
+                        style: theme.textTheme.labelLarge!.copyWith(
+                          color: MinimalistColors.gray900,  // Primary text - strong contrast for amounts
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -118,7 +101,7 @@ class CategoryChart extends StatelessWidget {
                       child: Icon(
                         _getCategoryIcon(categoryNameVi),  // Use helper method
                         size: 20,
-                        color: theme.colorScheme.primary,
+                        color: MinimalistColors.gray700,  // Body text - subtle but visible
                       ),
                     );
                   },
@@ -131,13 +114,19 @@ class CategoryChart extends StatelessWidget {
                   reservedSize: 50,
                   interval: sortedEntries.first.value * 0.25, // Match grid interval to prevent overlap
                   getTitlesWidget: (value, meta) {
-                    if (value == 0) return const Text('0');
-                    // Use compact format for chart axis labels
+                    if (value == 0) {
+                      return Text(
+                        '0',
+                        style: AppTypography.currencySmall(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      );
+                    }
+                    // Use compact format for chart axis labels with monospace font
                     return Text(
                       CurrencyFormatter.format(value, context: CurrencyContext.compact),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.colorScheme.onSurface.withAlpha(178),
+                      style: AppTypography.currencySmall(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     );
                   },
@@ -157,7 +146,7 @@ class CategoryChart extends StatelessWidget {
               horizontalInterval: sortedEntries.first.value * 0.25, // Increased to reduce label density
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: Colors.grey.withAlpha(51),
+                  color: MinimalistColors.gray300.withValues(alpha: 0.2),  // Inactive borders with transparency
                   strokeWidth: 1,
                 );
               },
@@ -170,16 +159,35 @@ class CategoryChart extends StatelessWidget {
                 barRods: [
                   BarChartRodData(
                     toY: entry.value.value,
-                    color: theme.colorScheme.primary,
-                    width: 20,
+                    // Minimalist: Subtle monochrome gradient
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        MinimalistColors.gray700,  // Body text - bottom
+                        MinimalistColors.gray600,  // Labels - middle
+                        MinimalistColors.gray500,  // Secondary - top
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                    width: 22,  // Slightly wider for better visibility
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(4),
+                      top: Radius.circular(6),  // Softer corners
+                    ),
+                    // Phase 2: Add shadow for depth
+                    backDrawRodData: BackgroundBarChartRodData(
+                      show: true,
+                      toY: sortedEntries.first.value * 1.2,
+                      color: MinimalistColors.gray200.withValues(alpha: 0.05),  // Dividers with very low opacity
                     ),
                   ),
                 ],
               );
             }).toList(),
           ),
+          // Phase 2: Smooth animation when data changes
+          swapAnimationDuration: const Duration(milliseconds: 300),
+          swapAnimationCurve: Curves.easeInOut,
         ),
       ),
     );

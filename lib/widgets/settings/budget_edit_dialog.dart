@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../utils/currency_formatter.dart';
+import '../../theme/minimalist/minimalist_colors.dart';
 
 /// Dialog for editing monthly budget with validation
 ///
@@ -63,7 +65,7 @@ class _BudgetEditDialogState extends State<BudgetEditDialog> {
             Text(
               'Set your monthly spending limit',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: MinimalistColors.gray600,  // Labels - subtle hint
                   ),
             ),
             const SizedBox(height: 16),
@@ -75,7 +77,7 @@ class _BudgetEditDialogState extends State<BudgetEditDialog> {
                 labelText: 'Budget Amount',
                 hintText: '20000000',
                 suffixText: 'đ',
-                prefixIcon: const Icon(Icons.account_balance_wallet),
+                prefixIcon: Icon(PhosphorIconsLight.wallet, color: MinimalistColors.gray700),  // Body text
                 border: const OutlineInputBorder(),
                 errorText: _errorMessage,
               ),
@@ -101,7 +103,7 @@ class _BudgetEditDialogState extends State<BudgetEditDialog> {
             Text(
               'Range: ${CurrencyFormatter.format(_minBudget, context: CurrencyContext.compact)} - ${CurrencyFormatter.format(_maxBudget, context: CurrencyContext.compact)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
+                    color: MinimalistColors.gray600,  // Labels - subtle hint
                     fontStyle: FontStyle.italic,
                   ),
             ),
@@ -114,12 +116,19 @@ class _BudgetEditDialogState extends State<BudgetEditDialog> {
           onPressed: () {
             Navigator.pop(context); // Return null (cancelled)
           },
+          style: TextButton.styleFrom(
+            foregroundColor: MinimalistColors.gray600,  // Labels - subtle
+          ),
           child: const Text('Cancel'),
         ),
-        
+
         // Save button
         FilledButton(
           onPressed: _handleSave,
+          style: FilledButton.styleFrom(
+            backgroundColor: MinimalistColors.gray900,  // Primary text - strong
+            foregroundColor: MinimalistColors.gray50,  // Main background - white text
+          ),
           child: const Text('Save'),
         ),
       ],
