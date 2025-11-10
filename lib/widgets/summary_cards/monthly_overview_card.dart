@@ -146,7 +146,7 @@ class MonthlyOverviewCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Monthly Overview',
+                'Monthly Spent',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: MinimalistColors.gray900,  // Primary text - high contrast
                 ),
@@ -162,22 +162,12 @@ class MonthlyOverviewCard extends StatelessWidget {
             children: [
               // LEFT: Total Spending (hero number)
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      CurrencyFormatter.format(
-                        totalAmount,
-                        context: CurrencyContext.full,
-                      ),
-                      style: AppTypography.currencyLarge(color: MinimalistColors.gray900),  // Primary text - hero number
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Total Spending',
-                      style: ComponentTextStyles.cardTitle(theme.textTheme),
-                    ),
-                  ],
+                child: Text(
+                  CurrencyFormatter.format(
+                    totalAmount,
+                    context: CurrencyContext.full,
+                  ),
+                  style: AppTypography.currencyLarge(color: MinimalistColors.gray900),  // Primary text - hero number
                 ),
               ),
               // RIGHT: Status badge (only for current month with budget set)

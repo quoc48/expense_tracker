@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/analytics_calculator.dart';
 import '../widgets/category_chart.dart';
 import '../widgets/trends_chart.dart';
 import '../widgets/summary_cards/monthly_overview_card.dart';
-import '../widgets/summary_cards/type_breakdown_card.dart';
+// import '../widgets/summary_cards/type_breakdown_card.dart';  // Hidden for simplified layout
 import '../providers/user_preferences_provider.dart';
+import 'settings_screen.dart';
 import '../theme/typography/app_typography.dart';
 import '../theme/constants/app_spacing.dart';
 import '../theme/minimalist/minimalist_colors.dart';
@@ -63,6 +65,27 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analytics'),
+        actions: [
+          // Settings button
+          IconButton(
+            icon: const Icon(PhosphorIconsLight.gear),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+          // Logout button
+          IconButton(
+            icon: const Icon(PhosphorIconsLight.signOut),
+            tooltip: 'Sign Out',
+            onPressed: () => _showLogoutDialog(context),
+          ),
+        ],
       ),
       body: Consumer<ExpenseProvider>(
         builder: (context, expenseProvider, child) {
@@ -223,11 +246,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       previousMonth,
     );
 
-    // Calculate type breakdown (Phải chi, Phát sinh, Lãng phí)
-    final typeBreakdown = AnalyticsCalculator.getTypeBreakdown(
-      monthExpenses,
-      _selectedMonth,
-    );
+    // Calculate type breakdown (Phải chi, Phát sinh, Lãng phí) - UNUSED (Type card hidden)
+    // final typeBreakdown = AnalyticsCalculator.getTypeBreakdown(
+    //   monthExpenses,
+    //   _selectedMonth,
+    // );
 
     // Format previous month name (short format: "October")
     final monthFormat = DateFormat('MMMM');
@@ -248,12 +271,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
         // No SizedBox needed - cards have their own vertical margins
 
-        // 2. Type Breakdown (full width)
+        // 2. Type Breakdown (full width) - HIDDEN for simplified layout
         // Shows: Phải chi, Phát sinh, Lãng phí percentages (sorted by highest)
-        TypeBreakdownCard(
-          typeBreakdown: typeBreakdown,
-          totalAmount: thisMonthTotal,
-        ),
+        // TypeBreakdownCard(
+        //   typeBreakdown: typeBreakdown,
+        //   totalAmount: thisMonthTotal,
+        // ),
       ],
     );
   }
@@ -392,5 +415,34 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
       ),
     );
+  }
+
+  /// Show logout confirmation dialog
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sign Out'),
+          content: const Text('Are you sure you want to sign out?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sign Out'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && context.mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signOut();
+      // AuthGate automatically shows LoginScreen
+    }
   }
 }

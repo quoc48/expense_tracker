@@ -54,7 +54,7 @@ class ExpenseListScreen extends StatelessWidget {
               ),
               // Logout button
               IconButton(
-                icon: const Icon(Icons.logout),
+                icon: const Icon(PhosphorIconsLight.signOut),
                 tooltip: 'Sign Out',
                 onPressed: () => _showLogoutDialog(context),
               ),
