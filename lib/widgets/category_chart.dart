@@ -3,7 +3,6 @@ import 'package:fl_chart/fl_chart.dart';
 import '../utils/currency_formatter.dart';
 import '../theme/typography/app_typography.dart';
 import '../theme/minimalist/minimalist_icons.dart';
-import '../theme/minimalist/minimalist_colors.dart';
 
 /// A bar chart showing expense breakdown by category (UPDATED - Phase 5.5.1)
 /// Uses fl_chart for beautiful and interactive visualizations
@@ -77,7 +76,7 @@ class CategoryChart extends StatelessWidget {
                       TextSpan(
                         text: CurrencyFormatter.format(amount, context: CurrencyContext.compact),
                         style: theme.textTheme.labelLarge!.copyWith(
-                          color: MinimalistColors.gray900,  // Primary text - strong contrast for amounts
+                          color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -101,7 +100,7 @@ class CategoryChart extends StatelessWidget {
                       child: Icon(
                         _getCategoryIcon(categoryNameVi),  // Use helper method
                         size: 20,
-                        color: MinimalistColors.gray700,  // Body text - subtle but visible
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     );
                   },
@@ -146,7 +145,7 @@ class CategoryChart extends StatelessWidget {
               horizontalInterval: sortedEntries.first.value * 0.25, // Increased to reduce label density
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: MinimalistColors.gray300.withValues(alpha: 0.2),  // Inactive borders with transparency
+                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
                   strokeWidth: 1,
                 );
               },
@@ -159,14 +158,14 @@ class CategoryChart extends StatelessWidget {
                 barRods: [
                   BarChartRodData(
                     toY: entry.value.value,
-                    // Minimalist: Subtle monochrome gradient
+                    // Minimalist: Subtle monochrome gradient (theme-aware)
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        MinimalistColors.gray700,  // Body text - bottom
-                        MinimalistColors.gray600,  // Labels - middle
-                        MinimalistColors.gray500,  // Secondary - top
+                        theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                        theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ],
                       stops: const [0.0, 0.5, 1.0],
                     ),
@@ -178,7 +177,7 @@ class CategoryChart extends StatelessWidget {
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: sortedEntries.first.value * 1.2,
-                      color: MinimalistColors.gray200.withValues(alpha: 0.05),  // Dividers with very low opacity
+                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.05),
                     ),
                   ),
                 ],

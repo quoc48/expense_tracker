@@ -176,7 +176,42 @@ class MinimalistColors {
   }
 
   // ==========================================
-  // Dark Theme Support (Future)
+  // Dark Mode Grayscale (inverted for dark theme)
+  // ==========================================
+
+  /// Dark mode background colors (darker than light mode)
+  static const Color darkGray50 = Color(0xFF0A0A0A);   // Background (almost black)
+  static const Color darkGray100 = Color(0xFF121212);  // Card background (elevated)
+
+  /// Dark mode dividers and borders
+  static const Color darkGray200 = Color(0xFF1E1E1E);  // Dividers
+  static const Color darkGray300 = Color(0xFF2A2A2A);  // Borders
+
+  /// Dark mode disabled and inactive states
+  static const Color darkGray400 = Color(0xFF404040);  // Disabled
+  static const Color darkGray500 = Color(0xFF757575);  // Tertiary text
+
+  /// Dark mode text hierarchy (lighter than dark mode backgrounds)
+  static const Color darkGray600 = Color(0xFF9E9E9E);  // Secondary text
+  static const Color darkGray700 = Color(0xFFBDBDBD);  // Body text
+  static const Color darkGray800 = Color(0xFFE0E0E0);  // Headings
+  static const Color darkGray900 = Color(0xFFFAFAFA);  // Primary text (lightest)
+
+  // ==========================================
+  // Dark Mode Alert Colors (dimmed warm earth tones)
+  // ==========================================
+
+  /// Budget warning in dark mode (70-90%) - Dimmed sandy gold
+  static const Color darkAlertWarning = Color(0xFFD4B55F);
+
+  /// Budget critical in dark mode (90-100%) - Dimmed peachy orange
+  static const Color darkAlertCritical = Color(0xFFE09456);
+
+  /// Budget over/error in dark mode (>100%) - Dimmed coral terracotta
+  static const Color darkAlertError = Color(0xFFD36449);
+
+  // ==========================================
+  // Dark Theme Support
   // ==========================================
 
   /// Check if we should use dark colors
@@ -185,20 +220,90 @@ class MinimalistColors {
   }
 
   /// Get adaptive color based on theme
-  static Color getAdaptiveGray(BuildContext context, Color lightColor) {
-    if (isDarkMode(context)) {
-      // Invert the gray scale for dark mode
-      if (lightColor == gray50) return gray900;
-      if (lightColor == gray100) return gray800;
-      if (lightColor == gray200) return gray700;
-      if (lightColor == gray300) return gray600;
-      if (lightColor == gray400) return gray500;
-      if (lightColor == gray500) return gray400;
-      if (lightColor == gray600) return gray300;
-      if (lightColor == gray700) return gray200;
-      if (lightColor == gray800) return gray100;
-      if (lightColor == gray900) return gray50;
+  /// This intelligently maps light mode colors to their dark mode equivalents
+  static Color getAdaptiveGray(
+    BuildContext context, {
+    required Color lightColor,
+    required Color darkColor,
+  }) {
+    return isDarkMode(context) ? darkColor : lightColor;
+  }
+
+  /// Get adaptive background color (main background)
+  static Color getAdaptiveBackground(BuildContext context) {
+    return isDarkMode(context) ? darkGray50 : gray50;
+  }
+
+  /// Get adaptive card background
+  static Color getAdaptiveCardBackground(BuildContext context) {
+    return isDarkMode(context) ? darkGray100 : gray100;
+  }
+
+  /// Get adaptive text color (primary)
+  static Color getAdaptivePrimaryText(BuildContext context) {
+    return isDarkMode(context) ? darkGray900 : gray900;
+  }
+
+  /// Get adaptive text color (secondary)
+  static Color getAdaptiveSecondaryText(BuildContext context) {
+    return isDarkMode(context) ? darkGray700 : gray700;
+  }
+
+  /// Get adaptive divider color
+  static Color getAdaptiveDivider(BuildContext context) {
+    return isDarkMode(context) ? darkGray200 : gray200;
+  }
+
+  /// Get adaptive border color
+  static Color getAdaptiveBorderColor(BuildContext context, bool isActive) {
+    if (isActive) {
+      return isDarkMode(context) ? white : black;
     }
-    return lightColor;
+    return isDarkMode(context) ? darkGray300 : gray300;
+  }
+
+  /// Get adaptive icon color
+  static Color getAdaptiveIconColor(BuildContext context, bool isActive) {
+    if (isActive) {
+      return isDarkMode(context) ? white : black;
+    }
+    return isDarkMode(context) ? darkGray600 : gray600;
+  }
+
+  /// Get adaptive budget color based on percentage
+  static Color getAdaptiveBudgetColor(BuildContext context, double percentage) {
+    if (isDarkMode(context)) {
+      if (percentage >= 100) return darkAlertError;
+      if (percentage >= 90) return darkAlertCritical;
+      if (percentage >= 70) return darkAlertWarning;
+      return darkGray500;
+    } else {
+      return getBudgetColor(percentage);
+    }
+  }
+
+  /// Get adaptive budget background
+  static Color getAdaptiveBudgetBackground(BuildContext context, double percentage) {
+    if (isDarkMode(context)) {
+      if (percentage >= 100) return darkAlertError.withValues(alpha: 0.1);
+      if (percentage >= 90) return darkAlertCritical.withValues(alpha: 0.1);
+      if (percentage >= 70) return darkAlertWarning.withValues(alpha: 0.1);
+      return darkGray100;
+    } else {
+      return getBudgetBackground(percentage);
+    }
+  }
+
+  /// Get adaptive shadow for cards
+  static BoxShadow getAdaptiveShadow(BuildContext context) {
+    if (isDarkMode(context)) {
+      return BoxShadow(
+        color: black.withValues(alpha: 0.24),  // Stronger shadow for dark mode
+        blurRadius: 4,
+        offset: const Offset(0, 2),
+        spreadRadius: 0,
+      );
+    }
+    return cardShadow;
   }
 }

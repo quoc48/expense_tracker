@@ -5,7 +5,6 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/month_total.dart';
 import '../utils/currency_formatter.dart';
 import '../theme/typography/app_typography.dart';
-import '../theme/minimalist/minimalist_colors.dart';
 
 /// A line chart showing spending trends over multiple months
 /// Displays monthly totals with interactive tooltips
@@ -73,12 +72,12 @@ class TrendsChart extends StatelessWidget {
       return FlSpot(entry.key.toDouble(), entry.value.total);
     }).toList();
 
-    // Minimalist: Use darker grayscale for better contrast (darker = worse trend)
+    // Minimalist: Use theme-aware colors for better contrast
     final lineColor = isIncreasing == null
-        ? MinimalistColors.gray700 // Body text - default if no trend data
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.7) // Default if no trend data
         : isIncreasing
-            ? MinimalistColors.gray900 // Primary text - spending increased (worse) - darker for emphasis
-            : MinimalistColors.gray800; // Subheadings - spending decreased (better) - darker for readability
+            ? theme.colorScheme.onSurface.withValues(alpha: 0.9) // Spending increased (worse) - darker
+            : theme.colorScheme.onSurface.withValues(alpha: 0.8); // Spending decreased (better)
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -145,7 +144,7 @@ class TrendsChart extends StatelessWidget {
                         TextSpan(
                           text: CurrencyFormatter.format(monthTotal.total, context: CurrencyContext.compact),
                           style: AppTypography.currencyMedium(
-                            color: MinimalistColors.gray900,  // Primary text - strong contrast for amounts
+                            color: theme.colorScheme.onSurface,
                           ).copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -221,7 +220,7 @@ class TrendsChart extends StatelessWidget {
               horizontalInterval: maxValue * 0.25,
               getDrawingHorizontalLine: (value) {
                 return FlLine(
-                  color: MinimalistColors.gray300.withValues(alpha: 0.2),  // Inactive borders with transparency
+                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
                   strokeWidth: 1,
                 );
               },
@@ -242,7 +241,7 @@ class TrendsChart extends StatelessWidget {
                     return FlDotCirclePainter(
                       radius: isSelectedMonth ? 6 : 4,
                       color: isSelectedMonth
-                          ? MinimalistColors.gray900 // Primary text - selected month emphasized
+                          ? theme.colorScheme.primary
                           : lineColor, // Trend color for other months
                       strokeWidth: isSelectedMonth ? 3 : 2,
                       strokeColor: theme.colorScheme.surface,

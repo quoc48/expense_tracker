@@ -5,8 +5,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'providers/expense_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_preferences_provider.dart';
+import 'providers/theme_provider.dart';
 import 'widgets/auth_gate.dart';
-import 'theme/app_theme.dart';
+import 'theme/minimalist/minimalist_theme.dart';
 
 // This is the entry point of the Flutter app
 // The main() function is called when the app starts
@@ -38,10 +39,11 @@ class ExpenseTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // MultiProvider allows us to provide multiple providers to the widget tree
-    // We now have three providers:
+    // We now have four providers:
     // 1. AuthProvider - handles user authentication and session
     // 2. ExpenseProvider - manages expense data (CRUD operations)
     // 3. UserPreferencesProvider - manages user settings and budget configuration
+    // 4. ThemeProvider - manages dark/light theme mode and persistence
     // All providers are available to all descendant widgets
     return MultiProvider(
       providers: [
@@ -69,27 +71,37 @@ class ExpenseTrackerApp extends StatelessWidget {
             return provider;
           },
         ),
+        // ThemeProvider manages dark/light/system theme mode
+        ChangeNotifierProvider(
+          create: (context) => ThemeProvider(),
+        ),
       ],
-      child: MaterialApp(
-        // App title (shown in task switcher on Android)
-        title: 'Expense Tracker',
+      // Consumer listens to ThemeProvider and rebuilds MaterialApp when theme changes
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            // App title (shown in task switcher on Android)
+            title: 'Expense Tracker',
 
-        // Disable the debug banner in the top-right corner
-        debugShowCheckedModeBanner: false,
+            // Disable the debug banner in the top-right corner
+            debugShowCheckedModeBanner: false,
 
-        // Use our new centralized theme system
-        // AppTheme provides consistent design tokens throughout the app
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+            // Use our minimalist theme system with dark mode support
+            // MinimalistTheme provides consistent design tokens throughout the app
+            theme: MinimalistTheme.lightTheme,
+            darkTheme: MinimalistTheme.darkTheme,
 
-        // Automatically switch between light and dark based on system settings
-        themeMode: ThemeMode.system,
+            // Use theme mode from ThemeProvider (light/dark/system)
+            // User can change this in Settings, and it persists across app restarts
+            themeMode: themeProvider.themeMode,
 
-        // Set AuthGate as the home screen (instead of MainNavigationScreen)
-        // AuthGate checks authentication and shows:
-        // - LoginScreen if not authenticated
-        // - MainNavigationScreen if authenticated
-        home: const AuthGate(),
+            // Set AuthGate as the home screen (instead of MainNavigationScreen)
+            // AuthGate checks authentication and shows:
+            // - LoginScreen if not authenticated
+            // - MainNavigationScreen if authenticated
+            home: const AuthGate(),
+          );
+        },
       ),
     );
   }

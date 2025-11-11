@@ -94,6 +94,7 @@ class MinimalistTypography {
   static TextTheme createTextTheme({
     required Color primaryTextColor,
     required Color secondaryTextColor,
+    required Color tertiaryTextColor,
   }) {
     return TextTheme(
       // Hero number (32px, semibold, mono)
@@ -214,7 +215,7 @@ class MinimalistTypography {
         fontWeight: medium,
         height: lineHeightTight,
         letterSpacing: letterSpacingWide,
-        color: secondaryTextColor,
+        color: tertiaryTextColor,
       ),
     );
   }

@@ -63,43 +63,29 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
     }
   }
 
-  /// Get gradient background based on alert level
-  /// Minimalist: Subtle tint of alert color for cohesive look
-  LinearGradient get _backgroundGradient {
+  /// Get background color based on alert level
+  /// Light mode: Subtle gradient tint
+  /// Dark mode: Solid darker background with higher opacity for clarity
+  Color _getBackgroundColor(BuildContext context) {
+    final isDark = MinimalistColors.isDarkMode(context);
+
     switch (_alertLevel) {
       case 'over':
-        // Coral terracotta tint - subtle red background
-        return LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            MinimalistColors.alertError.withValues(alpha: 0.05),  // Very subtle red tint
-            MinimalistColors.alertError.withValues(alpha: 0.1),   // Slightly stronger
-            MinimalistColors.alertError.withValues(alpha: 0.05),
-          ],
-        );
+        // Over budget - red background
+        return isDark
+            ? MinimalistColors.darkAlertError.withValues(alpha: 0.15)
+            : MinimalistColors.alertError.withValues(alpha: 0.08);
       case 'critical':
-        // Peachy orange tint - subtle orange background
-        return LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            MinimalistColors.alertCritical.withValues(alpha: 0.05),
-            MinimalistColors.alertCritical.withValues(alpha: 0.08),
-          ],
-        );
+        // Critical - orange background
+        return isDark
+            ? MinimalistColors.darkAlertCritical.withValues(alpha: 0.15)
+            : MinimalistColors.alertCritical.withValues(alpha: 0.08);
       case 'warning':
       default:
-        // Sandy gold tint - subtle yellow background
-        return LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            MinimalistColors.alertWarning.withValues(alpha: 0.08),
-            MinimalistColors.alertWarning.withValues(alpha: 0.05),
-            MinimalistColors.alertWarning.withValues(alpha: 0.08),
-          ],
-        );
+        // Warning - gold background
+        return isDark
+            ? MinimalistColors.darkAlertWarning.withValues(alpha: 0.15)
+            : MinimalistColors.alertWarning.withValues(alpha: 0.08);
     }
   }
 
@@ -117,12 +103,16 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
     }
   }
 
-  /// Get text color (message + close button)
-  /// Always dark for readability
-  Color get _textColor => MinimalistColors.gray900;
+  /// Get text color (message + close button) - adaptive for dark mode
+  /// Dark text on light backgrounds, light text on dark backgrounds
+  Color _getTextColor(BuildContext context) {
+    return MinimalistColors.getAdaptivePrimaryText(context);
+  }
 
-  /// Get close button color (slightly lighter than text)
-  Color get _closeColor => MinimalistColors.gray700;
+  /// Get close button color (slightly lighter than text) - adaptive for dark mode
+  Color _getCloseColor(BuildContext context) {
+    return MinimalistColors.getAdaptiveSecondaryText(context);
+  }
 
   /// Get icon based on alert level
   IconData get _icon {
@@ -189,22 +179,15 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        gradient: _backgroundGradient,  // Gradient background instead of flat color
+        color: _getBackgroundColor(context),  // Solid color for clean appearance
         border: Border(
           left: BorderSide(
             color: _accentColor,  // Use alert color for accent
             width: 4,
           ),
         ),
-        borderRadius: BorderRadius.circular(8),  // Softer corners (was 4)
-        // Add subtle shadow for depth
-        boxShadow: [
-          BoxShadow(
-            color: _accentColor.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),  // Softer corners
+        // No shadow in dark mode - clean flat design
       ),
       child: Row(
         children: [
@@ -216,18 +199,18 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
           ),
           const SizedBox(width: 12),
 
-          // Message text (uses dark gray for readability)
+          // Message text (adaptive color for light/dark mode)
           Expanded(
             child: Text(
               _message,
               style: ComponentTextStyles.alertMessage(Theme.of(context).textTheme).copyWith(
-                color: _textColor,
+                color: _getTextColor(context),
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
 
-          // Close button (uses medium gray)
+          // Close button (adaptive color for light/dark mode)
           InkWell(
             onTap: _handleDismiss,
             borderRadius: BorderRadius.circular(16),
@@ -235,7 +218,7 @@ class _BudgetAlertBannerState extends State<BudgetAlertBanner> {
               padding: const EdgeInsets.all(4),
               child: Icon(
                 Icons.close,
-                color: _closeColor,
+                color: _getCloseColor(context),
                 size: 18,
               ),
             ),
