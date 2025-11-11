@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../providers/user_preferences_provider.dart';
+import '../providers/theme_provider.dart';
 import '../widgets/settings/budget_setting_tile.dart';
-import '../theme/minimalist/minimalist_colors.dart';
 
 /// Settings screen with category-based organization
 ///
@@ -38,7 +38,11 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(PhosphorIconsLight.warningCircle, size: 48, color: MinimalistColors.gray800),  // Subheadings
+                  Icon(
+                    PhosphorIconsLight.warningCircle,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Error loading settings',
@@ -47,9 +51,7 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     prefsProvider.errorMessage!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: MinimalistColors.gray600,  // Labels
-                        ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -97,12 +99,7 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Language',
                 subtitle: 'Vietnamese',
               ),
-              _buildPlaceholderTile(
-                context,
-                icon: PhosphorIconsLight.palette,
-                title: 'Theme',
-                subtitle: 'System default',
-              ),
+              _buildThemeSelector(context),
               const Divider(height: 32),
 
               // Advanced Section
@@ -133,7 +130,7 @@ class SettingsScreen extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: MinimalistColors.gray700,  // Body text - subtle section headers
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
       ),
     );
@@ -151,11 +148,136 @@ class SettingsScreen extends StatelessWidget {
     required String subtitle,
   }) {
     return ListTile(
-      leading: Icon(icon, color: MinimalistColors.gray500),  // Secondary - subtle icons
+      leading: Icon(
+        icon,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
+      ),
       title: Text(title),
       subtitle: Text(subtitle),
-      trailing: Icon(PhosphorIconsLight.caretRight, color: MinimalistColors.gray500),  // Secondary
+      trailing: Icon(
+        PhosphorIconsLight.caretRight,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
+      ),
       enabled: false, // Grayed out to indicate not yet implemented
+    );
+  }
+
+  /// Theme selector with Light/Dark/System options
+  ///
+  /// Learning: Theme selection is implemented with a bottom sheet containing
+  /// RadioListTiles. This pattern is common in settings screens because:
+  /// 1. It shows all options at once (unlike a dialog)
+  /// 2. It's familiar to users from system settings
+  /// 3. RadioListTile provides built-in selection state management
+  Widget _buildThemeSelector(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        // Get display text for current theme mode
+        String getThemeText(ThemeMode mode) {
+          switch (mode) {
+            case ThemeMode.light:
+              return 'Light';
+            case ThemeMode.dark:
+              return 'Dark';
+            case ThemeMode.system:
+              return 'System default';
+          }
+        }
+
+        return ListTile(
+          leading: Icon(
+            PhosphorIconsLight.palette,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          title: const Text('Theme'),
+          subtitle: Text(getThemeText(themeProvider.themeMode)),
+          trailing: Icon(
+            PhosphorIconsLight.caretRight,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          onTap: () {
+            // Show bottom sheet with theme options
+            showModalBottomSheet(
+              context: context,
+              builder: (BuildContext bottomSheetContext) {
+                return Consumer<ThemeProvider>(
+                  builder: (context, themeProvider, child) {
+                    return SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Header
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  PhosphorIconsLight.palette,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Choose Theme',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 1),
+
+                          // Light theme option
+                          RadioListTile<ThemeMode>(
+                            title: const Text('Light'),
+                            subtitle: const Text('Always use light theme'),
+                            value: ThemeMode.light,
+                            groupValue: themeProvider.themeMode,
+                            onChanged: (ThemeMode? value) {
+                              if (value != null) {
+                                themeProvider.setThemeMode(value);
+                                Navigator.pop(bottomSheetContext);
+                              }
+                            },
+                          ),
+
+                          // Dark theme option
+                          RadioListTile<ThemeMode>(
+                            title: const Text('Dark'),
+                            subtitle: const Text('Always use dark theme'),
+                            value: ThemeMode.dark,
+                            groupValue: themeProvider.themeMode,
+                            onChanged: (ThemeMode? value) {
+                              if (value != null) {
+                                themeProvider.setThemeMode(value);
+                                Navigator.pop(bottomSheetContext);
+                              }
+                            },
+                          ),
+
+                          // System theme option
+                          RadioListTile<ThemeMode>(
+                            title: const Text('System default'),
+                            subtitle: const Text('Follow device setting'),
+                            value: ThemeMode.system,
+                            groupValue: themeProvider.themeMode,
+                            onChanged: (ThemeMode? value) {
+                              if (value != null) {
+                                themeProvider.setThemeMode(value);
+                                Navigator.pop(bottomSheetContext);
+                              }
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

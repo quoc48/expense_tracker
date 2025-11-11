@@ -6,6 +6,7 @@ import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_preferences_provider.dart';
+import '../providers/theme_provider.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/budget_alert_banner.dart';
 import 'add_expense_screen.dart';
@@ -29,12 +30,13 @@ class ExpenseListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Consumer<ExpenseProvider>: Listens to the provider and rebuilds when it changes
-    // Why Consumer instead of Provider.of?
-    // - More granular: Only rebuilds the Consumer widget, not the entire screen
+    // Consumer2<ExpenseProvider, ThemeProvider>: Listens to BOTH providers and rebuilds when either changes
+    // Why Consumer2 instead of Consumer?
+    // - Expense data dependency: Rebuilds when expenses are added/edited/deleted
+    // - Theme dependency: Rebuilds when user toggles light/dark mode (fixes stale colors bug)
     // - More explicit: Clearly shows which widgets depend on which data
-    return Consumer<ExpenseProvider>(
-      builder: (context, expenseProvider, child) {
+    return Consumer2<ExpenseProvider, ThemeProvider>(
+      builder: (context, expenseProvider, themeProvider, child) {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Expense Tracker'),
@@ -122,7 +124,14 @@ class ExpenseListScreen extends StatelessWidget {
     // Calculate budget percentage
     final budgetPercentage = budgetAmount > 0 ? (totalSpending / budgetAmount) * 100 : 0.0;
 
+    // Get current theme brightness for ListView key
+    // This forces ListView to rebuild visible items when theme changes
+    final brightness = Theme.of(context).brightness;
+
     return ListView.builder(
+      // Key based on brightness - ensures ListView rebuilds when toggling light/dark mode
+      // Without this key, Flutter reuses existing Card widgets (causing invisible text bug)
+      key: ValueKey('expense-list-$brightness'),
       // +1 for the alert banner (shown conditionally at index 0)
       itemCount: expenses.length + 1,
       itemBuilder: (context, index) {
@@ -190,17 +199,23 @@ class ExpenseListScreen extends StatelessWidget {
           ),
           minVerticalPadding: 0,  // Remove default ListTile vertical padding
           leading: CircleAvatar(
-            backgroundColor: MinimalistColors.gray100,  // Card background
+            backgroundColor: MinimalistColors.getAdaptiveGray(
+              context,
+              lightColor: MinimalistColors.gray100,
+              darkColor: MinimalistColors.darkGray300,  // Lighter circle in dark mode
+            ),
             radius: 20,
             child: Icon(
               expense.categoryIcon,
-              color: MinimalistColors.gray800,  // Subheadings
+              color: MinimalistColors.getAdaptivePrimaryText(context),
               size: AppConstants.iconSizeSm,
             ),
           ),
           title: Text(
             expense.description,
-            style: ComponentTextStyles.expenseTitleCompact(theme.textTheme),
+            style: ComponentTextStyles.expenseTitleCompact(theme.textTheme).copyWith(
+              color: MinimalistColors.getAdaptivePrimaryText(context),
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -208,13 +223,15 @@ class ExpenseListScreen extends StatelessWidget {
             padding: EdgeInsets.only(top: AppSpacing.space2xs),  // 4px minimal gap
             child: Text(
               dateFormat.format(expense.date),
-              style: ComponentTextStyles.expenseDateCompact(theme.textTheme),
+              style: ComponentTextStyles.expenseDateCompact(theme.textTheme).copyWith(
+                color: MinimalistColors.getAdaptiveSecondaryText(context),
+              ),
             ),
           ),
           trailing: Text(
             CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
             style: AppTypography.currencyMedium(
-              color: MinimalistColors.gray900,  // Primary text
+              color: MinimalistColors.getAdaptivePrimaryText(context),
             ),
           ),
           onTap: () => _editExpense(context, expense),

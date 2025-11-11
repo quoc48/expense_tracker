@@ -5,6 +5,9 @@ import '../../theme/typography/app_typography.dart';
 import '../../theme/minimalist/minimalist_colors.dart';
 import 'summary_stat_card.dart';
 
+// Note: MinimalistColors still imported for alert colors (alertWarning, alertCritical, alertError)
+// These are semantic colors designed to work across themes
+
 /// Unified card showing spending overview with budget context
 ///
 /// **Purpose:**
@@ -78,13 +81,18 @@ class MonthlyOverviewCard extends StatelessWidget {
     }
   }
 
-  /// Get text color for status badge
-  /// Yellow needs dark text for contrast, orange/red can use accent color
-  Color _getStatusTextColor() {
+  /// Get text color for status badge (theme-aware)
+  /// Ensures proper contrast in both light and dark modes
+  Color _getStatusTextColor(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+
     if (_percentageUsed < 70) {
       return MinimalistColors.gray500;  // Match badge color
     } else if (_percentageUsed < 90) {
-      return MinimalistColors.gray900;  // Dark text for yellow background
+      // Yellow badge: needs contrasting text
+      return brightness == Brightness.light
+          ? MinimalistColors.gray900  // Dark text on light yellow
+          : MinimalistColors.gray50;   // Light text on dark yellow
     } else {
       return _getStatusColor();  // Orange/red have good contrast
     }
@@ -107,7 +115,7 @@ class MonthlyOverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final statusColor = _getStatusColor();
-    final statusTextColor = _getStatusTextColor();
+    final statusTextColor = _getStatusTextColor(context);
     final statusText = _getStatusText();
 
     // Calculate percentage change for previous month comparison
@@ -116,12 +124,12 @@ class MonthlyOverviewCard extends StatelessWidget {
         : 0.0;
     final isIncrease = percentageChange > 0;
     final isDecrease = percentageChange < 0;
-    // Minimalist: Use darker grayscale for better contrast (darker = worse)
+    // Minimalist: Use theme-aware colors for better contrast
     final trendColor = isIncrease
-        ? MinimalistColors.gray900  // Primary text - spending increased (worse) - darker for contrast
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.9)  // Spending increased (worse) - darker
         : (isDecrease
-            ? MinimalistColors.gray700  // Body text - spending decreased (better) - darker for readability
-            : MinimalistColors.gray600); // Labels - no change - darker for visibility
+            ? theme.colorScheme.onSurface.withValues(alpha: 0.7)  // Spending decreased (better)
+            : theme.colorScheme.onSurface.withValues(alpha: 0.6)); // No change
     final trendIcon = isIncrease
         ? PhosphorIconsLight.arrowUp
         : (isDecrease
@@ -142,14 +150,12 @@ class MonthlyOverviewCard extends StatelessWidget {
               Icon(
                 PhosphorIconsLight.wallet,
                 size: 20,
-                color: MinimalistColors.gray700,  // Body text - subtle
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 8),
               Text(
                 'Monthly Spent',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: MinimalistColors.gray900,  // Primary text - high contrast
-                ),
+                style: theme.textTheme.titleMedium,
               ),
             ],
           ),
@@ -167,7 +173,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                     totalAmount,
                     context: CurrencyContext.full,
                   ),
-                  style: AppTypography.currencyLarge(color: MinimalistColors.gray900),  // Primary text - hero number
+                  style: AppTypography.currencyLarge(color: theme.colorScheme.onSurface),
                 ),
               ),
               // RIGHT: Status badge (only for current month with budget set)
@@ -175,9 +181,11 @@ class MonthlyOverviewCard extends StatelessWidget {
                 Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
+                  color: statusColor.withValues(alpha: theme.brightness == Brightness.light ? 0.1 : 0.2),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: theme.brightness == Brightness.light ? 0.3 : 0.5),
+                  ),
                 ),
                 child: Text(
                   statusText,
@@ -220,7 +228,7 @@ class MonthlyOverviewCard extends StatelessWidget {
               // Progress bar (clean, no text below)
               LinearProgressIndicator(
                 value: progressValue,
-                backgroundColor: MinimalistColors.gray200,  // Dividers - light background
+                backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(4),
@@ -230,7 +238,7 @@ class MonthlyOverviewCard extends StatelessWidget {
           if (isCurrentMonth && budgetAmount > 0) const SizedBox(height: 16),
 
           // Divider
-          Divider(color: MinimalistColors.gray300, height: 1),  // Inactive borders - subtle divider
+          Divider(color: theme.dividerColor, height: 1),
           const SizedBox(height: 12),
 
           // Bottom Metrics Row: Remaining + Previous (or just Previous for past months)
@@ -249,7 +257,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                               ? PhosphorIconsLight.piggyBank
                               : PhosphorIconsLight.warning,
                           size: 16,
-                          color: MinimalistColors.gray600,  // Labels
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -266,8 +274,8 @@ class MonthlyOverviewCard extends StatelessWidget {
                       ),
                       style: AppTypography.currencyMedium(
                         color: _remainingAmount >= 0
-                            ? MinimalistColors.gray700  // Body text - neutral
-                            : MinimalistColors.gray800,  // Subheadings - slightly darker for negative
+                            ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
+                            : theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -279,7 +287,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                 Container(
                 height: 40,
                 width: 1,
-                color: MinimalistColors.gray300,  // Inactive borders - subtle divider
+                color: theme.dividerColor,
                 margin: const EdgeInsets.symmetric(horizontal: 12),
               ),
 
@@ -293,7 +301,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                         Icon(
                           PhosphorIconsLight.clockCounterClockwise,
                           size: 16,
-                          color: MinimalistColors.gray600,  // Labels
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -315,7 +323,7 @@ class MonthlyOverviewCard extends StatelessWidget {
                             context: CurrencyContext.compact,
                           ),
                           style: AppTypography.currencyMedium(
-                            color: MinimalistColors.gray700,  // Body text
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         if (previousMonthAmount > 0) ...[

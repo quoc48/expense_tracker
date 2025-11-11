@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../utils/currency_formatter.dart';
 import '../../theme/typography/app_typography.dart';
-import '../../theme/minimalist/minimalist_colors.dart';
-import 'budget_edit_dialog.dart';
+import 'budget_edit_sheet.dart';
 
 /// Budget setting tile that displays current budget and opens edit dialog
 ///
@@ -27,7 +26,7 @@ class BudgetSettingTile extends StatelessWidget {
     return ListTile(
       leading: Icon(
         PhosphorIconsLight.wallet,
-        color: MinimalistColors.gray700,  // Body text - subtle icon
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       title: const Text('Monthly Budget'),
       subtitle: Text(
@@ -36,25 +35,28 @@ class BudgetSettingTile extends StatelessWidget {
           context: CurrencyContext.full,
         ),
         style: AppTypography.currencyMedium(
-          color: MinimalistColors.gray900,  // Primary text - strong contrast for amounts
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
-      trailing: Icon(PhosphorIconsLight.pencilSimple, color: MinimalistColors.gray500),  // Secondary - subtle edit icon
+      trailing: Icon(
+        PhosphorIconsLight.pencilSimple,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       onTap: () => _showBudgetDialog(context),
     );
   }
 
-  /// Show budget edit dialog
+  /// Show budget edit bottom sheet
   ///
-  /// Learning: Dialogs are perfect for focused editing tasks.
-  /// They keep the user's attention on a single field while
-  /// maintaining context of where they came from. The alternative
-  /// (navigating to a new screen) would feel heavyweight for
-  /// editing a single number.
+  /// Learning: Bottom sheets are perfect for mobile form editing.
+  /// They slide up from the bottom, provide natural entry/exit animations,
+  /// and are more thumb-friendly than centered dialogs. This matches the
+  /// Material Design pattern used throughout the app (e.g., theme selector).
   Future<void> _showBudgetDialog(BuildContext context) async {
-    final newBudget = await showDialog<double>(
+    final newBudget = await showModalBottomSheet<double>(
       context: context,
-      builder: (context) => BudgetEditDialog(
+      isScrollControlled: true, // Allow sheet to size to content + keyboard
+      builder: (context) => BudgetEditSheet(
         initialBudget: currentBudget,
       ),
     );

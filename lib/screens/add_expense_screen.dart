@@ -309,10 +309,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     FilledButton(
                       onPressed: _saveExpense,
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         child: Text(
                           isEditing ? 'Update Expense' : 'Save Expense',
-                          style: ComponentTextStyles.buttonPrimary(Theme.of(context).textTheme),
+                          // No explicit style - let FilledButton theme control colors for proper contrast
                         ),
                       ),
                     ),

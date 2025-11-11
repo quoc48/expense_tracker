@@ -14,7 +14,6 @@ import '../providers/user_preferences_provider.dart';
 import 'settings_screen.dart';
 import '../theme/typography/app_typography.dart';
 import '../theme/constants/app_spacing.dart';
-import '../theme/minimalist/minimalist_colors.dart';
 
 /// AnalyticsScreen displays spending analytics with monthly summaries and charts.
 ///
@@ -350,7 +349,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 Icon(
                   PhosphorIconsLight.chartPie,
-                  color: MinimalistColors.gray700,  // Body text - subtle
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -395,7 +394,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 Icon(
                   PhosphorIconsLight.chartLineUp,
-                  color: MinimalistColors.gray700,  // Body text - subtle
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
                 Text(
