@@ -1,317 +1,582 @@
-# Expense Tracker - Advanced Features TODO
+# Receipt Scanning Feature - TODO List
 
-## 🎉 MVP Complete - Milestones 1-3 ✅
-
-**Completed**: October 26, 2025
-
-For MVP task history, see [`docs/mvp/todo.md`](docs/mvp/todo.md)
-
-**MVP Delivered:**
-- ✅ Complete CRUD operations
-- ✅ Local data persistence
-- ✅ Bottom navigation with two tabs
-- ✅ Provider state management
-- ✅ Analytics dashboard with charts
-- ✅ Category breakdown (bar chart)
-- ✅ Spending trends (line chart)
+**Project**: Expense Tracker Flutter App
+**Feature**: OCR-based Receipt Scanning
+**Total Estimate**: 100-130 hours (4-5 weeks at 20-25 hours/week)
+**Last Updated**: 2025-11-13
 
 ---
 
-## 📋 Next Session Preparation
+## Phase 1: Foundation (Week 1) - 8-12 hours
 
-### Before Starting Milestone 4
-- [ ] Review [`spec.md`](spec.md) - Advanced features specification
-- [ ] Review Vietnamese categories table in spec.md
-- [ ] Create Supabase account at [supabase.com](https://supabase.com)
-- [ ] Export Notion expense database to CSV
-- [ ] Create `develop` branch from `main`
-- [ ] Create `feature/supabase-setup` branch from `develop`
+### 1.1 Dependencies Setup (2-3 hours)
+- [ ] Add dependencies to pubspec.yaml
+  - google_mlkit_text_recognition: ^0.13.0
+  - camera: ^0.11.0
+  - image_picker: ^1.1.0
+  - image: ^4.2.0
+  - hive: ^2.2.3
+  - hive_flutter: ^1.1.0
+  - connectivity_plus: ^6.0.0
+  - path_provider: ^2.1.0
+  - permission_handler: ^11.3.0
+- [ ] Add dev dependencies
+  - hive_generator: ^2.0.1
+  - build_runner: ^2.4.0
+- [ ] Run `flutter pub get`
+- [ ] Test app still builds
 
----
+**Dependencies**: None
+**Success Criteria**: App builds without errors, all packages resolve
 
-## Milestone 4: Supabase Infrastructure
+### 1.2 Permissions Configuration (2-3 hours)
+- [ ] iOS: Update Info.plist with camera usage description
+- [ ] iOS: Update Info.plist with photo library description
+- [ ] Android: Update AndroidManifest.xml with camera permission
+- [ ] Android: Update AndroidManifest.xml with storage permission
+- [ ] Create permission_handler service wrapper
+- [ ] Test permission flow on device
 
-**Status**: Not Started
-**Estimated Duration**: 2-3 sessions
-**Goal**: Set up cloud backend and migrate Notion data
+**Dependencies**: 1.1
+**Success Criteria**: Permission prompts appear correctly, can grant/deny
 
-### Phase 4.1: Supabase Project Setup
-- [ ] Create Supabase account and new project
-- [ ] Configure project settings
-- [ ] Set up environment variables in Flutter
-  - Create `.env` file
-  - Add `SUPABASE_URL`
-  - Add `SUPABASE_ANON_KEY`
-- [ ] Add `supabase_flutter` dependency to pubspec.yaml
-- [ ] Install dependencies (`flutter pub get`)
-- [ ] Initialize Supabase in Flutter app
+### 1.3 Directory Structure (1 hour)
+- [ ] Create lib/models/scanning/ directory
+- [ ] Create lib/screens/scanning/ directory
+- [ ] Create lib/widgets/scanning/ directory
+- [ ] Create lib/services/scanning/ directory
+- [ ] Create lib/utils/scanning/ directory
+- [ ] Create lib/repositories/offline/ directory
 
-### Phase 4.2: Database Schema Implementation
-- [ ] Create `categories` table (14 Vietnamese categories)
-- [ ] Create `expense_types` table (3 types with Vietnamese names)
-- [ ] Create `expenses` table (with FKs to categories/types)
-- [ ] Create `budgets` table (for Milestone 6)
-- [ ] Create `recurring_expenses` table (for Milestone 6)
-- [ ] Set up all indexes for performance
-- [ ] Configure Row Level Security (RLS) policies
-- [ ] Test RLS policies
+**Dependencies**: None
+**Success Criteria**: Clean project structure ready for implementation
 
-### Phase 4.3: Seed Data
-- [ ] Seed 14 Vietnamese categories from spec.md
-- [ ] Seed 3 expense types (Vietnamese names)
-- [ ] Verify seed data in Supabase dashboard
+### 1.4 Base Models (3-4 hours)
+- [ ] Create ScannedReceipt model
+  - id, scanDate, items, totalAmount, status
+- [ ] Create ScannedItem model
+  - description, amount, categoryNameVi, typeNameVi, confidence
+- [ ] Create QueuedReceipt Hive model with @HiveType annotations
+- [ ] Create QueuedItem Hive model with @HiveType annotations
+- [ ] Run build_runner to generate .g.dart files
+- [ ] Write unit tests for model serialization
+- [ ] Initialize Hive in main.dart
 
-### Phase 4.4: Notion Data Migration
-- [ ] Export Notion database to CSV
-- [ ] Review CSV structure and data quality
-- [ ] Create Python migration script
-  - Install dependencies (`pandas`, `supabase-py`)
-  - Map Vietnamese categories to Supabase UUIDs
-  - Transform CSV data to match schema
-  - Handle data validation
-- [ ] Run migration script
-- [ ] Validate migrated data
-  - Count total expenses
-  - Sum by category matches
-  - Date range verification
-  - No missing categories
+**Dependencies**: 1.1
+**Success Criteria**: Models compile, Hive boxes open, tests pass
 
-### Phase 4.5: Testing & Verification
-- [ ] Test database queries in Supabase dashboard
-- [ ] Verify RLS policies prevent unauthorized access
-- [ ] Confirm all Vietnamese categories display correctly
-- [ ] Document any migration issues or data cleaning needed
+### 1.5 Hive Setup (1-2 hours)
+- [ ] Initialize Hive in main.dart
+- [ ] Register QueuedReceipt adapter
+- [ ] Register QueuedItem adapter
+- [ ] Open receipt_queue box
+- [ ] Test Hive persistence (write/read)
 
-**Milestone 4 Completion Criteria**:
-- ✅ Supabase project fully configured
-- ✅ All tables created with correct schema
-- ✅ RLS policies tested and working
-- ✅ 14 Vietnamese categories seeded
-- ✅ Real Notion data migrated successfully
-- ✅ Data integrity validated
+**Dependencies**: 1.4
+**Success Criteria**: Can write to and read from Hive box
 
----
-
-## Milestone 5: Authentication + Cloud Sync
-
-**Status**: Not Started
-**Estimated Duration**: 3-4 sessions
-**Goal**: Add user auth and real-time synchronization
-
-### Phase 5.1: Authentication Screens
-- [ ] Create `lib/screens/auth/` directory
-- [ ] Create `login_screen.dart`
-- [ ] Create `signup_screen.dart`
-- [ ] Create `forgot_password_screen.dart`
-- [ ] Add email/password validation
-- [ ] Style auth screens with Material Design 3
-
-### Phase 5.2: Auth State Management
-- [ ] Create `AuthProvider` or use Supabase auth state
-- [ ] Add auth check on app startup
-- [ ] Route to login if not authenticated
-- [ ] Persist auth session
-- [ ] Handle logout functionality
-- [ ] Add user profile screen (optional)
-
-### Phase 5.3: Protected Routes
-- [ ] Wrap main app with auth check
-- [ ] Show login screen for unauthenticated users
-- [ ] Navigate to main app after successful login
-- [ ] Handle session expiration
-
-### Phase 5.4: Repository Pattern
-- [ ] Create `ExpenseRepository` interface
-- [ ] Implement `LocalExpenseRepository` (SharedPreferences)
-- [ ] Implement `SupabaseExpenseRepository`
-- [ ] Update `ExpenseProvider` to use repositories
-
-### Phase 5.5: Sync Service
-- [ ] Create `SyncService` class
-- [ ] Implement push to Supabase (local → cloud)
-- [ ] Implement pull from Supabase (cloud → local)
-- [ ] Add conflict resolution (last-write-wins)
-- [ ] Handle sync errors and retry logic
-- [ ] Add periodic background sync
-
-### Phase 5.6: Offline Support
-- [ ] Queue operations when offline
-- [ ] Retry failed syncs when online
-- [ ] Show sync status indicator in UI
-- [ ] Handle network state changes
-- [ ] Test offline → online transitions
-
-**Milestone 5 Completion Criteria**:
-- ✅ Users can sign up and login
-- ✅ Protected routes work correctly
-- ✅ Expenses sync to/from Supabase
-- ✅ Offline mode works (queue + retry)
-- ✅ Real-time updates from other devices
-- ✅ Sync status visible to user
+**Phase 1 Testing Checkpoint**:
+- [ ] All dependencies installed
+- [ ] Permissions work on iOS and Android
+- [ ] Models serialize correctly
+- [ ] Hive persistence works
 
 ---
 
-## Milestone 6: Advanced Features
+## Phase 2: Camera & Image Capture (Week 1-2) - 12-16 hours
 
-**Status**: Not Started
-**Estimated Duration**: 3-4 sessions
-**Goal**: Add recurring expenses and budget tracking
+### 2.1 Camera Service (4-5 hours)
+- [ ] Create CameraService class
+- [ ] Initialize camera controller
+- [ ] Handle camera lifecycle (resume/pause)
+- [ ] Implement flash toggle
+- [ ] Implement camera flip (front/back)
+- [ ] Add error handling
+- [ ] Write unit tests
 
-### Phase 6.1: Recurring Expenses
-- [ ] Create `RecurringExpense` model
-- [ ] Create recurring expense management screen
-- [ ] Add recurring expense form (add/edit)
-- [ ] Implement auto-creation service
-  - Check daily/on app open
-  - Create expenses based on frequency
-  - Update last_created_date
-- [ ] Sync recurring expenses with Supabase
-- [ ] Add enable/disable toggle
-- [ ] Test frequency logic (daily, weekly, monthly, yearly)
+**Dependencies**: 1.2
+**Success Criteria**: Camera initializes correctly, controls work
 
-### Phase 6.2: Budget Tracking
-- [ ] Create `Budget` model
-- [ ] Create budget setup screen
-- [ ] Add budget per category
-- [ ] Calculate budget vs actual spending
-- [ ] Show progress indicators
-- [ ] Add budget alerts (80%, 100% thresholds)
-- [ ] Display remaining budget per category
-- [ ] Sync budgets with Supabase
+### 2.2 CameraCaptureScreen UI (4-5 hours)
+- [ ] Create CameraCaptureScreen stateful widget
+- [ ] Implement full-screen camera preview
+- [ ] Add AppBar with back and flash buttons
+- [ ] Add bottom controls (Gallery, Capture, Flip)
+- [ ] Add guidelines overlay for framing
+- [ ] Implement capture button with animation
+- [ ] Add haptic feedback on capture
+- [ ] Handle permissions denied state
 
-### Phase 6.3: Analytics Enhancement
-- [ ] Add budget lines to charts
-- [ ] Show budget vs actual comparison
-- [ ] Add monthly budget adherence score
-- [ ] Update category chart with budget overlay
+**Dependencies**: 2.1
+**Success Criteria**: Can see camera preview, all controls functional
 
-**Milestone 6 Completion Criteria**:
-- ✅ Recurring expenses auto-create correctly
-- ✅ Budgets can be set per category
-- ✅ Budget tracking shows real-time progress
-- ✅ Alerts trigger at 80% and 100%
-- ✅ Analytics show budget comparisons
+### 2.3 Image Picker Integration (2 hours)
+- [ ] Integrate image_picker for gallery selection
+- [ ] Add gallery button to CameraCaptureScreen
+- [ ] Handle image selection
+- [ ] Navigate to preview after selection
 
----
+**Dependencies**: 2.2
+**Success Criteria**: Can select images from gallery
 
-## Milestone 7: Production Polish
+### 2.4 ImagePreviewScreen (3-4 hours)
+- [ ] Create ImagePreviewScreen widget
+- [ ] Implement zoomable image view (pinch to zoom)
+- [ ] Add Retake button (returns to camera)
+- [ ] Add Process button (continues to OCR)
+- [ ] Add quality warnings (blur detection, size check)
+- [ ] Style with minimalist theme
 
-**Status**: Not Started
-**Estimated Duration**: 2-3 sessions
-**Goal**: Make app production-ready for App Store
+**Dependencies**: 2.2, 2.3
+**Success Criteria**: Can preview image, zoom works, navigation works
 
-### Phase 7.1: UI/UX Polish
-- [ ] Add loading animations
-- [ ] Improve error messages
-- [ ] Add smooth transitions between screens
-- [ ] Show network status indicator
-- [ ] Add pull-to-refresh on expense list
-- [ ] Polish empty states
-- [ ] Add confirmation dialogs where needed
+### 2.5 Image Processing Utility (2-3 hours)
+- [ ] Create ImageProcessor class
+- [ ] Implement image compression (max 1920x1920, 85% quality)
+- [ ] Implement rotation correction (EXIF data)
+- [ ] Implement blur detection
+- [ ] Implement size validation
+- [ ] Write unit tests
 
-### Phase 7.2: Onboarding
-- [ ] Create onboarding flow for new users
-- [ ] Add feature highlights
-- [ ] Create tutorial overlays
-- [ ] Add skip option
+**Dependencies**: None
+**Success Criteria**: Images compressed correctly, quality maintained
 
-### Phase 7.3: App Assets
-- [ ] Design app icon
-- [ ] Create launch screen
-- [ ] Design App Store screenshots
-- [ ] Write app description
-- [ ] Create privacy policy (required for cloud sync)
-
-### Phase 7.4: Testing
-- [ ] Multi-device sync testing
-- [ ] Offline/online transition testing
-- [ ] Conflict resolution testing
-- [ ] Performance testing
-- [ ] Edge case testing
-- [ ] TestFlight beta testing
-
-### Phase 7.5: App Store Preparation
-- [ ] Configure App Store Connect
-- [ ] Upload build to TestFlight
-- [ ] Gather beta tester feedback
-- [ ] Fix critical bugs
-- [ ] Submit for App Store review
-
-**Milestone 7 Completion Criteria**:
-- ✅ App is polished and bug-free
-- ✅ Onboarding flow complete
-- ✅ App assets created
-- ✅ Privacy policy published
-- ✅ TestFlight testing complete
-- ✅ Ready for App Store submission
+**Phase 2 Testing Checkpoint**:
+- [ ] Can take photo with camera
+- [ ] Can select photo from gallery
+- [ ] Preview shows image correctly
+- [ ] Zoom works smoothly
+- [ ] Image compression works
+- [ ] Test on iOS and Android devices
 
 ---
 
-## 🔀 Git Workflow
+## Phase 3: OCR Integration (Week 2) - 16-20 hours
 
-### Branch Structure
-```
-main          ← Stable MVP (production-ready)
-└── develop   ← Integration branch for M4-7
-     ├── feature/supabase-setup
-     ├── feature/authentication
-     ├── feature/cloud-sync
-     ├── feature/recurring-expenses
-     └── feature/budget-tracking
-```
+### 3.1 OCR Service (6-8 hours)
+- [ ] Create OcrService class
+- [ ] Integrate Google ML Kit TextRecognizer
+- [ ] Implement extractText() method
+- [ ] Handle Vietnamese language recognition
+- [ ] Parse text blocks and lines
+- [ ] Add error handling
+- [ ] Add timeout handling (10 seconds max)
+- [ ] Write unit tests with sample images
 
-### Workflow Commands
-```bash
-# Initial setup (do once)
-git checkout main
-git checkout -b develop
+**Dependencies**: 1.1
+**Success Criteria**: Can extract text from Vietnamese receipts
 
-# For each feature
-git checkout develop
-git checkout -b feature/supabase-setup
-# ... work on feature ...
-git add .
-git commit -m "Descriptive message"
-git checkout develop
-git merge feature/supabase-setup
+### 3.2 Receipt Parser (6-8 hours)
+- [ ] Create ReceiptParser class
+- [ ] Implement amount extraction (multiple formats: 50.000, 50,000, 50000)
+- [ ] Implement item line parsing (description + amount pairs)
+- [ ] Handle tabular formats
+- [ ] Handle vertical list formats
+- [ ] Identify total line (optional)
+- [ ] Filter noise and headers/footers
+- [ ] Write unit tests with various receipt formats
 
-# After milestone complete
-git checkout main
-git merge develop --no-ff
-git tag v2.0.0-beta
-```
+**Dependencies**: 3.1
+**Success Criteria**: >70% accuracy on real receipts
 
----
+### 3.3 Processing Overlay Widget (2-3 hours)
+- [ ] Create ProcessingOverlay widget
+- [ ] Add animated loading indicator
+- [ ] Show progress text ("Extracting text...")
+- [ ] Add estimated time remaining
+- [ ] Implement cancel button
+- [ ] Handle cancellation gracefully
 
-## 📊 Progress Tracking
+**Dependencies**: None
+**Success Criteria**: Shows progress during OCR, cancel works
 
-| Milestone | Status | Completion |
-|-----------|--------|------------|
-| M1: Basic UI | ✅ Complete | 100% |
-| M2: Persistence | ✅ Complete | 100% |
-| M3: Analytics | ✅ Complete | 100% |
-| M4: Supabase | ⏳ Not Started | 0% |
-| M5: Auth + Sync | ⏳ Not Started | 0% |
-| M6: Features | ⏳ Not Started | 0% |
-| M7: Polish | ⏳ Not Started | 0% |
+### 3.4 OCR Integration Testing (2-3 hours)
+- [ ] Collect 10 real Vietnamese receipts
+- [ ] Test OCR on each receipt
+- [ ] Measure accuracy (% items correct)
+- [ ] Measure processing time
+- [ ] Document failure patterns
+- [ ] Refine parsing logic based on results
 
-**Overall Progress**: 3/7 milestones (43%)
+**Dependencies**: 3.1, 3.2
+**Success Criteria**: 70%+ items extracted correctly, <10s processing
 
----
-
-## 🎯 Next Session Checklist
-
-When starting next session:
-1. ✅ Review this todo.md
-2. ✅ Read `spec.md` for technical details
-3. ✅ Read Serena memory: `milestone_4_7_planning.md`
-4. ✅ Ensure Notion data exported
-5. ✅ Create Supabase account if not done
-6. ✅ Create `develop` branch
-7. ✅ Start Milestone 4, Phase 4.1
+**Phase 3 Testing Checkpoint**:
+- [ ] OCR extracts text from receipts
+- [ ] Parser identifies items and amounts
+- [ ] Processing time <10 seconds
+- [ ] Error handling works
+- [ ] Test with 10 different receipt formats
 
 ---
 
-**Last Updated**: October 26, 2025
-**Current Focus**: Preparing for Milestone 4
-**Next Task**: Review spec.md and create Supabase account
+## Phase 4: Category Matching (Week 2-3) - 12-16 hours
+
+### 4.1 Keyword Dictionary (4-5 hours)
+- [ ] Create keyword_dictionaries.dart
+- [ ] Build keyword lists for all 14 categories:
+  - Cà phê (coffee, latte, trà sữa, etc.)
+  - Thực phẩm (rau, thịt, gạo, etc.)
+  - Ăn uống (nhà hàng, cơm, phở, etc.)
+  - Du lịch (khách sạn, vé máy bay, etc.)
+  - Đi lại (taxi, grab, xăng, etc.)
+  - Hoá đơn (điện, nước, internet, etc.)
+  - Mua sắm (quần áo, giày dép, etc.)
+  - Giải trí (phim, game, karaoke, etc.)
+  - Sức khỏe (bệnh viện, thuốc, etc.)
+  - Giáo dục (học phí, sách, etc.)
+  - Tạp hoá (circle k, family mart, etc.)
+  - Thú cưng (chó, mèo, pet food, etc.)
+  - TẾT (bánh chưng, lì xì, etc.)
+  - Khác (fallback)
+- [ ] Include variations and typos
+- [ ] Test keyword coverage against real expenses
+
+**Dependencies**: None
+**Success Criteria**: Comprehensive keyword lists for all categories
+
+### 4.2 Category Matching Service (4-5 hours)
+- [ ] Create CategoryMatchingService class
+- [ ] Implement matchCategory() method
+- [ ] Use keyword dictionaries
+- [ ] Handle Vietnamese text normalization (remove accents for fuzzy matching)
+- [ ] Implement scoring algorithm (multiple keyword matches)
+- [ ] Default to "Khác" when no match
+- [ ] Write unit tests
+
+**Dependencies**: 4.1
+**Success Criteria**: >60% automatic matching accuracy
+
+### 4.3 Keyword Matcher Utility (2-3 hours)
+- [ ] Create KeywordMatcher class
+- [ ] Implement fuzzy matching for typos
+- [ ] Implement compound word handling
+- [ ] Add confidence scoring (internal only)
+- [ ] Write unit tests
+
+**Dependencies**: 4.2
+**Success Criteria**: Handles common typos and variations
+
+### 4.4 Matching Accuracy Testing (2-3 hours)
+- [ ] Export 100 random expenses from database
+- [ ] Run category matching on descriptions
+- [ ] Calculate accuracy percentage
+- [ ] Identify common mismatches
+- [ ] Refine keyword lists based on results
+- [ ] Re-test until >60% accuracy
+
+**Dependencies**: 4.2
+**Success Criteria**: >60% matching accuracy on real data
+
+**Phase 4 Testing Checkpoint**:
+- [ ] Keyword dictionaries cover all categories
+- [ ] Matching algorithm works
+- [ ] Tested against 100 real expenses
+- [ ] Accuracy >60%
+- [ ] Edge cases handled (empty strings, numbers only, etc.)
+
+---
+
+## Phase 5: Review Screen (Week 3) - 16-20 hours
+
+### 5.1 ScannedItemCard Widget (5-6 hours)
+- [ ] Create ScannedItemCard widget
+- [ ] Display mode: show icon, category, description, amount
+- [ ] Edit mode: inline expansion with text fields
+- [ ] Implement tap to toggle edit mode
+- [ ] Add category dropdown picker
+- [ ] Add type dropdown picker (Phải chi, Phát sinh, Lãng phí)
+- [ ] Add Update/Cancel buttons in edit mode
+- [ ] Implement swipe to delete
+- [ ] Style with minimalist theme
+
+**Dependencies**: None
+**Success Criteria**: Card displays correctly, edit mode works
+
+### 5.2 ReceiptReviewScreen Layout (4-5 hours)
+- [ ] Create ReceiptReviewScreen stateful widget
+- [ ] Add AppBar with "Review Receipt" title and "Save All" button
+- [ ] Add summary header (item count, total amount)
+- [ ] Implement ListView of ScannedItemCard widgets
+- [ ] Add empty state (no items)
+- [ ] Add FAB for adding missed items
+- [ ] Handle keyboard appearance (scroll to focused field)
+
+**Dependencies**: 5.1
+**Success Criteria**: Screen layout complete, scrolling works
+
+### 5.3 Add Missed Item Dialog (3-4 hours)
+- [ ] Create AddMissedItemDialog widget
+- [ ] Add form fields: description, amount, category, type
+- [ ] Validate inputs
+- [ ] Return new ScannedItem on save
+- [ ] Add to review list
+- [ ] Style consistently
+
+**Dependencies**: 5.2
+**Success Criteria**: Can manually add items to review list
+
+### 5.4 Batch Save Logic (4-5 hours)
+- [ ] Implement validateAllItems() method
+- [ ] Create expenses from ScannedItems
+- [ ] Use ExpenseProvider to batch create
+- [ ] Handle partial failures (some succeed, some fail)
+- [ ] Show progress indicator during save
+- [ ] Show success message with count
+- [ ] Show error message if failures
+- [ ] Navigate back to expense list on success
+
+**Dependencies**: 5.2
+**Success Criteria**: Can save all items as expenses, errors handled
+
+**Phase 5 Testing Checkpoint**:
+- [ ] Review screen displays 1, 5, 10, 20 items correctly
+- [ ] Can edit item inline
+- [ ] Can change category and type
+- [ ] Can delete items
+- [ ] Can add missed items
+- [ ] Batch save creates all expenses
+- [ ] Partial failures handled gracefully
+- [ ] UI remains responsive during save
+
+---
+
+## Phase 6: Offline Queue (Week 3-4) - 16-20 hours
+
+### 6.1 Offline Queue Repository (4-5 hours)
+- [ ] Create OfflineQueueRepository class
+- [ ] Implement CRUD operations for Hive box
+  - addToQueue(QueuedReceipt)
+  - getAll()
+  - getById(String id)
+  - getPending()
+  - updateStatus(String id, QueueStatus status)
+  - incrementRetry(String id)
+  - delete(String id)
+- [ ] Write unit tests
+
+**Dependencies**: 1.4, 1.5
+**Success Criteria**: Can manage queue via repository
+
+### 6.2 Connectivity Service (2-3 hours)
+- [ ] Create ConnectivityService class
+- [ ] Implement isOnline() check
+- [ ] Implement listenToConnectivity() stream
+- [ ] Handle connectivity changes
+- [ ] Write unit tests
+
+**Dependencies**: 1.1
+**Success Criteria**: Accurately detects online/offline state
+
+### 6.3 Offline Queue Service (6-8 hours)
+- [ ] Create OfflineQueueService class
+- [ ] Implement queueReceipt(ScannedReceipt) method
+- [ ] Implement processQueue() method
+- [ ] Implement retry logic with exponential backoff
+- [ ] Implement max retry limit (5 attempts)
+- [ ] Listen to connectivity changes → auto-process
+- [ ] Handle transient vs permanent errors
+- [ ] Add logging for debugging
+- [ ] Write unit tests
+
+**Dependencies**: 6.1, 6.2
+**Success Criteria**: Queue processes automatically, retries work
+
+### 6.4 Offline Queue Indicator Widget (3-4 hours)
+- [ ] Create OfflineQueueIndicator widget
+- [ ] Show banner at top of ExpenseListScreen
+- [ ] Display pending count
+- [ ] Show "Retry Now" button
+- [ ] Implement manual retry on button tap
+- [ ] Color-code by severity (info/warning/error)
+- [ ] Auto-hide when queue empty
+- [ ] Style with minimalist theme
+
+**Dependencies**: 6.3
+**Success Criteria**: Indicator shows queue status, retry button works
+
+**Phase 6 Testing Checkpoint**:
+- [ ] Queue 5 receipts while offline
+- [ ] Verify queue persists across app restarts
+- [ ] Turn on connectivity → verify auto-sync
+- [ ] Simulate network errors → verify retries
+- [ ] Test exponential backoff delays
+- [ ] Test max retry limit (5)
+- [ ] Manual retry button works
+- [ ] Indicator shows correct status
+
+---
+
+## Phase 7: FAB Integration (Week 4) - 4-6 hours
+
+### 7.1 Add Expense Bottom Sheet (2-3 hours)
+- [ ] Create AddExpenseBottomSheet widget
+- [ ] Add "Add Manual" option with icon and description
+- [ ] Add "Scan Receipt" option with icon and description
+- [ ] Implement navigation callbacks
+- [ ] Style with minimalist theme
+- [ ] Add animations
+
+**Dependencies**: None
+**Success Criteria**: Bottom sheet looks good, options clear
+
+### 7.2 Modify FAB Behavior (1-2 hours)
+- [ ] Update ExpenseListScreen FAB onPressed
+- [ ] Show AddExpenseBottomSheet on tap
+- [ ] Wire "Add Manual" → navigate to AddExpenseScreen
+- [ ] Wire "Scan Receipt" → navigate to CameraCaptureScreen
+- [ ] Test navigation flow
+
+**Dependencies**: 7.1, Phase 2, Phase 5
+**Success Criteria**: FAB shows 2 options, both navigations work
+
+### 7.3 Integration Testing (1 hour)
+- [ ] Test complete manual entry flow (unchanged)
+- [ ] Test complete scan flow (end-to-end)
+- [ ] Verify back navigation works correctly
+- [ ] Test on iOS and Android
+
+**Dependencies**: 7.2
+**Success Criteria**: Both flows work without issues
+
+**Phase 7 Testing Checkpoint**:
+- [ ] FAB shows bottom sheet with 2 options
+- [ ] "Add Manual" navigates to existing screen
+- [ ] "Scan Receipt" starts camera flow
+- [ ] Can cancel bottom sheet
+- [ ] Existing manual flow unchanged
+
+---
+
+## Phase 8: Testing & Polish (Week 4-5) - 16-20 hours
+
+### 8.1 End-to-End Testing (6-8 hours)
+- [ ] Test complete scan workflow (10 items):
+  - Open app → Tap FAB → Scan Receipt
+  - Capture photo → Preview → Process
+  - Review → Edit 2 items → Add 1 item → Delete 1 item
+  - Save All → Verify expenses created
+- [ ] Test offline queue workflow:
+  - Turn off WiFi/data
+  - Scan receipt → Save (goes to queue)
+  - Turn on connectivity → Verify auto-sync
+- [ ] Test error scenarios:
+  - Camera permission denied
+  - Network error during save
+  - Invalid image (blur, too small)
+  - OCR timeout
+- [ ] Test edge cases:
+  - 1 item receipt
+  - 50+ item receipt
+  - Receipt with no amounts
+  - Non-receipt image
+
+**Dependencies**: All previous phases
+**Success Criteria**: All workflows complete successfully, errors handled
+
+### 8.2 Performance Optimization (3-4 hours)
+- [ ] Measure OCR processing time (target <10s)
+- [ ] Optimize image compression settings
+- [ ] Profile memory usage during OCR
+- [ ] Ensure 60fps during UI interactions
+- [ ] Test on low-end Android device
+- [ ] Optimize if needed
+
+**Dependencies**: Phase 3
+**Success Criteria**: Performance targets met
+
+### 8.3 Error Handling & Messages (2-3 hours)
+- [ ] Review all error messages (use Vietnamese)
+- [ ] Add user-friendly error explanations
+- [ ] Implement recovery flows
+- [ ] Add retry options where appropriate
+- [ ] Test all error paths
+
+**Dependencies**: All phases
+**Success Criteria**: Errors clearly communicated, recoverable
+
+### 8.4 UI Polish (3-4 hours)
+- [ ] Add loading states to all async operations
+- [ ] Add subtle animations (card entrance, button press)
+- [ ] Add haptic feedback (capture, delete, save)
+- [ ] Ensure consistent spacing and typography
+- [ ] Test light and dark modes
+- [ ] Final visual review
+
+**Dependencies**: All phases
+**Success Criteria**: UI feels polished and responsive
+
+### 8.5 Documentation (2-3 hours)
+- [ ] Write user guide (how to use scanning feature)
+- [ ] Document technical architecture
+- [ ] Update main README.md
+- [ ] Add code comments where needed
+- [ ] Create troubleshooting guide
+
+**Dependencies**: All phases
+**Success Criteria**: Documentation complete and clear
+
+**Phase 8 Testing Checkpoint**:
+- [ ] All test cases pass
+- [ ] Performance targets met (<10s OCR, 60fps UI)
+- [ ] Error handling comprehensive
+- [ ] UI polished and smooth
+- [ ] Tested on multiple devices (iOS/Android)
+- [ ] Documentation complete
+- [ ] Ready for production use
+
+---
+
+## Final Acceptance Criteria
+
+### Functional
+- [ ] Can capture receipt photo or select from gallery
+- [ ] OCR extracts items and amounts (>70% accuracy)
+- [ ] Categories auto-matched (>60% accuracy)
+- [ ] Can review and edit all items
+- [ ] Can add/delete items
+- [ ] Batch save creates all expenses
+- [ ] Works offline with queue
+
+### Non-Functional
+- [ ] OCR processing <10 seconds
+- [ ] UI maintains 60fps
+- [ ] No crashes or data loss
+- [ ] Offline queue persists across restarts
+- [ ] Zero data loss during offline periods
+- [ ] Privacy maintained (images not stored)
+
+### Quality
+- [ ] Code follows project conventions
+- [ ] All tests passing
+- [ ] Error handling comprehensive
+- [ ] User-facing messages in Vietnamese
+- [ ] Consistent with existing UI theme
+
+---
+
+## Notes
+
+**Time Estimates**:
+- Total: 100-130 hours
+- Per phase: 4-20 hours
+- Assumes 20-25 hours/week availability
+
+**Dependencies**:
+- Phases 1-3 must be sequential
+- Phases 4-5 can overlap slightly
+- Phase 6 can start after Phase 1
+- Phase 7 requires Phases 2 and 5
+- Phase 8 requires all phases
+
+**Testing Strategy**:
+- Checkpoint after each phase
+- Continuous integration testing
+- Manual device testing throughout
+- Final acceptance testing in Phase 8
+
+**Risk Management**:
+- If OCR accuracy <70%, refine parser (add 4-6 hours)
+- If category matching <60%, expand keywords (add 2-4 hours)
+- If performance issues, optimize processing (add 4-6 hours)
+- Buffer time included in estimates for unexpected issues
