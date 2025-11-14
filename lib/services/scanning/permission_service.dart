@@ -49,7 +49,7 @@ class PermissionService {
   ///
   /// Opens the system settings page for this app, where the user
   /// can manually enable permissions.
-  Future<bool> openAppSettings() async {
+  Future<bool> openSettings() async {
     return await openAppSettings();
   }
 

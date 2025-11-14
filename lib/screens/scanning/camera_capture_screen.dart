@@ -229,11 +229,45 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
               ),
             ),
             const SizedBox(height: 24),
-            FilledButton(
+
+            // Try again button
+            FilledButton.icon(
               onPressed: _initializeCamera,
-              child: const Text('Thử lại'),
+              icon: const Icon(PhosphorIconsRegular.arrowClockwise),
+              label: const Text('Thử lại'),
             ),
+
             const SizedBox(height: 12),
+
+            // Open settings button (if permission denied)
+            if (!_hasPermission)
+              FilledButton.icon(
+                onPressed: () async {
+                  await _permissionService.openSettings();
+                },
+                icon: const Icon(PhosphorIconsRegular.gear),
+                label: const Text('Mở cài đặt'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                ),
+              ),
+
+            const SizedBox(height: 12),
+
+            // Use gallery instead button
+            OutlinedButton.icon(
+              onPressed: _pickFromGallery,
+              icon: const Icon(PhosphorIconsRegular.image),
+              label: const Text('Chọn từ thư viện'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Back button
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Quay lại'),

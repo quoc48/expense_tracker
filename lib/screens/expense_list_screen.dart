@@ -16,6 +16,8 @@ import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_spacing.dart';
 import '../theme/constants/app_constants.dart';
 import '../theme/minimalist/minimalist_colors.dart';
+import '../widgets/add_expense_bottom_sheet.dart';
+import 'scanning/camera_capture_screen.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
 ///
@@ -68,7 +70,7 @@ class ExpenseListScreen extends StatelessWidget {
                   ? _buildEmptyState(context)
                   : _buildExpenseList(context, expenseProvider.expenses),
           floatingActionButton: FloatingActionButton(
-            onPressed: () => _addExpense(context),
+            onPressed: () => _showAddExpenseOptions(context),
             tooltip: 'Add Expense',
             child: const Icon(PhosphorIconsRegular.plus), // Regular for FAB (slightly bolder)
           ),
@@ -240,7 +242,31 @@ class ExpenseListScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _addExpense(BuildContext context) async {
+  /// Show bottom sheet with 2 options: Manual entry or Scan receipt
+  void _showAddExpenseOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => AddExpenseBottomSheet(
+        onManualAdd: () => _addExpenseManually(context),
+        onScanReceipt: () => _scanReceipt(context),
+      ),
+    );
+  }
+
+  /// Navigate to camera to scan receipt
+  Future<void> _scanReceipt(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CameraCaptureScreen(),
+      ),
+    );
+    // Note: Receipt review and batch save will be implemented in Phase 5
+    // For now, the flow ends after OCR processing
+  }
+
+  /// Navigate to manual entry screen (existing flow)
+  Future<void> _addExpenseManually(BuildContext context) async {
     final result = await Navigator.push<Expense>(  // NEW: Return Expense directly
       context,
       MaterialPageRoute(
