@@ -2,6 +2,12 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../services/scanning/ocr_service.dart';
+import '../../utils/scanning/receipt_parser.dart';
+import '../../models/scanning/scanned_item.dart';
+import '../../widgets/scanning/processing_overlay.dart';
 
 /// Preview screen for captured/selected receipt image
 ///
@@ -25,10 +31,13 @@ class ImagePreviewScreen extends StatefulWidget {
 class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   final TransformationController _transformationController =
       TransformationController();
+  final OcrService _ocrService = OcrService();
+  final Uuid _uuid = const Uuid();
 
   bool _isAnalyzing = true;
   bool _isBlurry = false;
   bool _isTooSmall = false;
+  bool _isProcessing = false;
   ui.Image? _image;
 
   @override
@@ -41,6 +50,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   void dispose() {
     _transformationController.dispose();
     _image?.dispose();
+    _ocrService.dispose();
     super.dispose();
   }
 
@@ -77,9 +87,193 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     _transformationController.value = Matrix4.identity();
   }
 
+  /// Process the receipt image with OCR
+  Future<void> _processReceipt() async {
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      debugPrint('📸 Starting receipt processing for: ${widget.imagePath}');
+      final imageFile = File(widget.imagePath);
+
+      // Step 1: Extract text using OCR
+      debugPrint('🔍 Step 1: Extracting text with OCR...');
+      final ocrResult = await _ocrService.extractText(imageFile);
+
+      if (!ocrResult.hasText) {
+        throw Exception('Không tìm thấy văn bản trong ảnh');
+      }
+
+      debugPrint('✅ OCR completed: ${ocrResult.blockCount} blocks, ${ocrResult.allLines.length} lines');
+
+      // Step 2: Parse receipt items from text
+      debugPrint('📄 Step 2: Parsing receipt items...');
+      final parsedItems = ReceiptParser.parseReceipt(ocrResult);
+
+      if (parsedItems.isEmpty) {
+        throw Exception('Không tìm thấy mặt hàng nào trong hóa đơn');
+      }
+
+      debugPrint('✅ Parsed ${parsedItems.length} items');
+
+      // Step 3: Convert to ScannedItems
+      // Note: Category matching will be added in Phase 4
+      // For now, all items default to "Khác" category
+      final scannedItems = parsedItems.map((item) {
+        return ScannedItem(
+          id: _uuid.v4(),
+          description: item.description,
+          amount: item.amount,
+          categoryNameVi: 'Khác', // Default category until Phase 4
+          typeNameVi: 'Phải chi', // Default expense type
+          confidence: 0.7, // Placeholder confidence
+        );
+      }).toList();
+
+      debugPrint('✅ Created ${scannedItems.length} scanned items');
+
+      // Step 4: CRITICAL - Delete temp image file (privacy)
+      await _deleteTempImageFile(imageFile);
+
+      // Step 5: Navigate to review screen (Phase 5)
+      // For now, show success dialog with results
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+
+        await _showResultsDialog(scannedItems, ocrResult);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error processing receipt: $e');
+      debugPrint('Stack trace: $stackTrace');
+
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+
+        _showErrorDialog(e.toString());
+      }
+    }
+  }
+
+  /// Delete temporary image file after processing (PRIVACY CRITICAL)
+  Future<void> _deleteTempImageFile(File imageFile) async {
+    try {
+      if (await imageFile.exists()) {
+        await imageFile.delete();
+        debugPrint('🗑️ Deleted temp image file: ${imageFile.path}');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Failed to delete temp image: $e');
+      // Don't throw - this is cleanup, not critical to user flow
+    }
+  }
+
+  /// Show results dialog (temporary until Phase 5 Review Screen is ready)
+  Future<void> _showResultsDialog(
+    List<ScannedItem> items,
+    OcrResult ocrResult,
+  ) async {
+    final total = items.fold<double>(0.0, (sum, item) => sum + item.amount);
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Kết quả xử lý'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Tìm thấy ${items.length} mặt hàng:'),
+              const SizedBox(height: 12),
+              ...items.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      '• ${item.description}: ${_formatAmount(item.amount)}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  )),
+              const Divider(height: 24),
+              Text(
+                'Tổng: ${_formatAmount(total)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Thời gian xử lý: ${ocrResult.processingTimeMs}ms',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              // Close dialog and return to camera
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Close preview
+            },
+            child: const Text('Hoàn thành'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show error dialog
+  void _showErrorDialog(String error) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(PhosphorIconsRegular.warning, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Lỗi xử lý'),
+          ],
+        ),
+        content: Text(error),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Format amount as Vietnamese currency
+  String _formatAmount(double amount) {
+    final amountStr = amount.toStringAsFixed(0);
+    final buffer = StringBuffer();
+    var count = 0;
+
+    for (var i = amountStr.length - 1; i >= 0; i--) {
+      if (count > 0 && count % 3 == 0) {
+        buffer.write('.');
+      }
+      buffer.write(amountStr[i]);
+      count++;
+    }
+
+    return '${buffer.toString().split('').reversed.join()}đ';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
@@ -133,17 +327,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
                   const SizedBox(width: 16),
 
-                  // Process button (placeholder - will integrate OCR in Phase 3)
+                  // Process button
                   Expanded(
                     child: FilledButton(
-                      onPressed: () {
-                        // TODO: Navigate to processing overlay in Phase 3
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Chức năng xử lý OCR sẽ được thêm trong Phase 3'),
-                          ),
-                        );
-                      },
+                      onPressed: _isProcessing ? null : _processReceipt,
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -156,6 +343,18 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
         ],
       ),
+    ),
+        // Processing overlay
+        if (_isProcessing)
+          ProcessingOverlay(
+            onCancel: () {
+              setState(() {
+                _isProcessing = false;
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+      ],
     );
   }
 
