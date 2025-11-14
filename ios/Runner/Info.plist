@@ -43,5 +43,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Receipt Scanning Permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>Chúng tôi cần quyền truy cập máy ảnh để quét hóa đơn và tự động thêm chi tiêu</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Chúng tôi cần quyền truy cập thư viện ảnh để bạn có thể chọn hóa đơn đã chụp trước đó</string>
 </dict>
 </plist>

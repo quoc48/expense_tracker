@@ -62,6 +62,29 @@ dependencies:
   # Loading skeleton animations for better UX
   shimmer: ^3.0.0
 
+  # ===== Receipt Scanning Feature =====
+  # OCR - Google ML Kit for Vietnamese text recognition
+  google_mlkit_text_recognition: ^0.13.0
+
+  # Camera - Capture receipt photos
+  camera: ^0.11.0
+  image_picker: ^1.1.0
+
+  # Image Processing - Compression, rotation, quality
+  image: ^4.2.0
+
+  # Offline Storage - Queue management with Hive
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Connectivity - Detect online/offline state
+  connectivity_plus: ^6.0.0
+
+  # Utilities
+  path_provider: ^2.1.0  # Temporary file storage
+  path: ^1.9.0  # Path manipulation utilities
+  permission_handler: ^11.3.0  # Camera permissions
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -75,6 +98,10 @@ dev_dependencies:
 
   # Automatically generate app icons for iOS and Android
   flutter_launcher_icons: ^0.13.1
+
+  # Receipt Scanning - Hive code generation
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
