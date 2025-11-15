@@ -2,10 +2,8 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../services/scanning/ocr_service.dart';
-import '../../utils/scanning/receipt_parser.dart';
+import '../../services/scanning/vision_parser_service.dart';
 import '../../models/scanning/scanned_item.dart';
 import '../../widgets/scanning/processing_overlay.dart';
 
@@ -15,7 +13,7 @@ import '../../widgets/scanning/processing_overlay.dart';
 /// - Review the image quality with pinch-to-zoom
 /// - See quality warnings (blur, size issues)
 /// - Retake if needed
-/// - Process the receipt (move to OCR)
+/// - Process the receipt with Vision AI
 class ImagePreviewScreen extends StatefulWidget {
   final String imagePath;
 
@@ -31,8 +29,7 @@ class ImagePreviewScreen extends StatefulWidget {
 class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   final TransformationController _transformationController =
       TransformationController();
-  final OcrService _ocrService = OcrService();
-  final Uuid _uuid = const Uuid();
+  final VisionParserService _visionParser = VisionParserService();
 
   bool _isAnalyzing = true;
   bool _isBlurry = false;
@@ -50,7 +47,6 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   void dispose() {
     _transformationController.dispose();
     _image?.dispose();
-    _ocrService.dispose();
     super.dispose();
   }
 
@@ -87,7 +83,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     _transformationController.value = Matrix4.identity();
   }
 
-  /// Process the receipt image with OCR
+  /// Process the receipt image with Vision AI
   Future<void> _processReceipt() async {
     if (_isProcessing) return;
 
@@ -99,53 +95,34 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       debugPrint('📸 Starting receipt processing for: ${widget.imagePath}');
       final imageFile = File(widget.imagePath);
 
-      // Step 1: Extract text using OCR
-      debugPrint('🔍 Step 1: Extracting text with OCR...');
-      final ocrResult = await _ocrService.extractText(imageFile);
-
-      if (!ocrResult.hasText) {
-        throw Exception('Không tìm thấy văn bản trong ảnh');
+      // Check if Vision parser is configured
+      if (!_visionParser.isConfigured) {
+        throw Exception('Vision AI chưa được cấu hình. Vui lòng thêm OPENAI_API_KEY vào file .env');
       }
 
-      debugPrint('✅ OCR completed: ${ocrResult.blockCount} blocks, ${ocrResult.allLines.length} lines');
+      // Process image directly with Vision AI (no OCR step)
+      debugPrint('👁️ Processing receipt with Vision AI...');
+      final startTime = DateTime.now();
+      final scannedItems = await _visionParser.parseReceiptImage(imageFile);
 
-      // Step 2: Parse receipt items from text
-      debugPrint('📄 Step 2: Parsing receipt items...');
-      final parsedItems = ReceiptParser.parseReceipt(ocrResult);
-
-      if (parsedItems.isEmpty) {
+      if (scannedItems.isEmpty) {
         throw Exception('Không tìm thấy mặt hàng nào trong hóa đơn');
       }
 
-      debugPrint('✅ Parsed ${parsedItems.length} items');
+      final processingTime = DateTime.now().difference(startTime).inMilliseconds;
+      debugPrint('✅ Vision AI extracted ${scannedItems.length} items in ${processingTime}ms');
 
-      // Step 3: Convert to ScannedItems
-      // Note: Category matching will be added in Phase 4
-      // For now, all items default to "Khác" category
-      final scannedItems = parsedItems.map((item) {
-        return ScannedItem(
-          id: _uuid.v4(),
-          description: item.description,
-          amount: item.amount,
-          categoryNameVi: 'Khác', // Default category until Phase 4
-          typeNameVi: 'Phải chi', // Default expense type
-          confidence: 0.7, // Placeholder confidence
-        );
-      }).toList();
-
-      debugPrint('✅ Created ${scannedItems.length} scanned items');
-
-      // Step 4: CRITICAL - Delete temp image file (privacy)
+      // CRITICAL - Delete temp image file (privacy)
       await _deleteTempImageFile(imageFile);
 
-      // Step 5: Navigate to review screen (Phase 5)
+      // Navigate to review screen (Phase 5)
       // For now, show success dialog with results
       if (mounted) {
         setState(() {
           _isProcessing = false;
         });
 
-        await _showResultsDialog(scannedItems, ocrResult);
+        await _showResultsDialog(scannedItems, processingTime);
       }
     } catch (e, stackTrace) {
       debugPrint('❌ Error processing receipt: $e');
@@ -177,36 +154,62 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   /// Show results dialog (temporary until Phase 5 Review Screen is ready)
   Future<void> _showResultsDialog(
     List<ScannedItem> items,
-    OcrResult ocrResult,
+    int processingTimeMs,
   ) async {
     final total = items.fold<double>(0.0, (sum, item) => sum + item.amount);
 
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Kết quả xử lý'),
+        title: Row(
+          children: [
+            Icon(PhosphorIconsRegular.checkCircle, color: Colors.green.shade600),
+            const SizedBox(width: 8),
+            const Text('Vision AI - Kết quả'),
+          ],
+        ),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Tìm thấy ${items.length} mặt hàng:'),
+              Text('Tìm thấy ${items.length} sản phẩm:'),
+              const SizedBox(height: 4),
+              Text(
+                'Giá đã bao gồm VAT',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
               const SizedBox(height: 12),
               ...items.map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      '• ${item.description}: ${_formatAmount(item.amount)}',
-                      style: const TextStyle(fontSize: 14),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '• ',
+                      style: TextStyle(fontSize: 14),
                     ),
-                  )),
+                    Expanded(
+                      child: Text(
+                        '${item.description}: ${_formatAmount(item.amount)}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
               const Divider(height: 24),
               Text(
                 'Tổng: ${_formatAmount(total)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 12),
               Text(
-                'Thời gian xử lý: ${ocrResult.processingTimeMs}ms',
+                '⚡ ${processingTimeMs}ms | 👁️ GPT-4o-mini | 💰 ~\$0.0003',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,

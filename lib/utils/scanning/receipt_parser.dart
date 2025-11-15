@@ -127,11 +127,12 @@ class ReceiptParser {
 
   /// Detect if this is a Lotte-style receipt with table format
   ///
-  /// Indicators: "Ma sp" header, item codes (001-999), summary section
+  /// Indicators: "Ma sp" header, item codes (001-999), LOTTE MART text
   static bool _isLotteStyleReceipt(List<String> lines) {
     return lines.any((line) {
       final lower = line.toLowerCase();
-      return lower.contains('ma sp') ||
+      return lower.contains('lotte') ||
+             lower.contains('ma sp') ||
              lower.contains('mã sp') ||
              (lower.contains('dgia') && lower.contains('sl'));
     });

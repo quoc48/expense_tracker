@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/scanning/scanned_item.dart';
 import 'ocr_service.dart';
 
@@ -15,17 +16,17 @@ import 'ocr_service.dart';
 /// - More robust against OCR errors and formatting variations
 /// - Can adapt to new receipt formats without code changes
 class LlmParserService {
-  // API configuration (can be moved to environment config)
-  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
+  // API configuration for OpenAI
+  static const String _apiUrl = 'https://api.openai.com/v1/chat/completions';
   final String? _apiKey;
 
   // Model configuration
-  static const String _model = 'claude-3-haiku-20240307';
+  static const String _model = 'gpt-3.5-turbo-1106'; // Cost-effective, supports JSON mode
   static const int _maxTokens = 4000;
   static const double _temperature = 0.1; // Low temperature for consistent parsing
 
   LlmParserService({String? apiKey})
-      : _apiKey = apiKey ?? const String.fromEnvironment('ANTHROPIC_API_KEY');
+      : _apiKey = apiKey ?? dotenv.env['OPENAI_API_KEY'];
 
   /// Parse receipt using LLM
   ///
@@ -78,39 +79,49 @@ You are a receipt parser specialized in Vietnamese receipts. Extract items from 
 
 IMPORTANT RULES:
 1. Extract ALL product items with their prices
-2. If an item has a discount, apply it to get the final price
-3. Identify taxes (VAT/thuế) and fees as separate items marked with is_tax=true
+2. If an item has a discount (negative amount like -57,000), apply it to get the final price
+3. CRITICAL: Identify taxes and fees:
+   - Look for "VAT", "thuế", "tax" keywords
+   - Small amounts (typically 14,493 and 28,808 for VAT 10%)
+   - Usually appear near the end, before total
+   - Mark these with is_tax=true
 4. For Lotte-style receipts: items have codes (001-999), prices may be in summary section
-5. Return valid JSON only, no additional text
+5. Common tax amounts in Vietnam: 8% or 10% VAT
+6. Return valid JSON only, no additional text
 
 OCR TEXT:
 $ocrText
 
 OUTPUT FORMAT:
-Return a JSON array of items. Each item must have:
+Return a JSON object with an "items" array. Each item must have:
 {
-  "description": "Item name in Vietnamese",
-  "amount": final price as number (after any discounts),
-  "is_tax": true/false (true for VAT, taxes, fees),
-  "confidence": 0.0-1.0 (your confidence in this extraction)
+  "items": [
+    {
+      "description": "Item name in Vietnamese",
+      "amount": final price as number (after any discounts),
+      "is_tax": true/false (true for VAT, taxes, fees),
+      "confidence": 0.0-1.0 (your confidence in this extraction)
+    }
+  ]
 }
 
 Example:
-[
-  {"description": "Bánh mì", "amount": 20000, "is_tax": false, "confidence": 0.95},
-  {"description": "Cà phê sữa", "amount": 35000, "is_tax": false, "confidence": 0.90},
-  {"description": "VAT 8%", "amount": 4400, "is_tax": true, "confidence": 0.85}
-]
+{
+  "items": [
+    {"description": "Bánh mì", "amount": 20000, "is_tax": false, "confidence": 0.95},
+    {"description": "Cà phê sữa", "amount": 35000, "is_tax": false, "confidence": 0.90},
+    {"description": "VAT 8%", "amount": 4400, "is_tax": true, "confidence": 0.85}
+  ]
+}
 
-Parse the receipt and return ONLY the JSON array:''';
+Parse the receipt and return the JSON object:''';
   }
 
-  /// Call the LLM API
+  /// Call the OpenAI API
   Future<String> _callLlmApi(String prompt) async {
     final headers = {
       'Content-Type': 'application/json',
-      'x-api-key': _apiKey!,
-      'anthropic-version': '2023-06-01',
+      'Authorization': 'Bearer $_apiKey',
     };
 
     final body = json.encode({
@@ -119,10 +130,15 @@ Parse the receipt and return ONLY the JSON array:''';
       'temperature': _temperature,
       'messages': [
         {
+          'role': 'system',
+          'content': 'You are a receipt parser specialized in Vietnamese receipts. Extract items accurately and return ONLY valid JSON.',
+        },
+        {
           'role': 'user',
           'content': prompt,
         }
       ],
+      'response_format': {'type': 'json_object'}, // Force JSON response
     });
 
     try {
@@ -136,7 +152,8 @@ Parse the receipt and return ONLY the JSON array:''';
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return data['content'][0]['text'] ?? '';
+        // OpenAI returns the message in choices[0].message.content
+        return data['choices'][0]['message']['content'] ?? '';
       } else {
         debugPrint('❌ LLM API Error: ${response.statusCode} - ${response.body}');
         throw Exception('LLM API error: ${response.statusCode}');
@@ -150,15 +167,15 @@ Parse the receipt and return ONLY the JSON array:''';
   /// Parse LLM response into ScannedItem objects
   List<ScannedItem> _parseResponse(String response) {
     try {
-      // Extract JSON from response (LLM might include extra text)
-      final jsonMatch = RegExp(r'\[.*\]', dotAll: true).firstMatch(response);
-      if (jsonMatch == null) {
-        debugPrint('⚠️ LLM Parser: No JSON array found in response');
+      // Parse the JSON response
+      final Map<String, dynamic> jsonResponse = json.decode(response);
+
+      // Get the items array
+      final List<dynamic>? jsonItems = jsonResponse['items'];
+      if (jsonItems == null || jsonItems.isEmpty) {
+        debugPrint('⚠️ LLM Parser: No items found in response');
         return [];
       }
-
-      final jsonStr = jsonMatch.group(0)!;
-      final List<dynamic> jsonItems = json.decode(jsonStr);
 
       final items = <ScannedItem>[];
 
