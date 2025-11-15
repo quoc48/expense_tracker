@@ -80,6 +80,9 @@ dependencies:
   # Connectivity - Detect online/offline state
   connectivity_plus: ^6.0.0
 
+  # HTTP client for API calls (LLM parser)
+  http: ^1.2.0
+
   # Utilities
   path_provider: ^2.1.0  # Temporary file storage
   path: ^1.9.0  # Path manipulation utilities
