@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Service for managing camera and photo library permissions
@@ -8,7 +9,14 @@ import 'package:permission_handler/permission_handler.dart';
 class PermissionService {
   /// Check if camera permission is granted
   Future<bool> hasCameraPermission() async {
+    debugPrint('🎥 [PermissionService] Checking camera permission...');
     final status = await Permission.camera.status;
+    debugPrint('🎥 [PermissionService] Camera permission status: $status');
+    debugPrint('🎥 [PermissionService] isGranted: ${status.isGranted}');
+    debugPrint('🎥 [PermissionService] isDenied: ${status.isDenied}');
+    debugPrint('🎥 [PermissionService] isPermanentlyDenied: ${status.isPermanentlyDenied}');
+    debugPrint('🎥 [PermissionService] isRestricted: ${status.isRestricted}');
+    debugPrint('🎥 [PermissionService] isLimited: ${status.isLimited}');
     return status.isGranted;
   }
 
@@ -24,8 +32,24 @@ class PermissionService {
   /// If permission is permanently denied, returns false and the user
   /// must manually enable it in settings.
   Future<bool> requestCameraPermission() async {
-    final status = await Permission.camera.request();
-    return status.isGranted;
+    try {
+      debugPrint('🎥 [PermissionService] Requesting camera permission...');
+      debugPrint('🎥 [PermissionService] Before Permission.camera.request()');
+
+      final status = await Permission.camera.request();
+
+      debugPrint('🎥 [PermissionService] After Permission.camera.request()');
+      debugPrint('🎥 [PermissionService] Result status: $status');
+      debugPrint('🎥 [PermissionService] Result isGranted: ${status.isGranted}');
+      debugPrint('🎥 [PermissionService] Result isDenied: ${status.isDenied}');
+      debugPrint('🎥 [PermissionService] Result isPermanentlyDenied: ${status.isPermanentlyDenied}');
+
+      return status.isGranted;
+    } catch (e, stackTrace) {
+      debugPrint('❌ [PermissionService] ERROR requesting camera permission: $e');
+      debugPrint('❌ [PermissionService] Stack trace: $stackTrace');
+      return false;
+    }
   }
 
   /// Request photo library permission

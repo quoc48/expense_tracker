@@ -65,40 +65,86 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
   }
 
   /// Initialize camera with permission check
+  ///
+  /// WORKAROUND: Bypassing permission_handler due to iOS bug.
+  /// The camera package will handle permissions internally and show
+  /// the system permission dialog when accessing the camera.
   Future<void> _initializeCamera() async {
+    debugPrint('📱 [CameraScreen] === _initializeCamera() START ===');
+    debugPrint('📱 [CameraScreen] WORKAROUND: Bypassing permission_handler');
+    debugPrint('📱 [CameraScreen] Camera package will handle permissions directly');
+
     setState(() {
       _isInitializing = true;
       _errorMessage = null;
     });
 
-    // Check camera permission
-    final hasPermission = await _permissionService.hasCameraPermission();
+    try {
+      // WORKAROUND: Skip permission_handler entirely
+      // Go directly to camera initialization
+      // The camera package will request permissions when calling availableCameras()
+      debugPrint('📱 [CameraScreen] Initializing camera service directly...');
+      final success = await _cameraService.initialize();
+      debugPrint('📱 [CameraScreen] Camera service initialization: $success');
 
-    if (!hasPermission) {
-      // Request permission
-      final granted = await _permissionService.requestCameraPermission();
-
-      if (!granted) {
+      if (success) {
+        debugPrint('📱 [CameraScreen] ✅ Camera initialized successfully!');
+        setState(() {
+          _isInitializing = false;
+          _hasPermission = true;
+        });
+      } else {
+        debugPrint('📱 [CameraScreen] ❌ Camera initialization failed');
         setState(() {
           _isInitializing = false;
           _hasPermission = false;
           _errorMessage =
-              'Quyền truy cập máy ảnh bị từ chối. Vui lòng cấp quyền trong cài đặt.';
+              'Không thể khởi động máy ảnh. Vui lòng cấp quyền truy cập máy ảnh trong Cài đặt → Quyền riêng tư → Máy ảnh.';
         });
-        return;
       }
+
+      debugPrint('📱 [CameraScreen] === _initializeCamera() END ===');
+    } on CameraException catch (e) {
+      debugPrint('❌ [CameraScreen] CameraException: ${e.code} - ${e.description}');
+
+      String errorMessage;
+      if (e.code == 'CameraAccessDenied' ||
+          e.code == 'CameraAccessDeniedWithoutPrompt' ||
+          e.code == 'CameraAccessRestricted') {
+        errorMessage =
+            'Quyền truy cập máy ảnh bị từ chối.\n\nVui lòng cấp quyền trong:\nCài đặt → Quyền riêng tư → Máy ảnh → Expense Tracker';
+      } else {
+        errorMessage = 'Lỗi máy ảnh: ${e.description ?? 'Không xác định'}';
+      }
+
+      setState(() {
+        _isInitializing = false;
+        _hasPermission = false;
+        _errorMessage = errorMessage;
+      });
+    } catch (e, stackTrace) {
+      debugPrint('❌ [CameraScreen] ERROR in _initializeCamera: $e');
+      debugPrint('❌ [CameraScreen] Stack trace: $stackTrace');
+
+      // Check if error message mentions permissions
+      final errorStr = e.toString().toLowerCase();
+      String errorMessage;
+
+      if (errorStr.contains('permission') ||
+          errorStr.contains('authorization') ||
+          errorStr.contains('denied')) {
+        errorMessage =
+            'Quyền truy cập máy ảnh bị từ chối.\n\nVui lòng cấp quyền trong:\nCài đặt → Quyền riêng tư → Máy ảnh → Expense Tracker';
+      } else {
+        errorMessage = 'Lỗi khởi động máy ảnh: $e';
+      }
+
+      setState(() {
+        _isInitializing = false;
+        _hasPermission = false;
+        _errorMessage = errorMessage;
+      });
     }
-
-    // Initialize camera
-    final success = await _cameraService.initialize();
-
-    setState(() {
-      _isInitializing = false;
-      _hasPermission = success;
-      if (!success) {
-        _errorMessage = 'Không thể khởi động máy ảnh. Vui lòng thử lại.';
-      }
-    });
   }
 
   /// Handle flash toggle
