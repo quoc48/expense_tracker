@@ -83,6 +83,9 @@ dependencies:
   # HTTP client for API calls (LLM parser)
   http: ^1.2.0
 
+  # Google Gemini AI - Vision and text processing (FREE tier)
+  google_generative_ai: ^0.4.0
+
   # Utilities
   path_provider: ^2.1.0  # Temporary file storage
   path: ^1.9.0  # Path manipulation utilities

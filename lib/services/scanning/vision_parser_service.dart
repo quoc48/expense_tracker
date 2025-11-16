@@ -21,7 +21,7 @@ class VisionParserService {
   // - gpt-4o: Cost-effective (~$0.012/receipt)
   // - gpt-4o-mini: Most affordable (~$0.0003/receipt) - RECOMMENDED
   static const String model = 'gpt-4o-mini'; // Changed to most cost-effective
-  static const int _maxTokens = 4000;
+  static const int _maxTokens = 8000; // Increased to handle receipts with 30+ items
 
   VisionParserService({String? apiKey})
       : _apiKey = apiKey ?? dotenv.env['OPENAI_API_KEY'];
@@ -76,59 +76,78 @@ class VisionParserService {
   /// Build the prompt for Vision model
   String _buildVisionPrompt() {
     return '''
-Analyze this receipt image and extract ONLY PRODUCT ITEMS with their FINAL PRICES.
+Extract items from Vietnamese receipt using strict sequential state machine.
 
-CRITICAL INSTRUCTIONS:
-1. Extract ONLY product items (001-999), NOT VAT/tax lines
-2. Use the FINAL AMOUNT from rightmost column (already includes tax)
-3. For items with discounts: Subtract discount from base amount
-4. IGNORE "% VAT" lines at bottom (tax already included in prices)
-5. Item prices on receipt ALREADY INCLUDE TAX
+PROCESSING STATES:
 
-LOTTE MART RECEIPT FORMAT:
-- Product line: "001 PRODUCT NAME"
-- Price line: "barcode  unit_price  quantity  FINAL_AMOUNT"
-- Discount line (if any): "[M)DC]  amount  1  -amount" ← SUBTRACT THIS!
+STATE 1 - Item Header Detection:
+  Pattern: Line starts with 3-digit number (NNN) followed by text
+  Action: Extract code (NNN) and description (remaining text)
+  Next: Advance to STATE 2
 
-DISCOUNT HANDLING EXAMPLE:
-Item 001 with discount:
-  "001 XV COMFORT DIEU KY TUI 3.1L"
-  "8934868173038  226500  1  226,500"  ← Base amount (with tax)
-  "[M)DC]  57,000A  1  -57,000"         ← Discount on NEXT line
-  → Final = 226,500 - 57,000 = 169,500đ
+STATE 2 - Price Line Reading:
+  Pattern: Line immediately after header, contains multiple numbers
+  Rule: This line has format [barcode] [unit_price] [quantity] [TOTAL_AMOUNT]
+  Action: Extract ONLY the RIGHTMOST number as base_price (ignore all other numbers)
+  Note: For weighted items (qty ≠ 1), rightmost number is already calculated (unit_price × qty)
+  Next: Advance to STATE 3
 
-WEIGHTED ITEMS EXAMPLE:
-  "007 CHUOI VANG DOLE"
-  "2312890000007  39900  1.282  51,152"  ← Use 51,152 (rightmost)
+STATE 3 - Discount Detection:
+  Check next line against these patterns:
 
-DO NOT EXTRACT:
-  ✗ "05 % VAT" lines (informational only, tax already in prices)
-  ✗ "08 % VAT" lines (informational only, tax already in prices)
-  ✗ "Tong cong" (total line)
-  ✗ "giam gia" (discount summary)
+  DISCOUNT LINE indicators (if ANY match, it's a discount):
+    - Contains negative number (prefix with "-")
+    - Contains keywords: STIKER, GIAM, M)DC, DISCOUNT
+    - Contains percentage symbol (%)
+    - Does NOT start with 3-digit number
 
-EXPECTED OUTPUT:
+  IF discount line detected:
+    Action: Extract ONLY the RIGHTMOST negative number, take its absolute value as discount
+    Note: Ignore all other numbers on the line, use only the rightmost one
+    Next: Skip this line, return to STATE 1 for next item
+
+  IF not discount line (starts with 3-digit number):
+    Action: Set discount = 0 for current item
+    Next: Return to STATE 1 WITHOUT skipping (reprocess this line)
+
+CRITICAL RULES:
+- Process in strict order: STATE 1 → STATE 2 → STATE 3 → back to STATE 1
+- ALWAYS extract RIGHTMOST number from each line (ignore unit price, quantity, other numbers)
+- Receipt format: [barcode] [unit_price] [qty] [TOTAL] → use TOTAL (rightmost)
+- For discount lines: [text] [values] [DISCOUNT] → use DISCOUNT (rightmost negative number)
+- Never look ahead beyond STATE 3
+- Discount belongs to item IMMEDIATELY ABOVE it
+- When uncertain about discount, default to 0
+- Extract values only, never calculate
+
+DATA EXTRACTION:
+- code: First 3-digit number from item header line
+- description: Text portion from item header line
+- base_price: RIGHTMOST number from price line (column "so tien", NOT "dgia")
+- discount: RIGHTMOST negative number from discount line (absolute value), or 0
+
+IMPORTANT: Each line may have 3-5 numbers. ALWAYS use the RIGHTMOST one.
+
+OUTPUT FORMAT:
 {
   "items": [
     {
-      "code": "001",
-      "description": "XV COMFORT DIEU KY TUI 3.1L",
-      "amount": 169500,
+      "code": "3-digit-string",
+      "description": "text",
+      "base_price": number,
+      "discount": number,
       "is_tax": false,
-      "confidence": 0.95
-    },
-    {
-      "code": "002",
-      "description": "CL-BAO TAY NHUA TU HUY SH 100C",
-      "amount": 14900,
-      "is_tax": false,
-      "confidence": 0.95
+      "confidence": 0.0-1.0
     }
   ],
   "currency": "VND"
 }
 
-Extract ONLY the 13 product items (ignore VAT lines) and return JSON:''';
+VALIDATION CHECKS:
+- Item codes should increment sequentially
+- All base_price > 0
+- All discount >= 0
+- No orphaned discount lines''';
   }
 
   /// Call the OpenAI Vision API
@@ -221,11 +240,18 @@ Extract ONLY the 13 product items (ignore VAT lines) and return JSON:''';
         try {
           final code = item['code']?.toString() ?? '';
           final description = item['description']?.toString() ?? '';
-          final amount = _parseAmount(item['amount']);
+
+          // Extract base_price and discount separately
+          final basePrice = _parseAmount(item['base_price'] ?? item['amount']);
+          final discount = _parseAmount(item['discount'] ?? 0);
+
+          // Calculate final amount in Dart (not relying on AI to do math)
+          final finalAmount = basePrice - discount;
+
           final isTax = item['is_tax'] == true;
           final confidence = _parseConfidence(item['confidence']);
 
-          if (description.isNotEmpty && amount > 0) {
+          if (description.isNotEmpty && finalAmount > 0) {
             // Generate unique ID
             final id = 'vision_${DateTime.now().millisecondsSinceEpoch}_${items.length}';
 
@@ -235,13 +261,18 @@ Extract ONLY the 13 product items (ignore VAT lines) and return JSON:''';
             items.add(ScannedItem(
               id: id,
               description: description,
-              amount: amount,
+              amount: finalAmount,
               categoryNameVi: category,
               typeNameVi: isTax ? 'Phí' : 'Phải chi',
               confidence: confidence,
             ));
 
-            debugPrint('📝 Vision Item: ${code.isNotEmpty ? "$code " : ""}$description → ${amount}đ ${isTax ? "(TAX)" : ""}');
+            // Log with discount info for debugging
+            if (discount > 0) {
+              debugPrint('📝 Vision Item: ${code.isNotEmpty ? "$code " : ""}$description → $basePriceđ - $discountđ = $finalAmountđ ${isTax ? "(TAX)" : ""}');
+            } else {
+              debugPrint('📝 Vision Item: ${code.isNotEmpty ? "$code " : ""}$description → $finalAmountđ ${isTax ? "(TAX)" : ""}');
+            }
           }
         } catch (e) {
           debugPrint('⚠️ Vision Parser: Error parsing item: $e');
