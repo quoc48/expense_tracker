@@ -244,11 +244,15 @@ class ExpenseListScreen extends StatelessWidget {
 
   /// Show bottom sheet with 2 options: Manual entry or Scan receipt
   void _showAddExpenseOptions(BuildContext context) {
+    // IMPORTANT: Capture the parent context BEFORE showing modal
+    // The builder's context will be disposed when bottom sheet closes
+    final parentContext = context;
+
     showModalBottomSheet(
       context: context,
-      builder: (context) => AddExpenseBottomSheet(
-        onManualAdd: () => _addExpenseManually(context),
-        onScanReceipt: () => _scanReceipt(context),
+      builder: (bottomSheetContext) => AddExpenseBottomSheet(
+        onManualAdd: () => _addExpenseManually(parentContext),
+        onScanReceipt: () => _scanReceipt(parentContext),
       ),
     );
   }
@@ -267,34 +271,36 @@ class ExpenseListScreen extends StatelessWidget {
 
   /// Navigate to manual entry screen (existing flow)
   Future<void> _addExpenseManually(BuildContext context) async {
-    final result = await Navigator.push<Expense>(  // NEW: Return Expense directly
+    final result = await Navigator.push<Expense>(
       context,
       MaterialPageRoute(
         builder: (context) => const AddExpenseScreen(),
       ),
     );
 
-    if (result != null && context.mounted) {
-      // Access the provider without listening (we don't need rebuilds here)
-      // listen: false tells Provider we just want to call a method, not listen to changes
-      final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.addExpense(result);  // NEW: Simplified API
+    if (result == null || !context.mounted) {
+      return;
+    }
 
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added: ${result.description}'),  // Fixed: result IS the expense
-            duration: const Duration(seconds: 2),
-            action: SnackBarAction(
-              label: 'Undo',
-              onPressed: () async {
-                // Delete the just-added expense to undo
-                await provider.deleteExpense(result.id);  // Fixed: result IS the expense
-              },
-            ),
+    // Access the provider without listening (we don't need rebuilds here)
+    // listen: false tells Provider we just want to call a method, not listen to changes
+    final provider = Provider.of<ExpenseProvider>(context, listen: false);
+    final success = await provider.addExpense(result);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added: ${result.description}'),  // Fixed: result IS the expense
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              // Delete the just-added expense to undo
+              await provider.deleteExpense(result.id);  // Fixed: result IS the expense
+            },
           ),
-        );
-      }
+        ),
+      );
     }
   }
 

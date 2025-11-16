@@ -348,21 +348,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       return;
     }
 
-    // NEW: Create expense with Vietnamese strings directly!
-    // No enum conversion, no ExpenseFormResult DTO
+    // Create expense with Vietnamese strings directly
     final expense = Expense(
       id: widget.expense?.id ?? const Uuid().v4(),
       description: _descriptionController.text.trim(),
       amount: double.parse(_amountController.text),
-      categoryNameVi: _selectedCategoryVi!,  // Direct assignment!
-      typeNameVi: _selectedTypeVi!,          // Direct assignment!
+      categoryNameVi: _selectedCategoryVi!,
+      typeNameVi: _selectedTypeVi!,
       date: _selectedDate,
       note: _noteController.text.trim().isEmpty
           ? null
           : _noteController.text.trim(),
     );
 
-    // Return the expense object directly (no wrapper needed)
+    // Return the expense object directly
     Navigator.pop(context, expense);
   }
 }
