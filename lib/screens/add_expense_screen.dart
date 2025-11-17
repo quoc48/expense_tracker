@@ -21,10 +21,19 @@ import '../theme/minimalist/minimalist_colors.dart';
 /// - No ExpenseFormResult DTO needed
 /// - No enum conversion
 /// - Simpler data flow
+///
+/// Field Hiding:
+/// - Use `hiddenFields` to hide specific fields (e.g., {'date'} for scan results)
+/// - Hidden fields still use their default/existing values
 class AddExpenseScreen extends StatefulWidget {
   final Expense? expense;
+  final Set<String>? hiddenFields;
 
-  const AddExpenseScreen({super.key, this.expense});
+  const AddExpenseScreen({
+    super.key,
+    this.expense,
+    this.hiddenFields,
+  });
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -272,24 +281,25 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 16),
-
-                    // Date Picker
-                    InkWell(
-                      onTap: _pickDate,
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Date',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(PhosphorIconsLight.calendarBlank),
-                        ),
-                        child: Text(
-                          DateFormat('MMMM dd, yyyy').format(_selectedDate),
-                          style: ComponentTextStyles.fieldInput(Theme.of(context).textTheme),
+                    // Date Picker (conditional - hidden for scan results)
+                    if (widget.hiddenFields?.contains('date') != true) ...[
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: _pickDate,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Date',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(PhosphorIconsLight.calendarBlank),
+                          ),
+                          child: Text(
+                            DateFormat('MMMM dd, yyyy').format(_selectedDate),
+                            style: ComponentTextStyles.fieldInput(Theme.of(context).textTheme),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ],
 
                     // Note Field (Optional)
                     TextFormField(

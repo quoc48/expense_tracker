@@ -9,6 +9,7 @@ import '../providers/user_preferences_provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/budget_alert_banner.dart';
+import '../widgets/expense_card.dart';
 import 'add_expense_screen.dart';
 import 'settings_screen.dart';
 import '../theme/typography/app_typography.dart';
@@ -146,98 +147,16 @@ class ExpenseListScreen extends StatelessWidget {
         // Remaining items: Expense cards (adjust index by -1)
         final expenseIndex = index - 1;
         final expense = expenses[expenseIndex];
-        return _buildExpenseCard(context, expense, expenseIndex);
-      },
-    );
-  }
-
-  Widget _buildExpenseCard(BuildContext context, Expense expense, int index) {
-    final dateFormat = DateFormat('MMM dd, yyyy');
-    final theme = Theme.of(context);
-
-    return Dismissible(
-      key: Key(expense.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: AppSpacing.spaceLg),
-        margin: EdgeInsets.symmetric(
-          horizontal: AppSpacing.spaceMd,
-          vertical: AppSpacing.spaceXs,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.error,
-          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-        ),
-        child: Icon(
-          PhosphorIconsLight.trash,
-          color: MinimalistColors.gray50,  // Main background - for delete icon on red background
-          size: AppConstants.iconSizeLg,
-        ),
-      ),
-      confirmDismiss: (direction) async {
-        return await _showDeleteConfirmation(context, expense);
-      },
-      onDismissed: (direction) {
-        _deleteExpense(context, expense, index);
-      },
-      child: Card(
-        margin: EdgeInsets.symmetric(
-          horizontal: AppSpacing.spaceMd,
-          vertical: AppSpacing.space2xs,  // 4px - creates 8px total gap between cards
-        ),
-        // Minimalist: Subtle elevation for depth
-        elevation: 2,
-        shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),  // Rounded corners
-        ),
-        child: ListTile(
-          dense: true,  // Enable dense mode for tighter spacing
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.spaceMd,   // 16px
-            vertical: AppSpacing.space2xs,    // 4px - ultra-compact
-          ),
-          minVerticalPadding: 0,  // Remove default ListTile vertical padding
-          leading: CircleAvatar(
-            backgroundColor: MinimalistColors.getAdaptiveGray(
-              context,
-              lightColor: MinimalistColors.gray100,
-              darkColor: MinimalistColors.darkGray300,  // Lighter circle in dark mode
-            ),
-            radius: 20,
-            child: Icon(
-              expense.categoryIcon,
-              color: MinimalistColors.getAdaptivePrimaryText(context),
-              size: AppConstants.iconSizeSm,
-            ),
-          ),
-          title: Text(
-            expense.description,
-            style: ComponentTextStyles.expenseTitleCompact(theme.textTheme).copyWith(
-              color: MinimalistColors.getAdaptivePrimaryText(context),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Padding(
-            padding: EdgeInsets.only(top: AppSpacing.space2xs),  // 4px minimal gap
-            child: Text(
-              dateFormat.format(expense.date),
-              style: ComponentTextStyles.expenseDateCompact(theme.textTheme).copyWith(
-                color: MinimalistColors.getAdaptiveSecondaryText(context),
-              ),
-            ),
-          ),
-          trailing: Text(
-            CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
-            style: AppTypography.currencyMedium(
-              color: MinimalistColors.getAdaptivePrimaryText(context),
-            ),
-          ),
+        return ExpenseCard(
+          expense: expense,
           onTap: () => _editExpense(context, expense),
-        ),
-      ),
+          confirmDismiss: () => _showDeleteConfirmation(context, expense),
+          onDismissed: () => _deleteExpense(context, expense, expenseIndex),
+          enableSwipe: true,
+          showWarning: false,
+          showDate: true,
+        );
+      },
     );
   }
 
