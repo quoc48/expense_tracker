@@ -776,7 +776,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       id: '',
       amount: 0.0,
       description: '',
-      categoryNameVi: 'Ăn uống',
+      categoryNameVi: 'Thực phẩm', // Safe default - exists in Supabase
       typeNameVi: 'Phải chi',
       date: _selectedDate,
     );
