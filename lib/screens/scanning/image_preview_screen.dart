@@ -2,10 +2,22 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../../services/scanning/vision_parser_service.dart';
 import '../../models/scanning/scanned_item.dart';
-import '../../widgets/scanning/processing_overlay.dart';
+import '../../models/expense.dart';
+import '../../providers/expense_provider.dart';
+import '../../widgets/expense_card.dart';
+
+import '../../screens/add_expense_screen.dart';
+
+/// Scanning state enum for managing the three distinct states
+enum ScanningState {
+  preview,    // Initial state: preview image with zoom
+  processing, // Processing the receipt with Vision AI
+  results,    // Showing parsed results for review/edit
+}
 
 /// Preview screen for captured/selected receipt image
 ///
@@ -31,11 +43,21 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       TransformationController();
   final VisionParserService _visionParser = VisionParserService();
 
+  // State management
+  ScanningState _currentState = ScanningState.preview;
+  
+  // Preview state variables
   bool _isAnalyzing = true;
   bool _isBlurry = false;
   bool _isTooSmall = false;
-  bool _isProcessing = false;
   ui.Image? _image;
+  
+  // Processing state variables
+  String _processingStep = 'Analyzing image...';
+  
+  // Results state variables
+  List<ScannedItem> _scannedItems = [];
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -85,10 +107,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   /// Process the receipt image with Vision AI
   Future<void> _processReceipt() async {
-    if (_isProcessing) return;
-
     setState(() {
-      _isProcessing = true;
+      _currentState = ScanningState.processing;
+      _processingStep = 'Analyzing image...';
     });
 
     try {
@@ -100,7 +121,15 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         throw Exception('Vision AI chưa được cấu hình. Vui lòng thêm OPENAI_API_KEY vào file .env');
       }
 
-      // Process image directly with Vision AI (no OCR step)
+      // Step 1: Analyzing
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      
+      setState(() {
+        _processingStep = 'Extracting items...';
+      });
+
+      // Process image with Vision AI
       debugPrint('👁️ Processing receipt with Vision AI...');
       final startTime = DateTime.now();
       final scannedItems = await _visionParser.parseReceiptImage(imageFile);
@@ -112,27 +141,38 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       final processingTime = DateTime.now().difference(startTime).inMilliseconds;
       debugPrint('✅ Vision AI extracted ${scannedItems.length} items in ${processingTime}ms');
 
+      // Step 2: Categorizing
+      if (!mounted) return;
+      setState(() {
+        _processingStep = 'Categorizing items...';
+      });
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Step 3: Complete
+      if (!mounted) return;
+      setState(() {
+        _processingStep = 'Complete!';
+      });
+      await Future.delayed(const Duration(milliseconds: 300));
+
       // CRITICAL - Delete temp image file (privacy)
       await _deleteTempImageFile(imageFile);
 
-      // Navigate to review screen (Phase 5)
-      // For now, show success dialog with results
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
+      // Transition to results state
+      if (!mounted) return;
+      setState(() {
+        _scannedItems = scannedItems;
+        _currentState = ScanningState.results;
+      });
 
-        await _showResultsDialog(scannedItems, processingTime);
-      }
     } catch (e, stackTrace) {
       debugPrint('❌ Error processing receipt: $e');
       debugPrint('Stack trace: $stackTrace');
 
       if (mounted) {
         setState(() {
-          _isProcessing = false;
+          _currentState = ScanningState.preview;
         });
-
         _showErrorDialog(e.toString());
       }
     }
@@ -151,86 +191,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     }
   }
 
-  /// Show results dialog (temporary until Phase 5 Review Screen is ready)
-  Future<void> _showResultsDialog(
-    List<ScannedItem> items,
-    int processingTimeMs,
-  ) async {
-    final total = items.fold<double>(0.0, (sum, item) => sum + item.amount);
 
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(PhosphorIconsRegular.checkCircle, color: Colors.green.shade600),
-            const SizedBox(width: 8),
-            const Text('Vision AI - Kết quả'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Tìm thấy ${items.length} sản phẩm:'),
-              const SizedBox(height: 4),
-              Text(
-                'Giá đã bao gồm VAT',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '• ',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${item.description}: ${_formatAmount(item.amount)}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-              const Divider(height: 24),
-              Text(
-                'Tổng: ${_formatAmount(total)}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '⚡ ${processingTimeMs}ms | 👁️ GPT-4o-mini | 💰 ~\$0.0003',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              // Close dialog and return to camera
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Close preview
-            },
-            child: const Text('Hoàn thành'),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Show error dialog
   void _showErrorDialog(String error) {
@@ -274,92 +235,622 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: const Text('Xem trước'),
-        leading: IconButton(
-          icon: const Icon(PhosphorIconsRegular.x),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          // Reset zoom button
+    return Scaffold(
+      backgroundColor: _currentState == ScanningState.results 
+          ? Theme.of(context).scaffoldBackgroundColor 
+          : Colors.black,
+      appBar: _buildAppBar(context),
+      body: _buildBody(context),
+    );
+  }
+
+  /// Build dynamic AppBar based on current state
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    String title;
+    List<Widget> actions = [];
+    
+    switch (_currentState) {
+      case ScanningState.preview:
+        title = 'Preview Image';
+        actions = [
           IconButton(
             icon: const Icon(PhosphorIconsRegular.arrowsOut),
             onPressed: _resetZoom,
-            tooltip: 'Đặt lại zoom',
+            tooltip: 'Reset zoom',
+          ),
+        ];
+        break;
+      case ScanningState.processing:
+        title = 'Processing...';
+        break;
+      case ScanningState.results:
+        title = 'Review Items';
+        break;
+    }
+
+    return AppBar(
+      backgroundColor: _currentState == ScanningState.results 
+          ? null 
+          : Colors.black,
+      foregroundColor: _currentState == ScanningState.results 
+          ? null 
+          : Colors.white,
+      title: Text(title),
+      leading: const SizedBox.shrink(), // No leading widget
+      actions: [
+        ...actions,
+        IconButton(
+          icon: const Icon(PhosphorIconsRegular.x),
+          onPressed: () => _handleClose(context),
+          tooltip: 'Close',
+        ),
+      ],
+    );
+  }
+
+  /// Handle close button - behavior depends on state
+  void _handleClose(BuildContext context) {
+    if (_currentState == ScanningState.results) {
+      // Show confirmation dialog before closing
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Discard changes?'),
+          content: const Text('Unsaved items will be lost. Are you sure?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop(); // Close preview screen
+              },
+              child: const Text('Discard'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  /// Build body based on current state
+  Widget _buildBody(BuildContext context) {
+    switch (_currentState) {
+      case ScanningState.preview:
+        return _buildPreviewState(context);
+      case ScanningState.processing:
+        return _buildProcessingState(context);
+      case ScanningState.results:
+        return _buildResultsState(context);
+    }
+  }
+
+  // ========== STATE VIEW BUILDERS ==========
+
+  /// Build Preview State view
+  Widget _buildPreviewState(BuildContext context) {
+    return Column(
+      children: [
+        // Quality warnings
+        if (!_isAnalyzing && (_isBlurry || _isTooSmall))
+          _buildQualityWarnings(),
+
+        // Image preview with zoom
+        Expanded(
+          child: _buildImageViewer(),
+        ),
+
+        // Helpful tip
+        _buildTipText(),
+
+        // Bottom actions
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                // Retake button
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Retake'),
+                  ),
+                ),
+
+                const SizedBox(width: 16),
+
+                // Process button
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _processReceipt,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Process Receipt'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build Processing State view with checklist progress
+  Widget _buildProcessingState(BuildContext context) {
+    return Container(
+      color: Colors.black87,
+      child: Center(
+        child: Card(
+          margin: const EdgeInsets.all(24),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                const Text(
+                  'Processing Receipt',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Progress steps
+                _buildProcessingStep(
+                  'Analyzing image...',
+                  _processingStep == 'Analyzing image...',
+                  _processingStep != 'Analyzing image...',
+                ),
+                const SizedBox(height: 16),
+                _buildProcessingStep(
+                  'Extracting items...',
+                  _processingStep == 'Extracting items...',
+                  _processingStep == 'Categorizing items...' || _processingStep == 'Complete!',
+                ),
+                const SizedBox(height: 16),
+                _buildProcessingStep(
+                  'Categorizing items...',
+                  _processingStep == 'Categorizing items...',
+                  _processingStep == 'Complete!',
+                ),
+                const SizedBox(height: 16),
+                _buildProcessingStep(
+                  'Complete!',
+                  _processingStep == 'Complete!',
+                  false,
+                ),
+
+                const SizedBox(height: 24),
+
+                // Cancel button
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _currentState = ScanningState.preview;
+                    });
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build a processing step indicator
+  Widget _buildProcessingStep(String label, bool isActive, bool isComplete) {
+    return Row(
+      children: [
+        // Icon
+        if (isComplete)
+          Icon(PhosphorIconsRegular.checkCircle, color: Colors.green.shade600, size: 24)
+        else if (isActive)
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          )
+        else
+          Icon(PhosphorIconsRegular.circle, color: Colors.grey.shade400, size: 24),
+
+        const SizedBox(width: 12),
+
+        // Label
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
+              color: isComplete || isActive ? null : Colors.grey.shade600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build Results State view with scanned items
+  Widget _buildResultsState(BuildContext context) {
+    final total = _scannedItems.fold<double>(0.0, (sum, item) => sum + item.amount);
+
+    return Column(
+      children: [
+        // Date summary section
+        _buildDateSummary(context),
+
+        // Items list
+        Expanded(
+          child: _scannedItems.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  itemCount: _scannedItems.length,
+                  padding: const EdgeInsets.all(16),
+                  itemBuilder: (context, index) {
+                    final item = _scannedItems[index];
+                    
+                    // Convert ScannedItem to temporary Expense for display
+                    final tempExpense = Expense(
+                      id: 'temp_$index',
+                      amount: item.amount,
+                      description: item.description,
+                      categoryNameVi: item.categoryNameVi,
+                      typeNameVi: item.typeNameVi,
+                      date: _selectedDate,
+                    );
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: ExpenseCard(
+                        expense: tempExpense,
+                        showWarning: item.confidence < 0.8,
+                        showDate: false,
+                        enableSwipe: true,
+                        onTap: () => _editItem(index),
+                        onDismissed: () => _removeItem(index),
+                      ),
+                    );
+                  },
+                ),
+        ),
+
+        // Bottom summary and actions
+        _buildBottomActions(context, total),
+      ],
+    );
+  }
+
+  /// Build date summary section
+  Widget _buildDateSummary(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).dividerColor,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            PhosphorIconsRegular.calendar,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Receipt Date',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatDate(_selectedDate),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => _selectDate(context),
+            child: const Text('Change'),
           ),
         ],
       ),
-      body: Column(
+    );
+  }
+
+  /// Build empty state view
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Quality warnings
-          if (!_isAnalyzing && (_isBlurry || _isTooSmall))
-            _buildQualityWarnings(),
-
-          // Image preview with zoom
-          Expanded(
-            child: _buildImageViewer(),
+          Icon(
+            PhosphorIconsRegular.receipt,
+            size: 64,
+            color: Colors.grey.shade400,
           ),
-
-          // Helpful tip
-          _buildTipText(),
-
-          // Bottom actions
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  // Retake button
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text('Chụp lại'),
-                    ),
-                  ),
-
-                  const SizedBox(width: 16),
-
-                  // Process button
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _isProcessing ? null : _processReceipt,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text('Xử lý hóa đơn'),
-                    ),
-                  ),
-                ],
-              ),
+          const SizedBox(height: 16),
+          Text(
+            'No items found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adding items manually',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
             ),
           ),
         ],
       ),
-    ),
-        // Processing overlay
-        if (_isProcessing)
-          ProcessingOverlay(
-            onCancel: () {
-              setState(() {
-                _isProcessing = false;
-              });
-              Navigator.of(context).pop();
-            },
-          ),
-      ],
     );
   }
+
+  /// Build bottom actions bar
+  Widget _buildBottomActions(BuildContext context, double total) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Total summary
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total (${_scannedItems.length} items)',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                Text(
+                  _formatAmount(total),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Action buttons
+            Row(
+              children: [
+                // Add manual item button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _addManualItem,
+                    icon: const Icon(PhosphorIconsRegular.plus),
+                    label: const Text('Add Item'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Save all button
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: _scannedItems.isEmpty ? null : _saveAllItems,
+                    icon: const Icon(PhosphorIconsRegular.check),
+                    label: const Text('Save All'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ========== HELPER METHODS ==========
+
+  /// Format date for display
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  /// Select date for all items
+  Future<void> _selectDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  /// Edit item at index
+  Future<void> _editItem(int index) async {
+    final item = _scannedItems[index];
+    
+    // Convert to Expense for editing
+    final tempExpense = Expense(
+      id: 'temp_$index',
+      amount: item.amount,
+      description: item.description,
+      categoryNameVi: item.categoryNameVi,
+      typeNameVi: item.typeNameVi,
+      date: _selectedDate,
+    );
+
+    // Open edit screen with hidden date field
+    final result = await Navigator.of(context).push<Expense>(
+      MaterialPageRoute(
+        builder: (context) => AddExpenseScreen(
+          expense: tempExpense,
+          hiddenFields: const {'date'}, // Hide date - controlled by summary
+        ),
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _scannedItems[index] = ScannedItem(
+          id: item.id, // Keep original ID
+          description: result.description,
+          amount: result.amount,
+          categoryNameVi: result.categoryNameVi,
+          typeNameVi: result.typeNameVi,
+          confidence: 1.0, // Manual edits have full confidence
+        );
+      });
+    }
+  }
+
+  /// Remove item at index
+  void _removeItem(int index) {
+    setState(() {
+      _scannedItems.removeAt(index);
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Item removed'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            // TODO: Implement undo functionality
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Add manual item
+  Future<void> _addManualItem() async {
+    final newExpense = Expense(
+      id: '',
+      amount: 0.0,
+      description: '',
+      categoryNameVi: 'Ăn uống',
+      typeNameVi: 'Phải chi',
+      date: _selectedDate,
+    );
+
+    final result = await Navigator.of(context).push<Expense>(
+      MaterialPageRoute(
+        builder: (context) => AddExpenseScreen(
+          expense: newExpense,
+          hiddenFields: const {'date'}, // Hide date - controlled by summary
+        ),
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _scannedItems.add(ScannedItem(
+          id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate new ID
+          description: result.description,
+          amount: result.amount,
+          categoryNameVi: result.categoryNameVi,
+          typeNameVi: result.typeNameVi,
+          confidence: 1.0, // Manual items have full confidence
+        ));
+      });
+    }
+  }
+
+  /// Save all items as expenses
+  Future<void> _saveAllItems() async {
+    if (_scannedItems.isEmpty) return;
+
+    try {
+      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+      
+      // Create expenses from scanned items
+      for (final item in _scannedItems) {
+        final expense = Expense(
+          id: '', // Will be generated by Supabase
+          amount: item.amount,
+          description: item.description,
+          categoryNameVi: item.categoryNameVi,
+          typeNameVi: item.typeNameVi,
+          date: _selectedDate,
+        );
+        
+        await expenseProvider.addExpense(expense);
+      }
+
+      if (!mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Saved ${_scannedItems.length} items successfully'),
+          backgroundColor: Colors.green.shade600,
+        ),
+      );
+
+      // Close the screen
+      Navigator.of(context).pop();
+
+    } catch (e) {
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving items: $e'),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+    }
+  }
+
+  // ========== WIDGET BUILDERS ==========
 
   /// Quality warning banner
   Widget _buildQualityWarnings() {
