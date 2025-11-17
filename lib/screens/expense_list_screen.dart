@@ -16,7 +16,7 @@ import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_spacing.dart';
 import '../theme/constants/app_constants.dart';
 import '../theme/minimalist/minimalist_colors.dart';
-import '../widgets/add_expense_bottom_sheet.dart';
+import '../widgets/expandable_add_fab.dart';
 import 'scanning/camera_capture_screen.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
@@ -69,10 +69,9 @@ class ExpenseListScreen extends StatelessWidget {
               : expenseProvider.expenses.isEmpty
                   ? _buildEmptyState(context)
                   : _buildExpenseList(context, expenseProvider.expenses),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _showAddExpenseOptions(context),
-            tooltip: 'Add Expense',
-            child: const Icon(PhosphorIconsRegular.plus), // Regular for FAB (slightly bolder)
+          floatingActionButton: ExpandableAddFab(
+            onManualAdd: () => _addExpenseManually(context),
+            onScanReceipt: () => _scanReceipt(context),
           ),
         );
       },
@@ -238,21 +237,6 @@ class ExpenseListScreen extends StatelessWidget {
           ),
           onTap: () => _editExpense(context, expense),
         ),
-      ),
-    );
-  }
-
-  /// Show bottom sheet with 2 options: Manual entry or Scan receipt
-  void _showAddExpenseOptions(BuildContext context) {
-    // IMPORTANT: Capture the parent context BEFORE showing modal
-    // The builder's context will be disposed when bottom sheet closes
-    final parentContext = context;
-
-    showModalBottomSheet(
-      context: context,
-      builder: (bottomSheetContext) => AddExpenseBottomSheet(
-        onManualAdd: () => _addExpenseManually(parentContext),
-        onScanReceipt: () => _scanReceipt(parentContext),
       ),
     );
   }
