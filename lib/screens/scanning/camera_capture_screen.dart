@@ -10,11 +10,10 @@ import 'image_preview_screen.dart';
 ///
 /// Features:
 /// - Live camera preview
-/// - Flash toggle
 /// - Gallery picker
-/// - Camera flip (front/back)
-/// - Receipt framing guidelines
+/// - Receipt framing guidelines (vertical rectangle)
 /// - Permission handling
+/// - Simplified UI focused on receipt scanning
 class CameraCaptureScreen extends StatefulWidget {
   const CameraCaptureScreen({super.key});
 
@@ -147,17 +146,9 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
     }
   }
 
-  /// Handle flash toggle
-  Future<void> _toggleFlash() async {
-    await _cameraService.toggleFlash();
-    setState(() {}); // Rebuild to update flash icon
-  }
 
-  /// Handle camera flip
-  Future<void> _flipCamera() async {
-    await _cameraService.flipCamera();
-    setState(() {}); // Rebuild with new camera
-  }
+
+
 
   /// Handle capture button press
   Future<void> _capturePhoto() async {
@@ -335,6 +326,9 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
         // Camera preview
         CameraPreview(controller),
 
+        // Dark overlay outside capture frame
+        _buildDarkOverlay(),
+
         // Receipt framing guidelines
         _buildGuidelinesOverlay(),
 
@@ -347,100 +341,85 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
     );
   }
 
-  /// Top app bar with back and flash buttons
+  /// Top app bar with centered title and close button
   Widget _buildAppBar() {
-    return SafeArea(
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Back button
+            const Spacer(),
+            const Text(
+              'Scanning Receipt',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
             IconButton(
               onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(PhosphorIconsRegular.arrowLeft),
+              icon: const Icon(PhosphorIconsRegular.x),
               color: Colors.white,
               iconSize: 28,
             ),
-
-            // Flash button (only show for back camera)
-            if (_cameraService.hasFlash)
-              IconButton(
-                onPressed: _toggleFlash,
-                icon: Icon(
-                  _cameraService.flashMode == FlashMode.off
-                      ? PhosphorIconsRegular.lightning
-                      : PhosphorIconsFill.lightning,
-                ),
-                color: Colors.white,
-                iconSize: 28,
-              ),
           ],
         ),
+      ),
       ),
     );
   }
 
-  /// Bottom controls with gallery, capture, and flip buttons
+  /// Bottom controls with capture and gallery buttons
   Widget _buildBottomControls() {
     return Positioned(
       bottom: 0,
       left: 0,
       right: 0,
       child: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 24,
+            bottom: 40,  // Even more space at bottom
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Gallery button
-              _buildControlButton(
-                icon: PhosphorIconsRegular.image,
-                label: 'Thư viện',
-                onPressed: _pickFromGallery,
-              ),
-
-              // Capture button (larger, centered)
+              // Large capture button
               _buildCaptureButton(),
-
-              // Flip camera button (only show if multiple cameras)
-              if (_cameraService.availableCamerasCount > 1)
-                _buildControlButton(
-                  icon: PhosphorIconsRegular.cameraRotate,
-                  label: 'Đảo',
-                  onPressed: _flipCamera,
+              
+              const SizedBox(height: 56),  // More spacing between buttons
+              
+              // Gallery button with icon + text (no border)
+              TextButton.icon(
+                onPressed: _pickFromGallery,
+                icon: const Icon(PhosphorIconsRegular.imageSquare, size: 20),
+                label: const Text(
+                  'Upload Receipt from Gallery',
+                  style: TextStyle(fontWeight: FontWeight.w500),  // Medium weight
                 ),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  /// Control button (gallery, flip)
-  Widget _buildControlButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          onPressed: onPressed,
-          icon: Icon(icon),
-          color: Colors.white,
-          iconSize: 32,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-          ),
-        ),
-      ],
     );
   }
 
@@ -471,12 +450,29 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
     );
   }
 
+  /// Dark overlay outside the capture frame to focus attention
+  Widget _buildDarkOverlay() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final frameWidth = screenWidth * 0.70;
+    final frameHeight = screenHeight * 0.65;  // Balanced height with margins
+
+    return CustomPaint(
+      size: Size(screenWidth, screenHeight),
+      painter: _OverlayPainter(
+        frameWidth: frameWidth,
+        frameHeight: frameHeight,
+        borderRadius: 12,
+      ),
+    );
+  }
+
   /// Guidelines overlay to help frame receipts
   Widget _buildGuidelinesOverlay() {
     return Center(
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.85,
-        height: MediaQuery.of(context).size.height * 0.6,
+        width: MediaQuery.of(context).size.width * 0.70,
+        height: MediaQuery.of(context).size.height * 0.65,  // Balanced height
         decoration: BoxDecoration(
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.5),
@@ -515,25 +511,59 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
                 ),
               );
             }),
-
-            // Hint text
-            Positioned(
-              bottom: -40,
-              left: 0,
-              right: 0,
-              child: Text(
-                'Đặt hóa đơn trong khung',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Custom painter for dark overlay with transparent cutout
+class _OverlayPainter extends CustomPainter {
+  final double frameWidth;
+  final double frameHeight;
+  final double borderRadius;
+
+  _OverlayPainter({
+    required this.frameWidth,
+    required this.frameHeight,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Calculate frame position (centered)
+    final frameLeft = (size.width - frameWidth) / 2;
+    final frameTop = (size.height - frameHeight) / 2;
+
+    // Create the overlay path
+    final overlayPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    // Create the cutout path (rounded rectangle)
+    final cutoutPath = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(frameLeft, frameTop, frameWidth, frameHeight),
+          Radius.circular(borderRadius),
+        ),
+      );
+
+    // Subtract cutout from overlay to create transparent area
+    final finalPath = Path.combine(
+      PathOperation.difference,
+      overlayPath,
+      cutoutPath,
+    );
+
+    // Draw the overlay with semi-transparent black
+    final paint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.6)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(finalPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
