@@ -311,33 +311,66 @@ VALIDATION CHECKS:
   }
 
   /// Categorize item based on description
+  /// 
+  /// Returns one of 14 valid Supabase categories based on keywords
+  /// in the item description. These categories match exactly with
+  /// the categories stored in the Supabase database.
   String _categorizeItem(String description, bool isTax) {
-    if (isTax) return 'Thuế & Phí';
-
+    if (isTax) return 'Hoá đơn'; // Taxes go to Bills category
+    
     final lower = description.toLowerCase();
-
-    // Food & Household categories
-    if (lower.contains('comfort') || lower.contains('xà phòng')) {
-      return 'Gia dụng';
+    
+    // Coffee & Beverages
+    if (lower.contains('cà phê') || lower.contains('coffee') || 
+        lower.contains('highlands') || lower.contains('starbucks') ||
+        lower.contains('trà') || lower.contains('sữa')) {
+      return 'Cà phê';
     }
-    if (lower.contains('sữa') || lower.contains('milk')) {
-      return 'Đồ uống';
+    
+    // Transportation
+    if (lower.contains('grab') || lower.contains('taxi') || 
+        lower.contains('uber') || lower.contains('xăng') || 
+        lower.contains('gas')) {
+      return 'Đi lại';
     }
-    if (lower.contains('bánh') || lower.contains('mít')) {
-      return 'Ăn vặt';
+    
+    // Household/Groceries
+    if (lower.contains('comfort') || lower.contains('xà phòng') ||
+        lower.contains('bột giặt') || lower.contains('nước rửa')) {
+      return 'Tạp hoá';
     }
-    if (lower.contains('thịt') || lower.contains('heo') || lower.contains('nạc')) {
+    
+    // Food items
+    if (lower.contains('thịt') || lower.contains('heo') || 
+        lower.contains('gà') || lower.contains('bò') ||
+        lower.contains('cá') || lower.contains('tôm') ||
+        lower.contains('rau') || lower.contains('cải') ||
+        lower.contains('chuối') || lower.contains('trái') ||
+        lower.contains('bánh') || lower.contains('mì') ||
+        lower.contains('phở') || lower.contains('bún')) {
       return 'Thực phẩm';
     }
-    if (lower.contains('rau') || lower.contains('cải') || lower.contains('xà lách')) {
-      return 'Thực phẩm';
+    
+    // Health
+    if (lower.contains('thuốc') || lower.contains('pharmacy') ||
+        lower.contains('bệnh viện') || lower.contains('clinic')) {
+      return 'Sức khỏe';
     }
-    if (lower.contains('chuối') || lower.contains('trái')) {
-      return 'Thực phẩm';
+    
+    // Entertainment
+    if (lower.contains('cinema') || lower.contains('cgv') ||
+        lower.contains('game') || lower.contains('karaoke')) {
+      return 'Giải trí';
     }
-
-    // Default
-    return 'Mua sắm';
+    
+    // Fashion
+    if (lower.contains('quần') || lower.contains('áo') ||
+        lower.contains('giày') || lower.contains('uniqlo')) {
+      return 'Thời trang';
+    }
+    
+    // Default to Food category (most common for receipts)
+    return 'Thực phẩm';
   }
 }
 
