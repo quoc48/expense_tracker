@@ -9,6 +9,7 @@ import '../../services/learning/expense_pattern_service.dart';
 import '../../models/scanning/scanned_item.dart';
 import '../../models/expense.dart';
 import '../../providers/expense_provider.dart';
+import '../../providers/sync_provider.dart';
 import '../../repositories/supabase_expense_repository.dart';
 import '../../widgets/expense_card.dart';
 
@@ -900,7 +901,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
     try {
       final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+      final syncProvider = Provider.of<SyncProvider>(context, listen: false);
       final itemCount = _scannedItems.length;
+      final isOnline = syncProvider.isOnline;
 
       // Create expenses from scanned items
       for (final item in _scannedItems) {
@@ -922,20 +925,40 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       // This will go: ImagePreviewScreen -> CameraScreen -> ExpenseListScreen
       Navigator.of(context).popUntil((route) => route.isFirst);
 
-      // Show success message on the expense list screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(PhosphorIconsRegular.checkCircle, color: Colors.white),
-              const SizedBox(width: 12),
-              Text('✅ Added $itemCount expenses successfully'),
-            ],
+      // Show success message based on online/offline state
+      if (isOnline) {
+        // ONLINE: Items saved directly to Supabase
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(PhosphorIconsRegular.checkCircle, color: Colors.white),
+                const SizedBox(width: 12),
+                Text('✅ Saved $itemCount item${itemCount > 1 ? 's' : ''}'),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            duration: const Duration(seconds: 3),
           ),
-          backgroundColor: Colors.green.shade600,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+        );
+      } else {
+        // OFFLINE: Items queued for later sync
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(PhosphorIconsRegular.package, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('📦 Queued $itemCount item${itemCount > 1 ? 's' : ''} (will sync when online)'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.blue.shade600,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
 
     } catch (e) {
       if (!mounted) return;

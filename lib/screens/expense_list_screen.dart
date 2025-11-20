@@ -9,6 +9,7 @@ import '../providers/sync_provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/sync_status_banner.dart';
+import '../widgets/sync_queue_details_sheet.dart';
 import '../widgets/expense_card.dart';
 import 'add_expense_screen.dart';
 import 'settings_screen.dart';
@@ -128,10 +129,8 @@ class ExpenseListScreen extends StatelessWidget {
             syncState: syncProvider.syncState,
             pendingCount: syncProvider.pendingCount,
             onTap: () {
-              // TODO: Show sync queue details
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Queue details coming soon!')),
-              );
+              // Show sync queue details sheet
+              SyncQueueDetailsSheet.show(context);
             },
           );
         }

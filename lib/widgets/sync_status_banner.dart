@@ -37,76 +37,100 @@ class SyncStatusBanner extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final config = _getBannerConfig(syncState, isDarkMode);
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        AppSpacing.spaceMd,
-        AppSpacing.spaceXs,
-        AppSpacing.spaceMd,
-        AppSpacing.spaceXs,
-      ),
-      child: Material(
-        color: config.backgroundColor,
-        borderRadius: BorderRadius.circular(AppSpacing.spaceXs),
-        child: InkWell(
-          onTap: onTap,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, -0.3),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        key: ValueKey(syncState), // Key ensures animation on state change
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.spaceMd,
+          AppSpacing.spaceXs,
+          AppSpacing.spaceMd,
+          AppSpacing.spaceXs,
+        ),
+        child: Material(
+          color: config.backgroundColor,
           borderRadius: BorderRadius.circular(AppSpacing.spaceXs),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.spaceMd,
-              vertical: AppSpacing.spaceSm,
-            ),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: config.accentColor,
-                  width: 4,
-                ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppSpacing.spaceXs),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.spaceMd,
+                vertical: AppSpacing.spaceSm,
               ),
-              borderRadius: BorderRadius.circular(AppSpacing.spaceXs),
-            ),
-            child: Row(
-              children: [
-                // Icon (with animation for syncing state)
-                if (syncState == SyncState.syncing)
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(config.iconColor),
-                    ),
-                  )
-                else
-                  Icon(
-                    config.icon,
-                    size: 20,
-                    color: config.iconColor,
-                  ),
-
-                const SizedBox(width: AppSpacing.spaceSm),
-
-                // Message text
-                Expanded(
-                  child: Text(
-                    _getMessage(),
-                    style: TextStyle(
-                      color: config.textColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: config.accentColor,
+                    width: 4,
                   ),
                 ),
-
-                // Arrow indicator (if tappable)
-                if (onTap != null) ...[
-                  const SizedBox(width: AppSpacing.spaceSm),
-                  Icon(
-                    PhosphorIconsRegular.caretRight,
-                    size: 16,
-                    color: config.iconColor.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(AppSpacing.spaceXs),
+              ),
+              child: Row(
+                children: [
+                  // Icon (with animation for syncing state)
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: syncState == SyncState.syncing
+                        ? SizedBox(
+                            key: const ValueKey('spinner'),
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(config.iconColor),
+                            ),
+                          )
+                        : Icon(
+                            key: ValueKey(config.icon),
+                            config.icon,
+                            size: 20,
+                            color: config.iconColor,
+                          ),
                   ),
+
+                  const SizedBox(width: AppSpacing.spaceSm),
+
+                  // Message text
+                  Expanded(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
+                      style: TextStyle(
+                        color: config.textColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      child: Text(_getMessage()),
+                    ),
+                  ),
+
+                  // Arrow indicator (if tappable)
+                  if (onTap != null) ...[
+                    const SizedBox(width: AppSpacing.spaceSm),
+                    Icon(
+                      PhosphorIconsRegular.caretRight,
+                      size: 16,
+                      color: config.iconColor.withValues(alpha: 0.7),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -139,8 +163,8 @@ class SyncStatusBanner extends StatelessWidget {
         return _BannerConfig(
           accentColor: const Color(0xFF2196F3), // Blue
           backgroundColor: isDarkMode
-              ? const Color(0xFF2196F3).withOpacity(0.15)
-              : const Color(0xFF2196F3).withOpacity(0.08),
+              ? const Color(0xFF2196F3).withValues(alpha: 0.15)
+              : const Color(0xFF2196F3).withValues(alpha: 0.08),
           iconColor: const Color(0xFF2196F3),
           textColor: isDarkMode
               ? const Color(0xFFE3F2FD)
@@ -152,8 +176,8 @@ class SyncStatusBanner extends StatelessWidget {
         return _BannerConfig(
           accentColor: const Color(0xFF2196F3), // Blue
           backgroundColor: isDarkMode
-              ? const Color(0xFF2196F3).withOpacity(0.15)
-              : const Color(0xFF2196F3).withOpacity(0.08),
+              ? const Color(0xFF2196F3).withValues(alpha: 0.15)
+              : const Color(0xFF2196F3).withValues(alpha: 0.08),
           iconColor: const Color(0xFF2196F3),
           textColor: isDarkMode
               ? const Color(0xFFE3F2FD)
@@ -165,8 +189,8 @@ class SyncStatusBanner extends StatelessWidget {
         return _BannerConfig(
           accentColor: const Color(0xFF4CAF50), // Green
           backgroundColor: isDarkMode
-              ? const Color(0xFF4CAF50).withOpacity(0.15)
-              : const Color(0xFF4CAF50).withOpacity(0.08),
+              ? const Color(0xFF4CAF50).withValues(alpha: 0.15)
+              : const Color(0xFF4CAF50).withValues(alpha: 0.08),
           iconColor: const Color(0xFF4CAF50),
           textColor: isDarkMode
               ? const Color(0xFFE8F5E9)
@@ -178,8 +202,8 @@ class SyncStatusBanner extends StatelessWidget {
         return _BannerConfig(
           accentColor: const Color(0xFFE76F51), // Coral red
           backgroundColor: isDarkMode
-              ? const Color(0xFFE76F51).withOpacity(0.15)
-              : const Color(0xFFE76F51).withOpacity(0.08),
+              ? const Color(0xFFE76F51).withValues(alpha: 0.15)
+              : const Color(0xFFE76F51).withValues(alpha: 0.08),
           iconColor: const Color(0xFFE76F51),
           textColor: isDarkMode
               ? const Color(0xFFFFCDD2)
