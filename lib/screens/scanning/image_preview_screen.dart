@@ -5,9 +5,11 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/scanning/vision_parser_service.dart';
+import '../../services/learning/expense_pattern_service.dart';
 import '../../models/scanning/scanned_item.dart';
 import '../../models/expense.dart';
 import '../../providers/expense_provider.dart';
+import '../../repositories/supabase_expense_repository.dart';
 import '../../widgets/expense_card.dart';
 
 import '../../screens/add_expense_screen.dart';
@@ -41,7 +43,10 @@ class ImagePreviewScreen extends StatefulWidget {
 class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   final TransformationController _transformationController =
       TransformationController();
-  final VisionParserService _visionParser = VisionParserService();
+
+  // Services
+  late VisionParserService _visionParser;
+  late ExpensePatternService _patternService;
 
   // State management
   ScanningState _currentState = ScanningState.preview;
@@ -58,17 +63,39 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   // Results state variables
   List<ScannedItem> _scannedItems = [];
   DateTime _selectedDate = DateTime.now();
+  bool _isSaving = false; // Track saving state
 
   @override
   void initState() {
     super.initState();
+    _initializeServices();
     _analyzeImageQuality();
+  }
+
+  /// Initialize pattern learning and vision parser services
+  Future<void> _initializeServices() async {
+    // Initialize pattern service with repository
+    final repository = SupabaseExpenseRepository();
+    _patternService = ExpensePatternService(expenseRepository: repository);
+
+    // Initialize pattern service and load patterns
+    await _patternService.initialize();
+
+    // Create vision parser with pattern service
+    _visionParser = VisionParserService(patternService: _patternService);
+
+    debugPrint('🧠 Pattern Learning: ${_patternService.patternModel != null ? "Loaded" : "No patterns"}');
+    if (_patternService.patternModel != null) {
+      debugPrint('  - Categories: ${_patternService.patternModel!.patterns.length}');
+      debugPrint('  - Learned from: ${_patternService.patternModel!.totalExpenses} expenses');
+    }
   }
 
   @override
   void dispose() {
     _transformationController.dispose();
     _image?.dispose();
+    _patternService.dispose();
     super.dispose();
   }
 
@@ -674,9 +701,18 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                 Expanded(
                   flex: 2,
                   child: FilledButton.icon(
-                    onPressed: _scannedItems.isEmpty ? null : _saveAllItems,
-                    icon: const Icon(PhosphorIconsRegular.check),
-                    label: const Text('Save All'),
+                    onPressed: (_scannedItems.isEmpty || _isSaving) ? null : _saveAllItems,
+                    icon: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(PhosphorIconsRegular.check),
+                    label: Text(_isSaving ? 'Saving...' : 'Save All'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -855,11 +891,17 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   /// Save all items as expenses
   Future<void> _saveAllItems() async {
-    if (_scannedItems.isEmpty) return;
+    if (_scannedItems.isEmpty || _isSaving) return;
+
+    // Set loading state
+    setState(() {
+      _isSaving = true;
+    });
 
     try {
       final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
-      
+      final itemCount = _scannedItems.length;
+
       // Create expenses from scanned items
       for (final item in _scannedItems) {
         final expense = Expense(
@@ -870,30 +912,50 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           typeNameVi: item.typeNameVi,
           date: _selectedDate,
         );
-        
+
         await expenseProvider.addExpense(expense);
       }
 
       if (!mounted) return;
 
-      // Show success message
+      // Navigate back to expense list (popping all scanner screens)
+      // This will go: ImagePreviewScreen -> CameraScreen -> ExpenseListScreen
+      Navigator.of(context).popUntil((route) => route.isFirst);
+
+      // Show success message on the expense list screen
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Saved ${_scannedItems.length} items successfully'),
+          content: Row(
+            children: [
+              const Icon(PhosphorIconsRegular.checkCircle, color: Colors.white),
+              const SizedBox(width: 12),
+              Text('✅ Added $itemCount expenses successfully'),
+            ],
+          ),
           backgroundColor: Colors.green.shade600,
+          duration: const Duration(seconds: 3),
         ),
       );
 
-      // Close the screen
-      Navigator.of(context).pop();
-
     } catch (e) {
       if (!mounted) return;
-      
+
+      // Reset saving state on error
+      setState(() {
+        _isSaving = false;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error saving items: $e'),
+          content: Row(
+            children: [
+              const Icon(PhosphorIconsRegular.warning, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(child: Text('Error: ${e.toString()}')),
+            ],
+          ),
           backgroundColor: Colors.red.shade600,
+          duration: const Duration(seconds: 4),
         ),
       );
     }

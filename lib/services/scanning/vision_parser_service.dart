@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/scanning/scanned_item.dart';
+import '../learning/expense_pattern_service.dart';
 
 /// Vision-based receipt parser using GPT-4 Vision API
 ///
@@ -13,6 +14,7 @@ class VisionParserService {
   // API configuration
   static const String _apiUrl = 'https://api.openai.com/v1/chat/completions';
   final String? _apiKey;
+  final ExpensePatternService? _patternService;
 
   // Model configuration
   // Vision-capable models (from most to least expensive):
@@ -23,8 +25,11 @@ class VisionParserService {
   static const String model = 'gpt-4o-mini'; // Changed to most cost-effective
   static const int _maxTokens = 8000; // Increased to handle receipts with 30+ items
 
-  VisionParserService({String? apiKey})
-      : _apiKey = apiKey ?? dotenv.env['OPENAI_API_KEY'];
+  VisionParserService({
+    String? apiKey,
+    ExpensePatternService? patternService,
+  })  : _apiKey = apiKey ?? dotenv.env['OPENAI_API_KEY'],
+        _patternService = patternService;
 
   /// Parse receipt image directly using Vision API
   ///
@@ -258,12 +263,15 @@ VALIDATION CHECKS:
             // Determine category
             final category = _categorizeItem(description, isTax);
 
+            // Determine expense type from pattern learning
+            final type = _determineExpenseType(description, category, isTax);
+
             items.add(ScannedItem(
               id: id,
               description: description,
               amount: finalAmount,
               categoryNameVi: category,
-              typeNameVi: isTax ? 'Phí' : 'Phải chi',
+              typeNameVi: type,
               confidence: confidence,
             ));
 
@@ -310,14 +318,49 @@ VALIDATION CHECKS:
     return 0.9;
   }
 
+  /// Determine expense type based on learned patterns
+  ///
+  /// Uses pattern learning to suggest the most common type for this category.
+  /// Falls back to 'Phải chi' as the default for new patterns.
+  String _determineExpenseType(String description, String categoryNameVi, bool isTax) {
+    // Special case: tax items always go to 'Phí' (Fees)
+    if (isTax) return 'Phí';
+
+    // Try to get suggested type from pattern learning
+    if (_patternService != null && _patternService.patternModel != null) {
+      final suggestedType = _patternService.suggestType(
+        description,
+        categoryNameVi: categoryNameVi,
+      );
+
+      if (suggestedType != null) {
+        debugPrint('💡 Type Pattern: "$categoryNameVi" → $suggestedType');
+        return suggestedType;
+      }
+    }
+
+    // Default fallback: 'Phải chi' (Must spend) for items without pattern data
+    return 'Phải chi';
+  }
+
   /// Categorize item based on description
-  /// 
-  /// Returns one of 14 valid Supabase categories based on keywords
-  /// in the item description. These categories match exactly with
+  ///
+  /// Returns one of 14 valid Supabase categories based on learned patterns
+  /// or fallback to keyword matching. These categories match exactly with
   /// the categories stored in the Supabase database.
   String _categorizeItem(String description, bool isTax) {
     if (isTax) return 'Hoá đơn'; // Taxes go to Bills category
-    
+
+    // First, try pattern-based categorization if service is available
+    if (_patternService != null && _patternService.patternModel != null) {
+      final suggestedCategory = _patternService.suggestCategory(description);
+      if (suggestedCategory != null) {
+        debugPrint('📊 Pattern Match: "$description" → $suggestedCategory');
+        return suggestedCategory;
+      }
+    }
+
+    // Fallback to keyword-based categorization
     final lower = description.toLowerCase();
     
     // Coffee & Beverages
