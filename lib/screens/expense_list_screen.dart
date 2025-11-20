@@ -5,10 +5,10 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/user_preferences_provider.dart';
+import '../providers/sync_provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/currency_formatter.dart';
-import '../widgets/budget_alert_banner.dart';
+import '../widgets/sync_status_banner.dart';
 import '../widgets/expense_card.dart';
 import 'add_expense_screen.dart';
 import 'settings_screen.dart';
@@ -108,23 +108,8 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Widget _buildExpenseList(BuildContext context, List<Expense> expenses) {
-    // Get budget data to show alert banner
-    final userPreferences = Provider.of<UserPreferencesProvider>(context);
-    final budgetAmount = userPreferences.monthlyBudget;
-    
-    // Calculate current month's total spending
-    final now = DateTime.now();
-    final currentMonthExpenses = expenses.where((expense) {
-      return expense.date.year == now.year && expense.date.month == now.month;
-    }).toList();
-    
-    final totalSpending = currentMonthExpenses.fold<double>(
-      0.0,
-      (sum, expense) => sum + expense.amount,
-    );
-    
-    // Calculate budget percentage
-    final budgetPercentage = budgetAmount > 0 ? (totalSpending / budgetAmount) * 100 : 0.0;
+    // Get sync status to show sync banner
+    final syncProvider = Provider.of<SyncProvider>(context);
 
     // Get current theme brightness for ListView key
     // This forces ListView to rebuild visible items when theme changes
@@ -134,13 +119,20 @@ class ExpenseListScreen extends StatelessWidget {
       // Key based on brightness - ensures ListView rebuilds when toggling light/dark mode
       // Without this key, Flutter reuses existing Card widgets (causing invisible text bug)
       key: ValueKey('expense-list-$brightness'),
-      // +1 for the alert banner (shown conditionally at index 0)
+      // +1 for the sync banner (shown conditionally at index 0)
       itemCount: expenses.length + 1,
       itemBuilder: (context, index) {
-        // First item: Budget Alert Banner
+        // First item: Sync Status Banner
         if (index == 0) {
-          return BudgetAlertBanner(
-            budgetPercentage: budgetPercentage,
+          return SyncStatusBanner(
+            syncState: syncProvider.syncState,
+            pendingCount: syncProvider.pendingCount,
+            onTap: () {
+              // TODO: Show sync queue details
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Queue details coming soon!')),
+              );
+            },
           );
         }
         

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import '../models/expense.dart';
 import '../repositories/expense_repository.dart';
 import '../repositories/supabase_expense_repository.dart';
+import '../services/connectivity_monitor.dart';
+import '../services/queue_service.dart';
 
 /// ExpenseProvider manages the global state for all expenses in the app.
 /// It extends ChangeNotifier which is part of Flutter's built-in state management.
@@ -22,6 +24,17 @@ class ExpenseProvider extends ChangeNotifier {
 
   // Repository for data access (now using Supabase instead of SharedPreferences)
   final ExpenseRepository _repository = SupabaseExpenseRepository();
+
+  // Offline queue services (optional - for backward compatibility)
+  final ConnectivityMonitor? _connectivityMonitor;
+  final QueueService? _queueService;
+
+  // Constructor with optional offline services
+  ExpenseProvider({
+    ConnectivityMonitor? connectivityMonitor,
+    QueueService? queueService,
+  })  : _connectivityMonitor = connectivityMonitor,
+        _queueService = queueService;
 
   // Public getters - allow read-only access to private state
   // This is a common pattern: private state, public getters
@@ -58,28 +71,44 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-  /// Add a new expense to the list (SIMPLIFIED - Phase 5.5.1)
-  /// Returns true if successful, false otherwise
+  /// Add a new expense to the list with offline queue support
+  /// Returns true if successful (saved to Supabase or queued offline)
   /// Vietnamese names are now part of the Expense object itself!
+  ///
+  /// Offline Queue Strategy (Option A):
+  /// - If online: Save directly to Supabase
+  /// - If offline: Queue to Hive (will sync automatically when online)
   Future<bool> addExpense(Expense expense) async {
     try {
-      // Add to in-memory list
+      // Check connectivity if services are available
+      final bool isOnline = _connectivityMonitor != null
+          ? await _connectivityMonitor.checkConnectivity()
+          : true; // Assume online if no connectivity service
+
+      // Add to in-memory list first (optimistic update)
       _expenses.add(expense);
-
-      // Sort by date (newest first)
       _expenses.sort((a, b) => b.date.compareTo(a.date));
-
-      // Save to Supabase (Vietnamese names are in the expense object)
-      await _repository.create(expense);
-
-      // Notify listeners that the data has changed
-      // This will trigger a rebuild in all listening widgets
       notifyListeners();
+
+      if (isOnline) {
+        // Online: Save directly to Supabase
+        await _repository.create(expense);
+        debugPrint('✅ Saved expense to Supabase: ${expense.description}');
+      } else {
+        // Offline: Queue for later sync
+        if (_queueService != null) {
+          await _queueService.enqueueExpense(expense);
+          debugPrint('📦 Queued expense for offline sync: ${expense.description}');
+        } else {
+          // No queue service available, try to save anyway (will fail if truly offline)
+          await _repository.create(expense);
+        }
+      }
 
       return true;
     } catch (e) {
-      debugPrint('Error adding expense: $e');
-      // Remove the expense if save failed
+      debugPrint('❌ Error adding expense: $e');
+      // Remove the expense if operation failed
       _expenses.remove(expense);
       notifyListeners();
       return false;
