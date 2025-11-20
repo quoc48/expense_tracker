@@ -102,13 +102,33 @@ class _ExpandableAddFabState extends State<ExpandableAddFab>
         // Button spacing: 72px between each button (56px FAB + 16px gap)
         const double buttonSpacing = 72.0;
 
-        return SizedBox(
-          // Width: Main FAB (56) + 2 buttons (72 each) = 200px when fully expanded
-          width: 56 + (buttonSpacing * 2 * progress),
-          height: 56,
-          child: Stack(
-            alignment: Alignment.centerRight,
-            children: [
+        return Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            // Backdrop: Invisible overlay that captures taps when expanded
+            if (_isExpanded)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: _toggle, // Auto-collapse when tapping outside
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedOpacity(
+                    opacity: progress * 0.5, // Fade in to 50% opacity
+                    duration: AppConstants.durationNormal,
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ),
+              ),
+
+            // FAB Buttons
+            SizedBox(
+              // Width: Main FAB (56) + 2 buttons (72 each) = 200px when fully expanded
+              width: 56 + (buttonSpacing * 2 * progress),
+              height: 56,
+              child: Stack(
+                alignment: Alignment.centerRight,
+                children: [
               // Action Button 1: Manual Entry (leftmost when expanded)
               Positioned(
                 right: buttonSpacing * 2 * progress,
@@ -156,9 +176,11 @@ class _ExpandableAddFabState extends State<ExpandableAddFab>
                   ),
                 ),
               ),
-            ],
-          ),
-        );
+                ],
+              ),
+            ), // Close SizedBox
+          ],
+        ); // Close outer Stack
       },
     );
   }
