@@ -120,10 +120,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   /// Load categories and expense types from Supabase
   ///
   /// Falls back to hardcoded defaults when offline to prevent crashes
+  /// Uses 5-second timeout to avoid long waits when offline
   Future<void> _loadOptions() async {
     try {
-      final categories = await _repository.getCategories();
-      final types = await _repository.getExpenseTypes();
+      // Add timeout to avoid waiting 60+ seconds when offline
+      final categories = await _repository.getCategories()
+          .timeout(const Duration(seconds: 5));
+      final types = await _repository.getExpenseTypes()
+          .timeout(const Duration(seconds: 5));
 
       debugPrint('✅ Loaded categories from Supabase: $categories');
       debugPrint('✅ Loaded types from Supabase: $types');

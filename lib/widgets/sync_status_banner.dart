@@ -29,14 +29,28 @@ class SyncStatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Don't show banner if idle (no pending items)
-    if (syncState == SyncState.idle && pendingCount == 0) {
-      return const SizedBox.shrink();
-    }
-
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final config = _getBannerConfig(syncState, isDarkMode);
 
+    // Determine if banner should be visible
+    final isVisible = !(syncState == SyncState.idle && pendingCount == 0);
+
+    return AnimatedOpacity(
+      opacity: isVisible ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        child: isVisible
+            ? _buildBanner(context, config)
+            : const SizedBox.shrink(),
+      ),
+    );
+  }
+
+  /// Build the actual banner widget
+  Widget _buildBanner(BuildContext context, _BannerConfig config) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (child, animation) {
