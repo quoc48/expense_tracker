@@ -59,6 +59,31 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   List<String> _categories = [];
   List<String> _expenseTypes = [];
   bool _isLoadingOptions = true;
+  bool _usingFallbackData = false;
+
+  // Fallback data for offline mode (matches Supabase categories)
+  static const List<String> _fallbackCategories = [
+    'Biểu gia đình',
+    'Cà phê',
+    'Du lịch',
+    'Giáo dục',
+    'Giải trí',
+    'Hoá đơn',
+    'Quà vật',
+    'Sức khỏe',
+    'TẾT',
+    'Thời trang',
+    'Thực phẩm',
+    'Tiền nhà',
+    'Tạp hoá',
+    'Đi lại',
+  ];
+
+  static const List<String> _fallbackTypes = [
+    'Phải chi',
+    'Phát sinh',
+    'Lãng phí',
+  ];
 
   @override
   void initState() {
@@ -93,13 +118,15 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   /// Load categories and expense types from Supabase
+  ///
+  /// Falls back to hardcoded defaults when offline to prevent crashes
   Future<void> _loadOptions() async {
     try {
       final categories = await _repository.getCategories();
       final types = await _repository.getExpenseTypes();
 
-      debugPrint('Loaded categories from Supabase: $categories');
-      debugPrint('Loaded types from Supabase: $types');
+      debugPrint('✅ Loaded categories from Supabase: $categories');
+      debugPrint('✅ Loaded types from Supabase: $types');
 
       if (!mounted) return;
 
@@ -107,14 +134,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         _categories = categories.toSet().toList()..sort();
         _expenseTypes = types.toSet().toList();
         _isLoadingOptions = false;
+        _usingFallbackData = false;
       });
     } catch (e) {
-      debugPrint('Error loading form options: $e');
+      debugPrint('❌ Error loading form options: $e');
+      debugPrint('📦 Using fallback data (offline mode)');
 
       if (!mounted) return;
 
+      // Use fallback data to prevent crash when offline
       setState(() {
+        _categories = List.from(_fallbackCategories)..sort();
+        _expenseTypes = List.from(_fallbackTypes);
         _isLoadingOptions = false;
+        _usingFallbackData = true; // Show warning banner
       });
     }
   }
@@ -165,6 +198,37 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Offline warning banner
+                    if (_usingFallbackData)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              PhosphorIconsRegular.wifiSlash,
+                              color: Colors.orange.shade900,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Using offline mode. Categories may be limited.',
+                                style: TextStyle(
+                                  color: Colors.orange.shade900,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     // Description Field
                     TextFormField(
                       controller: _descriptionController,
