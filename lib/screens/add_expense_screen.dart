@@ -406,7 +406,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 730)), // Allow 2 years future
     );
 
     if (picked != null && picked != _selectedDate) {
