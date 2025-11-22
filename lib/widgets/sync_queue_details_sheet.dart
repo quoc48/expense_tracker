@@ -215,10 +215,9 @@ class SyncQueueDetailsSheet extends StatelessWidget {
     ScrollController scrollController,
     SyncProvider syncProvider,
   ) {
-    // Get pending receipts from queue service
-    final pendingReceipts = syncProvider.pendingCount > 0
-        ? [] // TODO: Expose method to get actual receipts from QueueService
-        : <QueuedReceipt>[];
+    // Get pending receipts from queue service via SyncProvider
+    final pendingReceipts = syncProvider.getPendingReceipts()
+        .cast<QueuedReceipt>();
 
     if (pendingReceipts.isEmpty) {
       return _buildEmptyTabState(
@@ -248,10 +247,9 @@ class SyncQueueDetailsSheet extends StatelessWidget {
     ScrollController scrollController,
     SyncProvider syncProvider,
   ) {
-    // Get failed receipts from queue service
-    final failedReceipts = syncProvider.failedCount > 0
-        ? [] // TODO: Expose method to get actual receipts from QueueService
-        : <QueuedReceipt>[];
+    // Get failed receipts from queue service via SyncProvider
+    final failedReceipts = syncProvider.getFailedReceipts()
+        .cast<QueuedReceipt>();
 
     if (failedReceipts.isEmpty) {
       return _buildEmptyTabState(
@@ -365,6 +363,50 @@ class SyncQueueDetailsSheet extends StatelessWidget {
                 ),
               ],
             ),
+
+            // Expense items list
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            ...receipt.items.map((item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    PhosphorIconsRegular.receipt,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.description,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '${item.categoryNameVi} • ${item.typeNameVi}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    _formatAmount(item.amount),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            )),
 
             // Error message for failed items
             if (!isPending && receipt.errorMessage != null) ...[

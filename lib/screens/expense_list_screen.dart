@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
@@ -7,7 +7,6 @@ import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/sync_provider.dart';
 import '../providers/theme_provider.dart';
-import '../utils/currency_formatter.dart';
 import '../widgets/sync_status_banner.dart';
 import '../widgets/sync_queue_details_sheet.dart';
 import '../widgets/expense_card.dart';
@@ -17,7 +16,6 @@ import '../theme/typography/app_typography.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_spacing.dart';
 import '../theme/constants/app_constants.dart';
-import '../theme/minimalist/minimalist_colors.dart';
 import '../widgets/expandable_add_fab.dart';
 import 'scanning/camera_capture_screen.dart';
 
@@ -29,55 +27,134 @@ import 'scanning/camera_capture_screen.dart';
 /// - No need to pass data through constructors
 /// - Separation of concerns: UI code here, business logic in ExpenseProvider
 /// - Automatic rebuilds when data changes (no manual setState calls)
-class ExpenseListScreen extends StatelessWidget {
+///
+/// Note: Now a StatefulWidget to manage FAB expanded state for auto-collapse behavior
+class ExpenseListScreen extends StatefulWidget {
   const ExpenseListScreen({super.key});
 
   @override
+  State<ExpenseListScreen> createState() => _ExpenseListScreenState();
+}
+
+class _ExpenseListScreenState extends State<ExpenseListScreen> {
+  /// GlobalKey to control the FAB from parent (for auto-collapse)
+  final GlobalKey<ExpandableAddFabState> _fabKey = GlobalKey<ExpandableAddFabState>();
+
+  /// Track whether the FAB is currently expanded
+  bool _isFabExpanded = false;
+
+  /// Timer for auto-collapse after 5 seconds
+  Timer? _autoCollapseTimer;
+
+  /// Track previous sync state to detect completion
+  SyncState? _previousSyncState;
+
+  @override
+  void dispose() {
+    _autoCollapseTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Start auto-collapse timer when FAB expands
+  void _startAutoCollapseTimer() {
+    _autoCollapseTimer?.cancel(); // Cancel existing timer if any
+    _autoCollapseTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && _isFabExpanded) {
+        _collapseFab();
+      }
+    });
+  }
+
+  /// Handle FAB expanded state change
+  void _onFabExpandedChanged(bool isExpanded) {
+    setState(() {
+      _isFabExpanded = isExpanded;
+    });
+
+    if (isExpanded) {
+      _startAutoCollapseTimer();
+    } else {
+      _autoCollapseTimer?.cancel();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Consumer2<ExpenseProvider, ThemeProvider>: Listens to BOTH providers and rebuilds when either changes
-    // Why Consumer2 instead of Consumer?
-    // - Expense data dependency: Rebuilds when expenses are added/edited/deleted
-    // - Theme dependency: Rebuilds when user toggles light/dark mode (fixes stale colors bug)
-    // - More explicit: Clearly shows which widgets depend on which data
-    return Consumer2<ExpenseProvider, ThemeProvider>(
-      builder: (context, expenseProvider, themeProvider, child) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Expense Tracker'),
-            actions: [
-              // Settings button
-              IconButton(
-                icon: const Icon(PhosphorIconsLight.gear),
-                tooltip: 'Settings',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
-                    ),
-                  );
-                },
+    // Consumer3: Listen to ExpenseProvider, ThemeProvider, AND SyncProvider
+    // - ExpenseProvider: Rebuilds when expenses change
+    // - ThemeProvider: Rebuilds when theme changes
+    // - SyncProvider: Detect sync completion to reload expenses from Supabase
+    return Consumer3<ExpenseProvider, ThemeProvider, SyncProvider>(
+      builder: (context, expenseProvider, themeProvider, syncProvider, child) {
+        // Detect sync completion and reload expenses from Supabase
+        if (_previousSyncState == SyncState.syncing &&
+            syncProvider.syncState == SyncState.synced) {
+          // Sync just completed - reload to replace temp IDs with real ones
+          debugPrint('🔄 Sync completed, reloading expenses from Supabase...');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            expenseProvider.loadExpenses();
+          });
+        }
+        _previousSyncState = syncProvider.syncState;
+        // Stack with 3 layers: Scaffold -> Backdrop -> FAB
+        // This allows backdrop to capture all taps when FAB is expanded
+        return Stack(
+          children: [
+            // Layer 1: Main Scaffold (bottom)
+            Scaffold(
+              appBar: AppBar(
+                title: const Text('Expense Tracker'),
+                actions: [
+                  // Settings button
+                  IconButton(
+                    icon: const Icon(PhosphorIconsLight.gear),
+                    tooltip: 'Settings',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  // Logout button
+                  IconButton(
+                    icon: const Icon(PhosphorIconsLight.signOut),
+                    tooltip: 'Sign Out',
+                    onPressed: () => _showLogoutDialog(context),
+                  ),
+                ],
               ),
-              // Logout button
-              IconButton(
-                icon: const Icon(PhosphorIconsLight.signOut),
-                tooltip: 'Sign Out',
-                onPressed: () => _showLogoutDialog(context),
+              body: expenseProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : expenseProvider.expenses.isEmpty
+                      ? _buildEmptyState(context)
+                      : _buildExpenseList(context, expenseProvider.expenses),
+              // No floatingActionButton here - we position it manually in Stack
+            ),
+
+            // Layer 2: FAB positioned manually (top)
+            // Auto-collapses after 3 seconds if not used
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: ExpandableAddFab(
+                key: _fabKey,
+                onManualAdd: () => _addExpenseManually(context),
+                onScanReceipt: () => _scanReceipt(context),
+                onExpandedChanged: _onFabExpandedChanged,
               ),
-            ],
-          ),
-          body: expenseProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : expenseProvider.expenses.isEmpty
-                  ? _buildEmptyState(context)
-                  : _buildExpenseList(context, expenseProvider.expenses),
-          floatingActionButton: ExpandableAddFab(
-            onManualAdd: () => _addExpenseManually(context),
-            onScanReceipt: () => _scanReceipt(context),
-          ),
+            ),
+          ],
         );
       },
     );
+  }
+
+  /// Collapse the FAB when tapping outside
+  void _collapseFab() {
+    _fabKey.currentState?.collapse();
   }
 
   Widget _buildEmptyState(BuildContext context) {

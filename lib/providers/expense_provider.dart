@@ -48,9 +48,9 @@ class ExpenseProvider extends ChangeNotifier {
     return _expenses.fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  /// Load all expenses from Supabase
+  /// Load all expenses from Supabase + pending queue items
   /// This should be called once when the app starts
-  /// Fetches all expenses for the authenticated user
+  /// Fetches all expenses for the authenticated user AND queued offline items
   Future<void> loadExpenses() async {
     _isLoading = true;
     // Notify listeners that loading has started
@@ -58,11 +58,46 @@ class ExpenseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _expenses = await _repository.getAll();
-      debugPrint('Loaded ${_expenses.length} expenses from Supabase');
+      // Try to load synced expenses from Supabase (with timeout for offline mode)
+      try {
+        _expenses = await _repository.getAll()
+            .timeout(const Duration(seconds: 5));
+        debugPrint('✅ Loaded ${_expenses.length} expenses from Supabase');
+      } catch (e) {
+        // Offline or timeout - just start with empty list
+        debugPrint('⚠️  Could not load from Supabase (offline?): $e');
+        debugPrint('📦 Will show queued items only');
+        _expenses = [];
+      }
+
+      // ALWAYS load pending queued items (for optimistic UI)
+      if (_queueService != null) {
+        final pendingReceipts = _queueService.getPendingReceipts();
+        if (pendingReceipts.isNotEmpty) {
+          // Convert queued items to Expense objects and add to list
+          for (final receipt in pendingReceipts) {
+            for (final item in receipt.items) {
+              final queuedExpense = Expense(
+                id: 'pending_${receipt.id}_${item.hashCode}', // Temporary ID
+                description: item.description,
+                amount: item.amount,
+                categoryNameVi: item.categoryNameVi,
+                typeNameVi: item.typeNameVi,
+                date: item.date,
+                note: item.note,
+              );
+              _expenses.add(queuedExpense);
+            }
+          }
+          _expenses.sort((a, b) => b.date.compareTo(a.date));
+          debugPrint('📦 Added ${_queueService.getPendingCount()} pending queued items to expense list');
+        }
+      }
+
+      debugPrint('📊 Total expenses in list: ${_expenses.length}');
     } catch (e) {
-      // In production, you'd want proper error handling here
-      debugPrint('Error loading expenses: $e');
+      // Critical error - log it but don't crash
+      debugPrint('❌ Critical error loading expenses: $e');
       _expenses = [];
     } finally {
       _isLoading = false;

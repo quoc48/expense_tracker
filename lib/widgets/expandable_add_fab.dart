@@ -21,17 +21,22 @@ class ExpandableAddFab extends StatefulWidget {
   /// Callback when user taps "Scan Receipt" button
   final VoidCallback onScanReceipt;
 
+  /// Callback when the expanded state changes (for parent to track state)
+  final ValueChanged<bool>? onExpandedChanged;
+
   const ExpandableAddFab({
     super.key,
     required this.onManualAdd,
     required this.onScanReceipt,
+    this.onExpandedChanged,
   });
 
   @override
-  State<ExpandableAddFab> createState() => _ExpandableAddFabState();
+  State<ExpandableAddFab> createState() => ExpandableAddFabState();
 }
 
-class _ExpandableAddFabState extends State<ExpandableAddFab>
+/// State class for ExpandableAddFab (public to allow GlobalKey access from parent)
+class ExpandableAddFabState extends State<ExpandableAddFab>
     with SingleTickerProviderStateMixin {
   /// Animation controller for smooth transitions
   late AnimationController _controller;
@@ -66,6 +71,15 @@ class _ExpandableAddFabState extends State<ExpandableAddFab>
         _controller.reverse();
       }
     });
+    // Notify parent of state change
+    widget.onExpandedChanged?.call(_isExpanded);
+  }
+
+  /// Collapse the FAB (called from parent via GlobalKey)
+  void collapse() {
+    if (_isExpanded) {
+      _toggle();
+    }
   }
 
   /// Handle manual entry action
@@ -105,22 +119,6 @@ class _ExpandableAddFabState extends State<ExpandableAddFab>
         return Stack(
           alignment: Alignment.bottomRight,
           children: [
-            // Backdrop: Invisible overlay that captures taps when expanded
-            if (_isExpanded)
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: _toggle, // Auto-collapse when tapping outside
-                  behavior: HitTestBehavior.opaque,
-                  child: AnimatedOpacity(
-                    opacity: progress * 0.5, // Fade in to 50% opacity
-                    duration: AppConstants.durationNormal,
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-              ),
-
             // FAB Buttons
             SizedBox(
               // Width: Main FAB (56) + 2 buttons (72 each) = 200px when fully expanded

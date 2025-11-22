@@ -421,8 +421,25 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       return;
     }
 
+    // Validate category selection
+    if (_selectedCategoryVi == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a category'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Validate type selection
     if (_selectedTypeVi == null) {
-      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an expense type'),
+          duration: Duration(seconds: 2),
+        ),
+      );
       return;
     }
 

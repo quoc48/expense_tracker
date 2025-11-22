@@ -56,6 +56,12 @@ class SyncProvider extends ChangeNotifier {
   bool get hasPendingItems => _pendingCount > 0;
   bool get hasFailedItems => _failedCount > 0;
 
+  /// Get list of pending receipts from queue
+  List<dynamic> getPendingReceipts() => _queueService.getPendingReceipts();
+
+  /// Get list of failed receipts from queue
+  List<dynamic> getFailedReceipts() => _queueService.getFailedReceipts();
+
   /// Initialize sync provider
   Future<void> _initialize() async {
     // Update counts from queue

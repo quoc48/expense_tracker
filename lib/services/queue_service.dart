@@ -49,6 +49,14 @@ class QueueService extends ChangeNotifier {
         _queueBox = Hive.box<QueuedReceipt>(_boxName);
         debugPrint('✅ Queue service using existing box');
       }
+
+      // Debug: Show what's in the box on initialization
+      debugPrint('📊 Queue box stats:');
+      debugPrint('   Total items: ${_queueBox!.length}');
+      debugPrint('   Pending: ${getPendingCount()}');
+      debugPrint('   Failed: ${getFailedCount()}');
+      debugPrint('   Box path: ${_queueBox!.path}');
+
     } catch (e) {
       debugPrint('❌ Failed to initialize queue service: $e');
       rethrow;
@@ -83,10 +91,16 @@ class QueueService extends ChangeNotifier {
       );
 
       // Save to Hive
-      await _queueBox!.add(queuedReceipt);
+      final index = await _queueBox!.add(queuedReceipt);
+
+      // CRITICAL: Explicitly flush to disk to ensure persistence across hot reload
+      await _queueBox!.flush();
+
       notifyListeners();
 
       debugPrint('📦 Queued 1 expense: ${expense.description} (${expense.amount}đ)');
+      debugPrint('   Box now has ${_queueBox!.length} items (just added at index $index)');
+      debugPrint('   Box path: ${_queueBox!.path}');
     } catch (e) {
       debugPrint('❌ Failed to enqueue expense: $e');
       rethrow;
