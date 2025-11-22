@@ -160,25 +160,47 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return RefreshIndicator(
+      onRefresh: () async {
+        await expenseProvider.loadExpenses();
+      },
+      child: ListView(
         children: [
-          Icon(
-            PhosphorIconsLight.receipt,
-            size: AppConstants.iconSize3xl * 1.5, // 72
-            color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
-          ),
-          SizedBox(height: AppSpacing.spaceLg),
-          Text(
-            'No expenses yet',
-            style: ComponentTextStyles.emptyTitle(theme.textTheme),
-          ),
-          SizedBox(height: AppSpacing.spaceXs),
-          Text(
-            'Tap + to add your first expense',
-            style: ComponentTextStyles.emptyMessage(theme.textTheme),
+          SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    PhosphorIconsLight.arrowClockwise,
+                    size: AppConstants.iconSize3xl * 1.5, // 72
+                    color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                  ),
+                  SizedBox(height: AppSpacing.spaceLg),
+                  Text(
+                    'No expenses loaded',
+                    style: ComponentTextStyles.emptyTitle(theme.textTheme),
+                  ),
+                  SizedBox(height: AppSpacing.spaceXs),
+                  Text(
+                    'Tap Refresh to load your expenses',
+                    style: ComponentTextStyles.emptyMessage(theme.textTheme),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: AppSpacing.spaceLg),
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await expenseProvider.loadExpenses();
+                    },
+                    icon: const Icon(PhosphorIconsLight.arrowClockwise, size: 20),
+                    label: const Text('Refresh'),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -188,43 +210,49 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   Widget _buildExpenseList(BuildContext context, List<Expense> expenses) {
     // Get sync status to show sync banner
     final syncProvider = Provider.of<SyncProvider>(context);
+    final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
 
     // Get current theme brightness for ListView key
     // This forces ListView to rebuild visible items when theme changes
     final brightness = Theme.of(context).brightness;
 
-    return ListView.builder(
-      // Key based on brightness - ensures ListView rebuilds when toggling light/dark mode
-      // Without this key, Flutter reuses existing Card widgets (causing invisible text bug)
-      key: ValueKey('expense-list-$brightness'),
-      // +1 for the sync banner (shown conditionally at index 0)
-      itemCount: expenses.length + 1,
-      itemBuilder: (context, index) {
-        // First item: Sync Status Banner
-        if (index == 0) {
-          return SyncStatusBanner(
-            syncState: syncProvider.syncState,
-            pendingCount: syncProvider.pendingCount,
-            onTap: () {
-              // Show sync queue details sheet
-              SyncQueueDetailsSheet.show(context);
-            },
-          );
-        }
-        
-        // Remaining items: Expense cards (adjust index by -1)
-        final expenseIndex = index - 1;
-        final expense = expenses[expenseIndex];
-        return ExpenseCard(
-          expense: expense,
-          onTap: () => _editExpense(context, expense),
-          confirmDismiss: () => _showDeleteConfirmation(context, expense),
-          onDismissed: () => _deleteExpense(context, expense, expenseIndex),
-          enableSwipe: true,
-          showWarning: false,
-          showDate: true,
-        );
+    return RefreshIndicator(
+      onRefresh: () async {
+        await expenseProvider.loadExpenses();
       },
+      child: ListView.builder(
+        // Key based on brightness - ensures ListView rebuilds when toggling light/dark mode
+        // Without this key, Flutter reuses existing Card widgets (causing invisible text bug)
+        key: ValueKey('expense-list-$brightness'),
+        // +1 for the sync banner (shown conditionally at index 0)
+        itemCount: expenses.length + 1,
+        itemBuilder: (context, index) {
+          // First item: Sync Status Banner
+          if (index == 0) {
+            return SyncStatusBanner(
+              syncState: syncProvider.syncState,
+              pendingCount: syncProvider.pendingCount,
+              onTap: () {
+                // Show sync queue details sheet
+                SyncQueueDetailsSheet.show(context);
+              },
+            );
+          }
+
+          // Remaining items: Expense cards (adjust index by -1)
+          final expenseIndex = index - 1;
+          final expense = expenses[expenseIndex];
+          return ExpenseCard(
+            expense: expense,
+            onTap: () => _editExpense(context, expense),
+            confirmDismiss: () => _showDeleteConfirmation(context, expense),
+            onDismissed: () => _deleteExpense(context, expense, expenseIndex),
+            enableSwipe: true,
+            showWarning: false,
+            showDate: true,
+          );
+        },
+      ),
     );
   }
 

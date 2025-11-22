@@ -61,7 +61,7 @@ class ExpenseProvider extends ChangeNotifier {
       // Try to load synced expenses from Supabase (with timeout for offline mode)
       try {
         _expenses = await _repository.getAll()
-            .timeout(const Duration(seconds: 5));
+            .timeout(const Duration(seconds: 15)); // Increased from 5s for large datasets
         debugPrint('✅ Loaded ${_expenses.length} expenses from Supabase');
       } catch (e) {
         // Offline or timeout - just start with empty list
