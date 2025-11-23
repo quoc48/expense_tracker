@@ -1,162 +1,118 @@
-# Current Phase Status - UPDATED 2025-01-11
+# Current Phase Status - UPDATED 2025-11-23
 
-**Branch:** feature/dark-mode (Dark Mode COMPLETE ✅)
+**Branch:** feature/receipt-scanning (Offline Queue System COMPLETE ✅)  
 **Main Branch Status:** Has Supabase + All Features  
-**Last Session:** 2025-01-11 (Dark Mode Session 2)
+**Last Session:** 2025-11-23 (Offline Queue Final Testing)
 
 ---
 
-## ✅ What's Already Built (On Main Branch)
+## ✅ What's Complete (On feature/receipt-scanning Branch)
 
-### Core Features (Milestones 1-3) ✅
+### Offline Queue System (PRODUCTION READY)
+**All Features Working:**
+- ✅ Offline expense add with queue (Hive persistence)
+- ✅ Queue persistence across cold start (`box.flush()` working)
+- ✅ Auto-sync when connectivity returns
+- ✅ Manual refresh control (RefreshIndicator)
+- ✅ Queue details display (shows descriptions)
+- ✅ FAB auto-collapse (3-second timer)
+- ✅ Save button validation (category/type required)
+- ✅ Auto-reload after sync (temp IDs → real IDs)
+- ✅ Edge cases tested (5-10 items, slow network)
+
+**Technical Stack:**
+- Hive for offline queue
+- ConnectivityMonitor for network status
+- SyncProvider for sync state management
+- QueueService with exponential backoff retry
+- Supabase timeout: 15s (optimized for 873 expenses)
+
+**UX Enhancements:**
+- ✅ Pull-to-refresh on empty state and expense list
+- ✅ Manual Refresh button with clear messaging
+- ✅ Offline-aware empty state
+- ✅ Negative budget display in Analytics (-3.9m in red)
+
+**Testing Status:**
+- ✅ All 9 tests passed on physical iPhone
+- ✅ Cold start testing (force quit + relaunch)
+- ✅ Edge cases verified
+- ✅ Production-ready
+
+---
+
+## 📝 Recent Commits (feature/receipt-scanning)
+
+```
+e5c6121 feat: Show negative values when over budget in Analytics
+28e7ef0 feat: Enhanced offline UX - Timeout fix & manual refresh
+4119f58 feat: Complete offline queue system - 8 critical bug fixes
+```
+
+---
+
+## 🎯 Next Decision Point
+
+**Ready for one of these:**
+
+### Option 1: Deploy to iPhone (Daily Use)
+```bash
+flutter run --profile
+# Recommended for testing in real-world usage
+# Re-run every 7 days to refresh signing
+```
+
+### Option 2: Merge to Main
+```bash
+git checkout main
+git merge feature/receipt-scanning --no-ff
+git push origin main
+# Complete offline queue feature
+```
+
+### Option 3: TestFlight (Production Distribution)
+- Set up App Store Connect
+- Upload build
+- Professional distribution
+
+---
+
+## 📊 What's on Main Branch (Not Yet Merged)
+
+### Core Features (Milestones 1-5) ✅
 - Expense list with full CRUD
 - Add expense form with validation
 - Analytics screen with charts
 - Budget tracking system
+- Supabase integration (auth, cloud database, RLS)
+- 14 Vietnamese categories from Notion
+- 873 expenses migrated from Notion
+- Dark mode (complete)
 
-### Supabase Integration (Milestones 4-5) ✅
-**Already Complete:**
-- ✅ Supabase authentication (email/password)
-- ✅ Cloud database with PostgreSQL
-- ✅ Row Level Security (RLS) policies
-- ✅ Repository pattern architecture
-- ✅ 14 Vietnamese categories from Notion
-- ✅ 873 expenses migrated from Notion
-- ✅ Real-time cloud sync
-- ✅ User preferences stored in cloud
-
-**Technical Stack:**
-- `supabase_flutter: ^2.0.0`
-- Repository pattern (`lib/repositories/`)
-- Provider state management
-- Category preservation (Vietnamese-first)
-
-### UI Features ✅
-- Material Design 3 theme system
-- Budget alerts and tracking
-- Summary cards (context-aware)
-- Charts (Category breakdown, Trends)
-- Vietnamese đồng formatting
-
-### Phase G: Dark Mode (Current Branch) ✅
-- Full dark theme implementation
-- Theme toggle (Light/Dark/System)
-- Theme persistence (SharedPreferences)
-- All screens adapted (35+ colors fixed)
-- Charts working in both modes
+### Missing on Main (Currently on feature/receipt-scanning):
+- ⏳ Offline queue system
+- ⏳ Receipt scanning with Vision API
+- ⏳ Batch expense processing
+- ⏳ Offline UX enhancements
+- ⏳ Negative budget display
 
 ---
 
-## 📊 Current Architecture
+## 🚀 Recommended Next Steps
 
-```
-User Authentication (Supabase Auth)
-         ↓
-   Providers (State)
-         ↓
-   Repositories (Data Layer)
-         ↓
-   Supabase Cloud Database
-```
+**For Daily Use:**
+1. Deploy to iPhone: `flutter run --profile`
+2. Use for a few days to validate real-world behavior
+3. Then merge to main for version control
 
-**Data Flow:**
-- User logs in → Supabase Auth
-- App loads expenses → Repository → Supabase
-- User adds expense → Repository → Syncs to cloud
-- Budget settings → User preferences table → Cloud
+**For Clean Release:**
+1. Merge to main now (feature is complete)
+2. Then deploy from main branch
+3. Continue development on new feature branches
 
 ---
 
-## 🎯 What's NOT Built Yet
+**Summary:** Offline Queue System is production-ready on `feature/receipt-scanning`. Choose deployment path: daily use testing OR merge to main.
 
-### Option 1: Offline-First Sync
-**Status:** Not implemented  
-**What it adds:**
-- Local SQLite database for offline use
-- Sync queue for offline changes
-- Background sync when online
-- Conflict resolution
-- Works without internet
-
-**Current limitation:** App requires internet connection
-
-### Option 2: Advanced Features
-**Status:** Planned but not built
-- Recurring expenses (templates)
-- Category customization (add/edit/delete)
-- Export/import (CSV, PDF reports)
-- Spending predictions (ML-based)
-- Custom budget rules
-
-### Option 3: Production Polish
-**Status:** Partially done
-- ✅ Dark mode (just completed!)
-- ⏳ Loading states & error handling
-- ⏳ App icons & splash screens
-- ⏳ Pull-to-refresh
-- ⏳ Optimistic UI updates
-- ⏳ Performance optimization
-
----
-
-## 🚀 Next Steps Options
-
-### Path A: Merge Dark Mode → Start Offline Sync
-1. Merge feature/dark-mode → main
-2. Build offline-first architecture:
-   - Local SQLite with drift package
-   - Sync queue system
-   - Background sync service
-   - Conflict resolution logic
-
-**Time:** 4-6 weeks  
-**Complexity:** High  
-**Value:** App works without internet
-
-### Path B: Merge Dark Mode → Advanced Features
-1. Merge feature/dark-mode → main
-2. Add advanced features:
-   - Recurring expenses
-   - Category customization
-   - Export functionality
-   - Budget enhancements
-
-**Time:** 2-4 weeks  
-**Complexity:** Medium  
-**Value:** More powerful expense tracking
-
-### Path C: Merge Dark Mode → Deploy to Device
-1. Merge feature/dark-mode → main
-2. iOS deployment:
-   - App icon & splash screen
-   - Build configuration
-   - TestFlight setup
-   - Physical device deployment
-
-**Time:** 3-5 days  
-**Complexity:** Low-Medium  
-**Value:** Use on real iPhone
-
----
-
-## 📝 Key Clarifications
-
-**What you already have:**
-- ✅ Supabase cloud sync (online-only)
-- ✅ Authentication system
-- ✅ Vietnamese categories (14 from Notion)
-- ✅ 873 historical expenses
-- ✅ Budget tracking with cloud storage
-- ✅ Repository pattern architecture
-
-**What's still possible to add:**
-- ⏳ Offline-first sync (works without internet)
-- ⏳ Advanced features (recurring, custom categories)
-- ⏳ Production polish (icons, loading states, etc.)
-- ⏳ iOS deployment to device
-
----
-
-**Summary:** Your app already has cloud sync with Supabase! The question is what additional features or improvements you want to add next. Offline-first sync would be the major architectural enhancement that's not yet built.
-
-**Last Updated:** 2025-01-11
+**Last Updated:** 2025-11-23  
+**Status:** Ready for deployment decision ✅
