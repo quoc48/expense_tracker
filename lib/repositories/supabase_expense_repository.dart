@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import '../models/expense.dart';
 import '../services/supabase_service.dart';
 import 'expense_repository.dart';
@@ -18,6 +19,9 @@ class SupabaseExpenseRepository implements ExpenseRepository {
   // Cache for category/type UUIDs (to avoid repeated lookups)
   Map<String, String>? _categoryIdMap; // Vietnamese name → UUID
   Map<String, String>? _typeIdMap;     // Vietnamese name → UUID
+
+  // UUID generator for creating new expense IDs
+  final _uuid = const Uuid();
 
   /// Initialize category and type ID mappings from Supabase
   ///
@@ -116,10 +120,13 @@ class SupabaseExpenseRepository implements ExpenseRepository {
     }
 
     // Insert into Supabase
+    // Generate a new UUID if the expense doesn't have an ID
+    final expenseId = expense.id.isNotEmpty ? expense.id : _uuid.v4();
+
     final response = await supabase
         .from('expenses')
         .insert({
-          'id': expense.id,
+          'id': expenseId,
           'user_id': user.id,
           'category_id': categoryId,
           'type_id': typeId,

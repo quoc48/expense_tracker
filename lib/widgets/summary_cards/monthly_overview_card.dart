@@ -268,14 +268,14 @@ class MonthlyOverviewCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      CurrencyFormatter.format(
+                      '${_remainingAmount < 0 ? '-' : ''}${CurrencyFormatter.format(
                         _remainingAmount.abs(),
                         context: CurrencyContext.compact,
-                      ),
+                      )}',
                       style: AppTypography.currencyMedium(
                         color: _remainingAmount >= 0
                             ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
-                            : theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            : theme.colorScheme.error, // Red for overspending
                       ),
                     ),
                   ],

@@ -21,10 +21,19 @@ import '../theme/minimalist/minimalist_colors.dart';
 /// - No ExpenseFormResult DTO needed
 /// - No enum conversion
 /// - Simpler data flow
+///
+/// Field Hiding:
+/// - Use `hiddenFields` to hide specific fields (e.g., {'date'} for scan results)
+/// - Hidden fields still use their default/existing values
 class AddExpenseScreen extends StatefulWidget {
   final Expense? expense;
+  final Set<String>? hiddenFields;
 
-  const AddExpenseScreen({super.key, this.expense});
+  const AddExpenseScreen({
+    super.key,
+    this.expense,
+    this.hiddenFields,
+  });
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -50,6 +59,31 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   List<String> _categories = [];
   List<String> _expenseTypes = [];
   bool _isLoadingOptions = true;
+  bool _usingFallbackData = false;
+
+  // Fallback data for offline mode (matches Supabase categories)
+  static const List<String> _fallbackCategories = [
+    'Biểu gia đình',
+    'Cà phê',
+    'Du lịch',
+    'Giáo dục',
+    'Giải trí',
+    'Hoá đơn',
+    'Quà vật',
+    'Sức khỏe',
+    'TẾT',
+    'Thời trang',
+    'Thực phẩm',
+    'Tiền nhà',
+    'Tạp hoá',
+    'Đi lại',
+  ];
+
+  static const List<String> _fallbackTypes = [
+    'Phải chi',
+    'Phát sinh',
+    'Lãng phí',
+  ];
 
   @override
   void initState() {
@@ -84,13 +118,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   /// Load categories and expense types from Supabase
+  ///
+  /// Falls back to hardcoded defaults when offline to prevent crashes
+  /// Uses 5-second timeout to avoid long waits when offline
   Future<void> _loadOptions() async {
     try {
-      final categories = await _repository.getCategories();
-      final types = await _repository.getExpenseTypes();
+      // Add timeout to avoid waiting 60+ seconds when offline
+      final categories = await _repository.getCategories()
+          .timeout(const Duration(seconds: 5));
+      final types = await _repository.getExpenseTypes()
+          .timeout(const Duration(seconds: 5));
 
-      debugPrint('Loaded categories from Supabase: $categories');
-      debugPrint('Loaded types from Supabase: $types');
+      debugPrint('✅ Loaded categories from Supabase: $categories');
+      debugPrint('✅ Loaded types from Supabase: $types');
 
       if (!mounted) return;
 
@@ -98,14 +138,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         _categories = categories.toSet().toList()..sort();
         _expenseTypes = types.toSet().toList();
         _isLoadingOptions = false;
+        _usingFallbackData = false;
       });
     } catch (e) {
-      debugPrint('Error loading form options: $e');
+      debugPrint('❌ Error loading form options: $e');
+      debugPrint('📦 Using fallback data (offline mode)');
 
       if (!mounted) return;
 
+      // Use fallback data to prevent crash when offline
       setState(() {
+        _categories = List.from(_fallbackCategories)..sort();
+        _expenseTypes = List.from(_fallbackTypes);
         _isLoadingOptions = false;
+        _usingFallbackData = true; // Show warning banner
       });
     }
   }
@@ -156,6 +202,37 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Offline warning banner
+                    if (_usingFallbackData)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              PhosphorIconsRegular.wifiSlash,
+                              color: Colors.orange.shade900,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Using offline mode. Categories may be limited.',
+                                style: TextStyle(
+                                  color: Colors.orange.shade900,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     // Description Field
                     TextFormField(
                       controller: _descriptionController,
@@ -272,24 +349,25 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 16),
-
-                    // Date Picker
-                    InkWell(
-                      onTap: _pickDate,
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Date',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(PhosphorIconsLight.calendarBlank),
-                        ),
-                        child: Text(
-                          DateFormat('MMMM dd, yyyy').format(_selectedDate),
-                          style: ComponentTextStyles.fieldInput(Theme.of(context).textTheme),
+                    // Date Picker (conditional - hidden for scan results)
+                    if (widget.hiddenFields?.contains('date') != true) ...[
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: _pickDate,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Date',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(PhosphorIconsLight.calendarBlank),
+                          ),
+                          child: Text(
+                            DateFormat('MMMM dd, yyyy').format(_selectedDate),
+                            style: ComponentTextStyles.fieldInput(Theme.of(context).textTheme),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ],
 
                     // Note Field (Optional)
                     TextFormField(
@@ -328,7 +406,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 730)), // Allow 2 years future
     );
 
     if (picked != null && picked != _selectedDate) {
@@ -343,26 +421,42 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       return;
     }
 
-    if (_selectedTypeVi == null) {
-      setState(() {});
+    // Validate category selection
+    if (_selectedCategoryVi == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a category'),
+          duration: Duration(seconds: 2),
+        ),
+      );
       return;
     }
 
-    // NEW: Create expense with Vietnamese strings directly!
-    // No enum conversion, no ExpenseFormResult DTO
+    // Validate type selection
+    if (_selectedTypeVi == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an expense type'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Create expense with Vietnamese strings directly
     final expense = Expense(
       id: widget.expense?.id ?? const Uuid().v4(),
       description: _descriptionController.text.trim(),
       amount: double.parse(_amountController.text),
-      categoryNameVi: _selectedCategoryVi!,  // Direct assignment!
-      typeNameVi: _selectedTypeVi!,          // Direct assignment!
+      categoryNameVi: _selectedCategoryVi!,
+      typeNameVi: _selectedTypeVi!,
       date: _selectedDate,
       note: _noteController.text.trim().isEmpty
           ? null
           : _noteController.text.trim(),
     );
 
-    // Return the expense object directly (no wrapper needed)
+    // Return the expense object directly
     Navigator.pop(context, expense);
   }
 }

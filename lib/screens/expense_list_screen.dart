@@ -1,21 +1,23 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/user_preferences_provider.dart';
+import '../providers/sync_provider.dart';
 import '../providers/theme_provider.dart';
-import '../utils/currency_formatter.dart';
-import '../widgets/budget_alert_banner.dart';
+import '../widgets/sync_status_banner.dart';
+import '../widgets/sync_queue_details_sheet.dart';
+import '../widgets/expense_card.dart';
 import 'add_expense_screen.dart';
 import 'settings_screen.dart';
 import '../theme/typography/app_typography.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_spacing.dart';
 import '../theme/constants/app_constants.dart';
-import '../theme/minimalist/minimalist_colors.dart';
+import '../widgets/expandable_add_fab.dart';
+import 'scanning/camera_capture_screen.dart';
 
 /// ExpenseListScreen now uses Provider for state management instead of local state.
 ///
@@ -25,80 +27,180 @@ import '../theme/minimalist/minimalist_colors.dart';
 /// - No need to pass data through constructors
 /// - Separation of concerns: UI code here, business logic in ExpenseProvider
 /// - Automatic rebuilds when data changes (no manual setState calls)
-class ExpenseListScreen extends StatelessWidget {
+///
+/// Note: Now a StatefulWidget to manage FAB expanded state for auto-collapse behavior
+class ExpenseListScreen extends StatefulWidget {
   const ExpenseListScreen({super.key});
 
   @override
+  State<ExpenseListScreen> createState() => _ExpenseListScreenState();
+}
+
+class _ExpenseListScreenState extends State<ExpenseListScreen> {
+  /// GlobalKey to control the FAB from parent (for auto-collapse)
+  final GlobalKey<ExpandableAddFabState> _fabKey = GlobalKey<ExpandableAddFabState>();
+
+  /// Track whether the FAB is currently expanded
+  bool _isFabExpanded = false;
+
+  /// Timer for auto-collapse after 5 seconds
+  Timer? _autoCollapseTimer;
+
+  /// Track previous sync state to detect completion
+  SyncState? _previousSyncState;
+
+  @override
+  void dispose() {
+    _autoCollapseTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Start auto-collapse timer when FAB expands
+  void _startAutoCollapseTimer() {
+    _autoCollapseTimer?.cancel(); // Cancel existing timer if any
+    _autoCollapseTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && _isFabExpanded) {
+        _collapseFab();
+      }
+    });
+  }
+
+  /// Handle FAB expanded state change
+  void _onFabExpandedChanged(bool isExpanded) {
+    setState(() {
+      _isFabExpanded = isExpanded;
+    });
+
+    if (isExpanded) {
+      _startAutoCollapseTimer();
+    } else {
+      _autoCollapseTimer?.cancel();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Consumer2<ExpenseProvider, ThemeProvider>: Listens to BOTH providers and rebuilds when either changes
-    // Why Consumer2 instead of Consumer?
-    // - Expense data dependency: Rebuilds when expenses are added/edited/deleted
-    // - Theme dependency: Rebuilds when user toggles light/dark mode (fixes stale colors bug)
-    // - More explicit: Clearly shows which widgets depend on which data
-    return Consumer2<ExpenseProvider, ThemeProvider>(
-      builder: (context, expenseProvider, themeProvider, child) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Expense Tracker'),
-            actions: [
-              // Settings button
-              IconButton(
-                icon: const Icon(PhosphorIconsLight.gear),
-                tooltip: 'Settings',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
-                    ),
-                  );
-                },
+    // Consumer3: Listen to ExpenseProvider, ThemeProvider, AND SyncProvider
+    // - ExpenseProvider: Rebuilds when expenses change
+    // - ThemeProvider: Rebuilds when theme changes
+    // - SyncProvider: Detect sync completion to reload expenses from Supabase
+    return Consumer3<ExpenseProvider, ThemeProvider, SyncProvider>(
+      builder: (context, expenseProvider, themeProvider, syncProvider, child) {
+        // Detect sync completion and reload expenses from Supabase
+        if (_previousSyncState == SyncState.syncing &&
+            syncProvider.syncState == SyncState.synced) {
+          // Sync just completed - reload to replace temp IDs with real ones
+          debugPrint('🔄 Sync completed, reloading expenses from Supabase...');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            expenseProvider.loadExpenses();
+          });
+        }
+        _previousSyncState = syncProvider.syncState;
+        // Stack with 3 layers: Scaffold -> Backdrop -> FAB
+        // This allows backdrop to capture all taps when FAB is expanded
+        return Stack(
+          children: [
+            // Layer 1: Main Scaffold (bottom)
+            Scaffold(
+              appBar: AppBar(
+                title: const Text('Expense Tracker'),
+                actions: [
+                  // Settings button
+                  IconButton(
+                    icon: const Icon(PhosphorIconsLight.gear),
+                    tooltip: 'Settings',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  // Logout button
+                  IconButton(
+                    icon: const Icon(PhosphorIconsLight.signOut),
+                    tooltip: 'Sign Out',
+                    onPressed: () => _showLogoutDialog(context),
+                  ),
+                ],
               ),
-              // Logout button
-              IconButton(
-                icon: const Icon(PhosphorIconsLight.signOut),
-                tooltip: 'Sign Out',
-                onPressed: () => _showLogoutDialog(context),
+              body: expenseProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : expenseProvider.expenses.isEmpty
+                      ? _buildEmptyState(context)
+                      : _buildExpenseList(context, expenseProvider.expenses),
+              // No floatingActionButton here - we position it manually in Stack
+            ),
+
+            // Layer 2: FAB positioned manually (top)
+            // Auto-collapses after 3 seconds if not used
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: ExpandableAddFab(
+                key: _fabKey,
+                onManualAdd: () => _addExpenseManually(context),
+                onScanReceipt: () => _scanReceipt(context),
+                onExpandedChanged: _onFabExpandedChanged,
               ),
-            ],
-          ),
-          body: expenseProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : expenseProvider.expenses.isEmpty
-                  ? _buildEmptyState(context)
-                  : _buildExpenseList(context, expenseProvider.expenses),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _addExpense(context),
-            tooltip: 'Add Expense',
-            child: const Icon(PhosphorIconsRegular.plus), // Regular for FAB (slightly bolder)
-          ),
+            ),
+          ],
         );
       },
     );
   }
 
+  /// Collapse the FAB when tapping outside
+  void _collapseFab() {
+    _fabKey.currentState?.collapse();
+  }
+
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return RefreshIndicator(
+      onRefresh: () async {
+        await expenseProvider.loadExpenses();
+      },
+      child: ListView(
         children: [
-          Icon(
-            PhosphorIconsLight.receipt,
-            size: AppConstants.iconSize3xl * 1.5, // 72
-            color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
-          ),
-          SizedBox(height: AppSpacing.spaceLg),
-          Text(
-            'No expenses yet',
-            style: ComponentTextStyles.emptyTitle(theme.textTheme),
-          ),
-          SizedBox(height: AppSpacing.spaceXs),
-          Text(
-            'Tap + to add your first expense',
-            style: ComponentTextStyles.emptyMessage(theme.textTheme),
+          SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    PhosphorIconsLight.arrowClockwise,
+                    size: AppConstants.iconSize3xl * 1.5, // 72
+                    color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                  ),
+                  SizedBox(height: AppSpacing.spaceLg),
+                  Text(
+                    'No expenses loaded',
+                    style: ComponentTextStyles.emptyTitle(theme.textTheme),
+                  ),
+                  SizedBox(height: AppSpacing.spaceXs),
+                  Text(
+                    'Tap Refresh to load your expenses',
+                    style: ComponentTextStyles.emptyMessage(theme.textTheme),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: AppSpacing.spaceLg),
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await expenseProvider.loadExpenses();
+                    },
+                    icon: const Icon(PhosphorIconsLight.arrowClockwise, size: 20),
+                    label: const Text('Refresh'),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -106,169 +208,98 @@ class ExpenseListScreen extends StatelessWidget {
   }
 
   Widget _buildExpenseList(BuildContext context, List<Expense> expenses) {
-    // Get budget data to show alert banner
-    final userPreferences = Provider.of<UserPreferencesProvider>(context);
-    final budgetAmount = userPreferences.monthlyBudget;
-    
-    // Calculate current month's total spending
-    final now = DateTime.now();
-    final currentMonthExpenses = expenses.where((expense) {
-      return expense.date.year == now.year && expense.date.month == now.month;
-    }).toList();
-    
-    final totalSpending = currentMonthExpenses.fold<double>(
-      0.0,
-      (sum, expense) => sum + expense.amount,
-    );
-    
-    // Calculate budget percentage
-    final budgetPercentage = budgetAmount > 0 ? (totalSpending / budgetAmount) * 100 : 0.0;
+    // Get sync status to show sync banner
+    final syncProvider = Provider.of<SyncProvider>(context);
+    final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
 
     // Get current theme brightness for ListView key
     // This forces ListView to rebuild visible items when theme changes
     final brightness = Theme.of(context).brightness;
 
-    return ListView.builder(
-      // Key based on brightness - ensures ListView rebuilds when toggling light/dark mode
-      // Without this key, Flutter reuses existing Card widgets (causing invisible text bug)
-      key: ValueKey('expense-list-$brightness'),
-      // +1 for the alert banner (shown conditionally at index 0)
-      itemCount: expenses.length + 1,
-      itemBuilder: (context, index) {
-        // First item: Budget Alert Banner
-        if (index == 0) {
-          return BudgetAlertBanner(
-            budgetPercentage: budgetPercentage,
+    return RefreshIndicator(
+      onRefresh: () async {
+        await expenseProvider.loadExpenses();
+      },
+      child: ListView.builder(
+        // Key based on brightness - ensures ListView rebuilds when toggling light/dark mode
+        // Without this key, Flutter reuses existing Card widgets (causing invisible text bug)
+        key: ValueKey('expense-list-$brightness'),
+        // +1 for the sync banner (shown conditionally at index 0)
+        itemCount: expenses.length + 1,
+        itemBuilder: (context, index) {
+          // First item: Sync Status Banner
+          if (index == 0) {
+            return SyncStatusBanner(
+              syncState: syncProvider.syncState,
+              pendingCount: syncProvider.pendingCount,
+              onTap: () {
+                // Show sync queue details sheet
+                SyncQueueDetailsSheet.show(context);
+              },
+            );
+          }
+
+          // Remaining items: Expense cards (adjust index by -1)
+          final expenseIndex = index - 1;
+          final expense = expenses[expenseIndex];
+          return ExpenseCard(
+            expense: expense,
+            onTap: () => _editExpense(context, expense),
+            confirmDismiss: () => _showDeleteConfirmation(context, expense),
+            onDismissed: () => _deleteExpense(context, expense, expenseIndex),
+            enableSwipe: true,
+            showWarning: false,
+            showDate: true,
           );
-        }
-        
-        // Remaining items: Expense cards (adjust index by -1)
-        final expenseIndex = index - 1;
-        final expense = expenses[expenseIndex];
-        return _buildExpenseCard(context, expense, expenseIndex);
-      },
-    );
-  }
-
-  Widget _buildExpenseCard(BuildContext context, Expense expense, int index) {
-    final dateFormat = DateFormat('MMM dd, yyyy');
-    final theme = Theme.of(context);
-
-    return Dismissible(
-      key: Key(expense.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: AppSpacing.spaceLg),
-        margin: EdgeInsets.symmetric(
-          horizontal: AppSpacing.spaceMd,
-          vertical: AppSpacing.spaceXs,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.error,
-          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-        ),
-        child: Icon(
-          PhosphorIconsLight.trash,
-          color: MinimalistColors.gray50,  // Main background - for delete icon on red background
-          size: AppConstants.iconSizeLg,
-        ),
-      ),
-      confirmDismiss: (direction) async {
-        return await _showDeleteConfirmation(context, expense);
-      },
-      onDismissed: (direction) {
-        _deleteExpense(context, expense, index);
-      },
-      child: Card(
-        margin: EdgeInsets.symmetric(
-          horizontal: AppSpacing.spaceMd,
-          vertical: AppSpacing.space2xs,  // 4px - creates 8px total gap between cards
-        ),
-        // Minimalist: Subtle elevation for depth
-        elevation: 2,
-        shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),  // Rounded corners
-        ),
-        child: ListTile(
-          dense: true,  // Enable dense mode for tighter spacing
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.spaceMd,   // 16px
-            vertical: AppSpacing.space2xs,    // 4px - ultra-compact
-          ),
-          minVerticalPadding: 0,  // Remove default ListTile vertical padding
-          leading: CircleAvatar(
-            backgroundColor: MinimalistColors.getAdaptiveGray(
-              context,
-              lightColor: MinimalistColors.gray100,
-              darkColor: MinimalistColors.darkGray300,  // Lighter circle in dark mode
-            ),
-            radius: 20,
-            child: Icon(
-              expense.categoryIcon,
-              color: MinimalistColors.getAdaptivePrimaryText(context),
-              size: AppConstants.iconSizeSm,
-            ),
-          ),
-          title: Text(
-            expense.description,
-            style: ComponentTextStyles.expenseTitleCompact(theme.textTheme).copyWith(
-              color: MinimalistColors.getAdaptivePrimaryText(context),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Padding(
-            padding: EdgeInsets.only(top: AppSpacing.space2xs),  // 4px minimal gap
-            child: Text(
-              dateFormat.format(expense.date),
-              style: ComponentTextStyles.expenseDateCompact(theme.textTheme).copyWith(
-                color: MinimalistColors.getAdaptiveSecondaryText(context),
-              ),
-            ),
-          ),
-          trailing: Text(
-            CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
-            style: AppTypography.currencyMedium(
-              color: MinimalistColors.getAdaptivePrimaryText(context),
-            ),
-          ),
-          onTap: () => _editExpense(context, expense),
-        ),
+        },
       ),
     );
   }
 
-  Future<void> _addExpense(BuildContext context) async {
-    final result = await Navigator.push<Expense>(  // NEW: Return Expense directly
+  /// Navigate to camera to scan receipt
+  Future<void> _scanReceipt(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CameraCaptureScreen(),
+      ),
+    );
+    // Note: Receipt review and batch save will be implemented in Phase 5
+    // For now, the flow ends after OCR processing
+  }
+
+  /// Navigate to manual entry screen (existing flow)
+  Future<void> _addExpenseManually(BuildContext context) async {
+    final result = await Navigator.push<Expense>(
       context,
       MaterialPageRoute(
         builder: (context) => const AddExpenseScreen(),
       ),
     );
 
-    if (result != null && context.mounted) {
-      // Access the provider without listening (we don't need rebuilds here)
-      // listen: false tells Provider we just want to call a method, not listen to changes
-      final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.addExpense(result);  // NEW: Simplified API
+    if (result == null || !context.mounted) {
+      return;
+    }
 
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added: ${result.description}'),  // Fixed: result IS the expense
-            duration: const Duration(seconds: 2),
-            action: SnackBarAction(
-              label: 'Undo',
-              onPressed: () async {
-                // Delete the just-added expense to undo
-                await provider.deleteExpense(result.id);  // Fixed: result IS the expense
-              },
-            ),
+    // Access the provider without listening (we don't need rebuilds here)
+    // listen: false tells Provider we just want to call a method, not listen to changes
+    final provider = Provider.of<ExpenseProvider>(context, listen: false);
+    final success = await provider.addExpense(result);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added: ${result.description}'),  // Fixed: result IS the expense
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              // Delete the just-added expense to undo
+              await provider.deleteExpense(result.id);  // Fixed: result IS the expense
+            },
           ),
-        );
-      }
+        ),
+      );
     }
   }
 

@@ -224,7 +224,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }) {
     // Get user preferences for budget
     final prefsProvider = Provider.of<UserPreferencesProvider>(context);
-    final budget = prefsProvider.preferences?.monthlyBudget ?? 0.0;
+    // Use provider's convenience getter for consistent defaults (20M VND)
+    final budget = prefsProvider.monthlyBudget;
 
     // Check if viewing current month (budget tracking only relevant for current month)
     final isCurrentMonth = AnalyticsCalculator.isSameMonth(

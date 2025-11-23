@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import '../models/expense.dart';
 import '../repositories/expense_repository.dart';
 import '../repositories/supabase_expense_repository.dart';
+import '../services/connectivity_monitor.dart';
+import '../services/queue_service.dart';
 
 /// ExpenseProvider manages the global state for all expenses in the app.
 /// It extends ChangeNotifier which is part of Flutter's built-in state management.
@@ -23,6 +25,17 @@ class ExpenseProvider extends ChangeNotifier {
   // Repository for data access (now using Supabase instead of SharedPreferences)
   final ExpenseRepository _repository = SupabaseExpenseRepository();
 
+  // Offline queue services (optional - for backward compatibility)
+  final ConnectivityMonitor? _connectivityMonitor;
+  final QueueService? _queueService;
+
+  // Constructor with optional offline services
+  ExpenseProvider({
+    ConnectivityMonitor? connectivityMonitor,
+    QueueService? queueService,
+  })  : _connectivityMonitor = connectivityMonitor,
+        _queueService = queueService;
+
   // Public getters - allow read-only access to private state
   // This is a common pattern: private state, public getters
   List<Expense> get expenses => _expenses;
@@ -35,9 +48,9 @@ class ExpenseProvider extends ChangeNotifier {
     return _expenses.fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  /// Load all expenses from Supabase
+  /// Load all expenses from Supabase + pending queue items
   /// This should be called once when the app starts
-  /// Fetches all expenses for the authenticated user
+  /// Fetches all expenses for the authenticated user AND queued offline items
   Future<void> loadExpenses() async {
     _isLoading = true;
     // Notify listeners that loading has started
@@ -45,11 +58,46 @@ class ExpenseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _expenses = await _repository.getAll();
-      debugPrint('Loaded ${_expenses.length} expenses from Supabase');
+      // Try to load synced expenses from Supabase (with timeout for offline mode)
+      try {
+        _expenses = await _repository.getAll()
+            .timeout(const Duration(seconds: 15)); // Increased from 5s for large datasets
+        debugPrint('✅ Loaded ${_expenses.length} expenses from Supabase');
+      } catch (e) {
+        // Offline or timeout - just start with empty list
+        debugPrint('⚠️  Could not load from Supabase (offline?): $e');
+        debugPrint('📦 Will show queued items only');
+        _expenses = [];
+      }
+
+      // ALWAYS load pending queued items (for optimistic UI)
+      if (_queueService != null) {
+        final pendingReceipts = _queueService.getPendingReceipts();
+        if (pendingReceipts.isNotEmpty) {
+          // Convert queued items to Expense objects and add to list
+          for (final receipt in pendingReceipts) {
+            for (final item in receipt.items) {
+              final queuedExpense = Expense(
+                id: 'pending_${receipt.id}_${item.hashCode}', // Temporary ID
+                description: item.description,
+                amount: item.amount,
+                categoryNameVi: item.categoryNameVi,
+                typeNameVi: item.typeNameVi,
+                date: item.date,
+                note: item.note,
+              );
+              _expenses.add(queuedExpense);
+            }
+          }
+          _expenses.sort((a, b) => b.date.compareTo(a.date));
+          debugPrint('📦 Added ${_queueService.getPendingCount()} pending queued items to expense list');
+        }
+      }
+
+      debugPrint('📊 Total expenses in list: ${_expenses.length}');
     } catch (e) {
-      // In production, you'd want proper error handling here
-      debugPrint('Error loading expenses: $e');
+      // Critical error - log it but don't crash
+      debugPrint('❌ Critical error loading expenses: $e');
       _expenses = [];
     } finally {
       _isLoading = false;
@@ -58,28 +106,44 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-  /// Add a new expense to the list (SIMPLIFIED - Phase 5.5.1)
-  /// Returns true if successful, false otherwise
+  /// Add a new expense to the list with offline queue support
+  /// Returns true if successful (saved to Supabase or queued offline)
   /// Vietnamese names are now part of the Expense object itself!
+  ///
+  /// Offline Queue Strategy (Option A):
+  /// - If online: Save directly to Supabase
+  /// - If offline: Queue to Hive (will sync automatically when online)
   Future<bool> addExpense(Expense expense) async {
     try {
-      // Add to in-memory list
+      // Check connectivity if services are available
+      final bool isOnline = _connectivityMonitor != null
+          ? await _connectivityMonitor.checkConnectivity()
+          : true; // Assume online if no connectivity service
+
+      // Add to in-memory list first (optimistic update)
       _expenses.add(expense);
-
-      // Sort by date (newest first)
       _expenses.sort((a, b) => b.date.compareTo(a.date));
-
-      // Save to Supabase (Vietnamese names are in the expense object)
-      await _repository.create(expense);
-
-      // Notify listeners that the data has changed
-      // This will trigger a rebuild in all listening widgets
       notifyListeners();
+
+      if (isOnline) {
+        // Online: Save directly to Supabase
+        await _repository.create(expense);
+        debugPrint('✅ Saved expense to Supabase: ${expense.description}');
+      } else {
+        // Offline: Queue for later sync
+        if (_queueService != null) {
+          await _queueService.enqueueExpense(expense);
+          debugPrint('📦 Queued expense for offline sync: ${expense.description}');
+        } else {
+          // No queue service available, try to save anyway (will fail if truly offline)
+          await _repository.create(expense);
+        }
+      }
 
       return true;
     } catch (e) {
-      debugPrint('Error adding expense: $e');
-      // Remove the expense if save failed
+      debugPrint('❌ Error adding expense: $e');
+      // Remove the expense if operation failed
       _expenses.remove(expense);
       notifyListeners();
       return false;
