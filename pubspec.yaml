@@ -50,6 +50,9 @@ dependencies:
   # Modern minimalist icon library with 5 weights
   phosphor_flutter: ^2.1.0
 
+  # Google Fonts - Dynamic font loading from Google Fonts CDN
+  google_fonts: ^6.2.1
+
   # Supabase client for Flutter (PostgreSQL, Auth, Realtime)
   supabase_flutter: ^2.0.0
 

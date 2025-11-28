@@ -1,133 +1,160 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Typography system for the Expense Tracker app
-/// Uses Inter font family (bundled locally) for optimal readability and modern aesthetics
+/// Uses Momo Trust Sans font (Google Fonts) for modern Vietnamese fintech aesthetic
 /// JetBrains Mono used for currency values with tabular figures for perfect alignment
+///
+/// Font weights available in Momo Trust Sans:
+/// - Regular (400) - Body text, labels
+/// - Medium (500) - Emphasis, category amounts
+/// - SemiBold (600) - Section titles, navigation
+/// - Bold (700) - Large amounts, hero numbers
 class AppTypography {
   // Private constructor to prevent instantiation
   AppTypography._();
 
-  /// Creates a complete text theme with our custom typography scale
+  /// Creates a complete text theme with Momo Trust Sans via Google Fonts
+  /// Uses GoogleFonts.getFont() for fonts that may not have dedicated methods yet
   static TextTheme createTextTheme({
     required Color textPrimary,
     required Color textSecondary,
     required Color textTertiary,
   }) {
+    // Helper to create Momo Trust Sans style
+    // Using getFont() for fonts not yet in the typed API
+    TextStyle momoStyle({
+      double fontSize = 14,
+      FontWeight fontWeight = FontWeight.normal,
+      double letterSpacing = 0,
+      double height = 1.4,
+      Color? color,
+    }) {
+      return GoogleFonts.getFont(
+        'Momo Trust Sans',
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        height: height,
+        color: color,
+      );
+    }
+
     return TextTheme(
-      // Display styles - For hero numbers and large totals
-      displayLarge: const TextStyle(
-        fontFamily: 'Inter',
+      // Display styles - For hero numbers and large totals (32px bold per Figma)
+      displayLarge: momoStyle(
         fontSize: 48,
         fontWeight: FontWeight.bold,
         letterSpacing: -0.25,
         height: 1.2,
-      ).copyWith(color: textPrimary),
-      displayMedium: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 36,
-        fontWeight: FontWeight.w600, // SemiBold
+        color: textPrimary,
+      ),
+      displayMedium: momoStyle(
+        fontSize: 32, // Updated to match Figma main amount
+        fontWeight: FontWeight.bold,
         letterSpacing: 0,
         height: 1.2,
-      ).copyWith(color: textPrimary),
-      displaySmall: const TextStyle(
-        fontFamily: 'Inter',
+        color: textPrimary,
+      ),
+      displaySmall: momoStyle(
         fontSize: 28,
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
         height: 1.3,
-      ).copyWith(color: textPrimary),
+        color: textPrimary,
+      ),
 
       // Headline styles - For screen and section titles
-      headlineLarge: const TextStyle(
-        fontFamily: 'Inter',
+      headlineLarge: momoStyle(
         fontSize: 24,
-        fontWeight: FontWeight.w500, // Medium
+        fontWeight: FontWeight.w500,
         letterSpacing: 0,
         height: 1.3,
-      ).copyWith(color: textPrimary),
-      headlineMedium: const TextStyle(
-        fontFamily: 'Inter',
+        color: textPrimary,
+      ),
+      headlineMedium: momoStyle(
         fontSize: 20,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.15,
         height: 1.3,
-      ).copyWith(color: textPrimary),
-      headlineSmall: const TextStyle(
-        fontFamily: 'Inter',
+        color: textPrimary,
+      ),
+      headlineSmall: momoStyle(
         fontSize: 18,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.15,
         height: 1.3,
-      ).copyWith(color: textPrimary),
+        color: textPrimary,
+      ),
 
-      // Title styles - For cards and list items
-      titleLarge: const TextStyle(
-        fontFamily: 'Inter',
+      // Title styles - For cards and list items (14px SemiBold per Figma)
+      titleLarge: momoStyle(
         fontSize: 16,
-        fontWeight: FontWeight.w600,  // Slightly bolder for primary items
+        fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
         height: 1.4,
-      ).copyWith(color: textPrimary),
-      titleMedium: const TextStyle(
-        fontFamily: 'Inter',
+        color: textPrimary,
+      ),
+      titleMedium: momoStyle(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600, // SemiBold for section titles like "Category"
         letterSpacing: 0.1,
         height: 1.4,
-      ).copyWith(color: textPrimary),
-      titleSmall: const TextStyle(
-        fontFamily: 'Inter',
+        color: textPrimary,
+      ),
+      titleSmall: momoStyle(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         height: 1.4,
-      ).copyWith(color: textSecondary), // Overlines are secondary
+        color: textSecondary,
+      ),
 
-      // Body styles - For general content
-      bodyLarge: const TextStyle(
-        fontFamily: 'Inter',
+      // Body styles - For general content (14px Regular per Figma)
+      bodyLarge: momoStyle(
         fontSize: 16,
         fontWeight: FontWeight.normal,
         letterSpacing: 0.5,
         height: 1.5,
-      ).copyWith(color: textPrimary),
-      bodyMedium: const TextStyle(
-        fontFamily: 'Inter',
+        color: textPrimary,
+      ),
+      bodyMedium: momoStyle(
         fontSize: 14,
         fontWeight: FontWeight.normal,
         letterSpacing: 0.25,
         height: 1.5,
-      ).copyWith(color: textPrimary),
-      bodySmall: const TextStyle(
-        fontFamily: 'Inter',
+        color: textPrimary,
+      ),
+      bodySmall: momoStyle(
         fontSize: 12,
         fontWeight: FontWeight.normal,
         letterSpacing: 0.4,
         height: 1.5,
-      ).copyWith(color: textSecondary),
+        color: textSecondary,
+      ),
 
-      // Label styles - For buttons, chips, badges
-      labelLarge: const TextStyle(
-        fontFamily: 'Inter',
+      // Label styles - For buttons, chips, badges (14px Medium per Figma category cards)
+      labelLarge: momoStyle(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w500, // Medium for category amounts
         letterSpacing: 0.1,
         height: 1.4,
-      ).copyWith(color: textPrimary),
-      labelMedium: const TextStyle(
-        fontFamily: 'Inter',
+        color: textPrimary,
+      ),
+      labelMedium: momoStyle(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.5,
         height: 1.4,
-      ).copyWith(color: textPrimary),
-      labelSmall: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
+        color: textPrimary,
+      ),
+      labelSmall: momoStyle(
+        fontSize: 10, // Updated for chart labels per Figma
+        fontWeight: FontWeight.normal,
         letterSpacing: 0.5,
         height: 1.4,
-      ).copyWith(color: textTertiary),
+        color: textTertiary,
+      ),
     );
   }
 
