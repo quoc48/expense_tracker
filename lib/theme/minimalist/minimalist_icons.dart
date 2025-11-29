@@ -36,35 +36,65 @@ class MinimalistIcons {
   // ==========================================
   // EXACTLY 14 categories as defined in Supabase database
   // No "Other" category - users must choose specific categories
+  //
+  // Two icon styles available:
+  // - Light (regular): For forms, lists, expense cards
+  // - Fill: For CategoryCard widgets (bar chart style)
 
-  /// Map of category names to their icons (14 total)
+  /// Map of category names to their LIGHT icons (14 total)
+  /// Use for: forms, expense list items, general UI
   static const Map<String, IconData> categoryIcons = {
-    // 1-7: Core spending categories
-    'Thực phẩm': PhosphorIconsLight.forkKnife,      // 1. Food
-    'Cà phê': PhosphorIconsLight.coffee,            // 2. Coffee
-    'Đi lại': PhosphorIconsLight.car,               // 3. Transportation
-    'Hoá đơn': PhosphorIconsLight.lightning,        // 4. Bills
-    'Tiền nhà': PhosphorIconsLight.house,           // 5. Housing
-    'Giải trí': PhosphorIconsLight.popcorn,         // 6. Entertainment
-    'Du lịch': PhosphorIconsLight.airplane,         // 7. Travel
-
-    // 8-11: Shopping & Personal
-    'Tạp hoá': PhosphorIconsLight.shoppingBag,      // 8. Groceries
-    'Thời trang': PhosphorIconsLight.tShirt,        // 9. Fashion
-    'Sức khỏe': PhosphorIconsLight.heartbeat,       // 10. Health
-    'Giáo dục': PhosphorIconsLight.graduationCap,   // 11. Education
-
-    // 12-14: Special occasions
-    'Quà vật': PhosphorIconsLight.gift,             // 12. Gifts
-    'TẾT': PhosphorIconsLight.sparkle,              // 13. Holiday/Tet
-    'Biểu gia đình': PhosphorIconsLight.users,      // 14. Family
+    // Row 1 (from Figma)
+    'Thực phẩm': PhosphorIconsLight.forkKnife,      // Food
+    'Tiền nhà': PhosphorIconsLight.house,           // Housing
+    'Biếu gia đình': PhosphorIconsLight.users,      // Family
+    'Cà phê': PhosphorIconsLight.coffee,            // Coffee
+    'Du lịch': PhosphorIconsLight.airplane,         // Travel
+    // Row 2
+    'Giáo dục': PhosphorIconsLight.graduationCap,   // Education
+    'Giải trí': PhosphorIconsLight.gift,            // Entertainment (gift box in Figma)
+    'Hoá đơn': PhosphorIconsLight.receipt,          // Bills (receipt in Figma)
+    'Quà vật': PhosphorIconsLight.gift,             // Gifts
+    'Sức khoẻ': PhosphorIconsLight.heartbeat,       // Health
+    // Row 3
+    'Thời trang': PhosphorIconsLight.tShirt,        // Fashion
+    'Tạp hoá': PhosphorIconsLight.shoppingCart,     // Groceries (cart in Figma)
+    'Tết': PhosphorIconsLight.flower,               // Tet Holiday (flower in Figma)
+    'Đi lại': PhosphorIconsLight.motorcycle,        // Transportation (motorcycle in Figma)
   };
 
-  /// Get icon for a category (no fallback since we have exactly 14)
+  /// Map of category names to their FILL icons (14 total)
+  /// Use for: CategoryCard widgets with colored backgrounds
+  static const Map<String, IconData> categoryIconsFill = {
+    // Row 1 (from Figma)
+    'Thực phẩm': PhosphorIconsFill.forkKnife,      // Food
+    'Tiền nhà': PhosphorIconsFill.house,           // Housing
+    'Biếu gia đình': PhosphorIconsFill.users,      // Family
+    'Cà phê': PhosphorIconsFill.coffee,            // Coffee
+    'Du lịch': PhosphorIconsFill.airplane,         // Travel
+    // Row 2
+    'Giáo dục': PhosphorIconsFill.graduationCap,   // Education
+    'Giải trí': PhosphorIconsFill.gift,            // Entertainment
+    'Hoá đơn': PhosphorIconsFill.receipt,          // Bills
+    'Quà vật': PhosphorIconsFill.gift,             // Gifts
+    'Sức khoẻ': PhosphorIconsFill.heartbeat,       // Health
+    // Row 3
+    'Thời trang': PhosphorIconsFill.tShirt,        // Fashion
+    'Tạp hoá': PhosphorIconsFill.shoppingCart,     // Groceries
+    'Tết': PhosphorIconsFill.flower,               // Tet Holiday
+    'Đi lại': PhosphorIconsFill.motorcycle,        // Transportation
+  };
+
+  /// Get LIGHT icon for a category (for forms, lists, general UI)
   /// If category not found, returns a warning icon to indicate data issue
   static IconData getCategoryIcon(String categoryName) {
-    // Return the icon if found, otherwise warning to indicate unmapped category
     return categoryIcons[categoryName] ?? PhosphorIconsLight.warning;
+  }
+
+  /// Get FILL icon for a category (for CategoryCard widgets)
+  /// If category not found, returns a warning icon to indicate data issue
+  static IconData getCategoryIconFill(String categoryName) {
+    return categoryIconsFill[categoryName] ?? PhosphorIconsFill.warning;
   }
 
   // ==========================================
@@ -215,14 +245,15 @@ class MinimalistIcons {
   }
 
   /// Create a category icon widget
+  /// Set [filled] to true for CategoryCard widgets (bar chart style)
   static Widget createCategoryIcon(
     String category, {
     Color? color,
     double? size,
-    bool isSelected = false,
+    bool filled = false,
   }) {
     return createIcon(
-      getCategoryIcon(category),
+      filled ? getCategoryIconFill(category) : getCategoryIcon(category),
       color: color,
       size: size ?? getIconSize(IconSizeType.small),
       semanticLabel: category,

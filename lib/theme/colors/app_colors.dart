@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 
 /// Color system for the Expense Tracker app
-/// Provides semantic colors for consistent UI theming
+/// Based on Figma design with iOS-style gray system
+///
+/// Design Reference: Figma node-id=5-939
 class AppColors {
   // Private constructor to prevent instantiation
   AppColors._();
 
+  // ===== iOS Gray System (from Figma) =====
+  // These colors follow Apple's Human Interface Guidelines
+  static const Color background = Color(0xFFEDEFF1);      // Main app background
+  static const Color gray = Color(0xFF8E8E93);            // Secondary text
+  static const Color gray6 = Color(0xFFF2F2F7);           // Card backgrounds
+
+  // ===== Text Colors (from Figma) =====
+  static const Color textBlack = Color(0xFF000000);       // Primary text, titles
+
   // ===== Primary Brand Colors =====
-  // Teal palette for trust and financial stability
+  // Keeping teal as primary for brand consistency
   static const Color primary50 = Color(0xFFE0F2F1);
   static const Color primary100 = Color(0xFFB2DFDB);
   static const Color primary200 = Color(0xFF80CBC4);
@@ -97,22 +108,56 @@ class AppColors {
   static const Color expenseNiceToHave = warning;
   static const Color expenseWasted = error;
 
-  // ===== Category Colors (14 Vietnamese categories) =====
+  // ===== Category Colors (from Figma design) =====
+  // These vibrant colors are used for category cards with 20% opacity background
+  // and solid color fill for the progress bar
+  static const Color categoryOrange = Color(0xFFFF8D28);
+  static const Color categoryYellow = Color(0xFFFFCC00);
+  static const Color categoryGreen = Color(0xFF34C759);   // iOS system green
+  static const Color categoryBrown = Color(0xFFAC7F5E);
+  static const Color categoryMint = Color(0xFF00C8B3);
+  static const Color categoryTeal = Color(0xFF00C3D0);
+  static const Color categoryCyan = Color(0xFF00C0E8);
+  static const Color categoryPink = Color(0xFFFF2D55);    // iOS system pink
+  static const Color categoryBlue = Color(0xFF0088FF);
+  static const Color categoryIndigo = Color(0xFF6155F5);
+  static const Color categoryPurple = Color(0xFFCB30E0);
+
+  // Category color list for easy iteration
+  static const List<Color> categoryColorList = [
+    categoryOrange,
+    categoryYellow,
+    categoryGreen,
+    categoryBrown,
+    categoryMint,
+    categoryTeal,
+    categoryCyan,
+    categoryPink,
+    categoryBlue,
+    categoryIndigo,
+    categoryPurple,
+  ];
+
+  // ===== Category Colors Map (Vietnamese categories) =====
+  // Maps category names to their designated colors (from Figma node-id=5-1798)
   static const Map<String, Color> categoryColors = {
-    'Thực phẩm': Color(0xFFFF6B6B),       // Food - Warm red
-    'Sức khỏe': Color(0xFF4ECDC4),        // Health - Teal
-    'Thời trang': Color(0xFF95E1D3),      // Fashion - Mint
-    'Giải trí': Color(0xFFF38181),        // Entertainment - Coral
-    'Tiền nhà': Color(0xFFAA96DA),        // Housing - Purple
-    'Hoá đơn': Color(0xFFFCBAD3),         // Bills - Pink
-    'Biểu gia đình': Color(0xFFA8D8EA),   // Family - Sky blue
-    'Giáo dục': Color(0xFFFFCB85),        // Education - Orange
-    'TẾT': Color(0xFFFF6B6B),             // Tet Holiday - Red
-    'Quà vật': Color(0xFFFFE66D),         // Gifts - Yellow
-    'Tạp hoá': Color(0xFFC7CEEA),         // Groceries - Lavender
-    'Đi lại': Color(0xFFB4F8C8),          // Transportation - Green
-    'Du lịch': Color(0xFFFBE7C6),         // Travel - Peach
-    'Cà phê': Color(0xFFA0E7E5),          // Coffee - Cyan
+    // Row 1
+    'Thực phẩm': categoryOrange,          // Food - Orange
+    'Tiền nhà': categoryYellow,           // Housing - Yellow
+    'Biếu gia đình': categoryGreen,       // Family - Green
+    'Cà phê': categoryBrown,              // Coffee - Brown
+    'Du lịch': categoryCyan,              // Travel - Cyan
+    // Row 2
+    'Giáo dục': categoryMint,             // Education - Mint/Teal
+    'Giải trí': categoryTeal,             // Entertainment - Teal
+    'Hoá đơn': categoryPink,              // Bills - Pink
+    'Quà vật': categoryBlue,              // Gifts - Blue
+    'Sức khoẻ': categoryIndigo,           // Health - Indigo
+    // Row 3
+    'Thời trang': categoryPurple,         // Fashion - Purple
+    'Tạp hoá': categoryYellow,            // Groceries - Yellow
+    'Tết': categoryPink,                  // Tet Holiday - Pink
+    'Đi lại': categoryGreen,              // Transportation - Green
   };
 
   // ===== Helper Methods =====
@@ -154,5 +199,21 @@ class AppColors {
         baseColor.withValues(alpha: 0.1),
       ],
     );
+  }
+
+  /// Get category background color (20% opacity as per Figma design)
+  /// Used for CategoryCard background behind the progress bar
+  static Color getCategoryBackground(Color categoryColor) {
+    return categoryColor.withValues(alpha: 0.2);
+  }
+
+  /// Get category color by index (cycles through available colors)
+  static Color getCategoryColorByIndex(int index) {
+    return categoryColorList[index % categoryColorList.length];
+  }
+
+  /// Get a color for a category name (with fallback)
+  static Color getCategoryColor(String categoryName) {
+    return categoryColors[categoryName] ?? categoryOrange;
   }
 }

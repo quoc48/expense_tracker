@@ -1,15 +1,16 @@
-# Current Phase Status - UPDATED 2025-11-23
+# Current Phase Status - MERGED TO MAIN ✅
 
-**Branch:** feature/receipt-scanning (Offline Queue System COMPLETE ✅)  
-**Main Branch Status:** Has Supabase + All Features  
-**Last Session:** 2025-11-23 (Offline Queue Final Testing)
+**Branch:** main  
+**Feature Completed:** Offline Queue System + Production Bug Fix  
+**Last Session:** 2025-11-23  
+**Status:** Ready for next feature
 
 ---
 
-## ✅ What's Complete (On feature/receipt-scanning Branch)
+## ✅ What's NOW on Main Branch
 
-### Offline Queue System (PRODUCTION READY)
-**All Features Working:**
+### Complete Offline Queue System (PRODUCTION READY)
+**All Features:**
 - ✅ Offline expense add with queue (Hive persistence)
 - ✅ Queue persistence across cold start (`box.flush()` working)
 - ✅ Auto-sync when connectivity returns
@@ -19,100 +20,123 @@
 - ✅ Save button validation (category/type required)
 - ✅ Auto-reload after sync (temp IDs → real IDs)
 - ✅ Edge cases tested (5-10 items, slow network)
+- ✅ **Production bug fix**: Analytics budget display
 
-**Technical Stack:**
-- Hive for offline queue
-- ConnectivityMonitor for network status
-- SyncProvider for sync state management
-- QueueService with exponential backoff retry
-- Supabase timeout: 15s (optimized for 873 expenses)
-
-**UX Enhancements:**
-- ✅ Pull-to-refresh on empty state and expense list
-- ✅ Manual Refresh button with clear messaging
-- ✅ Offline-aware empty state
-- ✅ Negative budget display in Analytics (-3.9m in red)
-
-**Testing Status:**
+**Production Testing:**
 - ✅ All 9 tests passed on physical iPhone
-- ✅ Cold start testing (force quit + relaunch)
-- ✅ Edge cases verified
-- ✅ Production-ready
+- ✅ Cold start testing verified
+- ✅ Daily use testing revealed Analytics bug
+- ✅ Bug fixed and verified on device
+
+**Security Improvement:**
+- ✅ Removed hardcoded API keys from test files
+- ✅ Migrated to environment variables
+- ✅ GitHub secret scanning protection in place
 
 ---
 
-## 📝 Recent Commits (feature/receipt-scanning)
+## 📝 Git Status
 
 ```
-e5c6121 feat: Show negative values when over budget in Analytics
-28e7ef0 feat: Enhanced offline UX - Timeout fix & manual refresh
-4119f58 feat: Complete offline queue system - 8 critical bug fixes
+Merged: feature/receipt-scanning → main
+Commits: 29 commits merged
+Push: Successfully pushed to origin/main
+Branch: feature/receipt-scanning (can be deleted)
 ```
+
+**Commit SHA:** 22cc678
 
 ---
 
-## 🎯 Next Decision Point
+## 🎯 Next Feature Options
 
-**Ready for one of these:**
+**Ready to start new feature! Choose from:**
 
-### Option 1: Deploy to iPhone (Daily Use)
-```bash
-flutter run --profile
-# Recommended for testing in real-world usage
-# Re-run every 7 days to refresh signing
-```
+### Option 1: Receipt Scanning Enhancements
+**Effort:** Medium | **Value:** High  
+- Improve OCR accuracy for Vietnamese text
+- Batch receipt processing (scan multiple)
+- Smart category suggestions from receipt content
+- Receipt history and management UI
 
-### Option 2: Merge to Main
-```bash
-git checkout main
-git merge feature/receipt-scanning --no-ff
-git push origin main
-# Complete offline queue feature
-```
+### Option 2: Budget & Analytics Improvements
+**Effort:** Medium | **Value:** High  
+- Weekly budget tracking (not just monthly)
+- Budget alerts and notifications
+- Spending predictions based on history
+- Category-specific budget limits
+- Trends comparison (this month vs last month)
 
-### Option 3: TestFlight (Production Distribution)
-- Set up App Store Connect
-- Upload build
-- Professional distribution
+### Option 3: Recurring Expenses
+**Effort:** Medium | **Value:** High  
+- Auto-create monthly expenses (rent, subscriptions)
+- Recurring expense templates
+- Edit/pause/delete recurring patterns
+- Preview upcoming recurring expenses
+
+### Option 4: Data Management
+**Effort:** Low-Medium | **Value:** Medium  
+- Export to CSV/Excel
+- Import from other expense trackers
+- Backup/restore functionality
+- Data visualization improvements
+
+### Option 5: User Experience Polish
+**Effort:** Low-Medium | **Value:** Medium  
+- Quick expense templates (coffee, lunch, etc.)
+- iOS widget for home screen
+- Siri shortcuts integration
+- Improved empty states and onboarding
+
+### Option 6: Social/Sharing Features
+**Effort:** High | **Value:** Medium (depends on use case)  
+- Shared budgets (family/roommates)
+- Expense splitting
+- Monthly reports sharing
+- Group expense tracking
 
 ---
 
-## 📊 What's on Main Branch (Not Yet Merged)
+## 📊 Current App Status
 
-### Core Features (Milestones 1-5) ✅
-- Expense list with full CRUD
-- Add expense form with validation
-- Analytics screen with charts
-- Budget tracking system
-- Supabase integration (auth, cloud database, RLS)
-- 14 Vietnamese categories from Notion
+### Complete Features ✅
+- Expense CRUD with Supabase
+- 14 Vietnamese categories
+- Analytics with charts (6-month trends)
+- Budget tracking (monthly)
+- Dark mode
+- Offline-first queue system
+- Receipt scanning (camera + OCR)
+- Manual expense entry
+- Category/type validation
+
+### Production Ready ✅
 - 873 expenses migrated from Notion
-- Dark mode (complete)
-
-### Missing on Main (Currently on feature/receipt-scanning):
-- ⏳ Offline queue system
-- ⏳ Receipt scanning with Vision API
-- ⏳ Batch expense processing
-- ⏳ Offline UX enhancements
-- ⏳ Negative budget display
+- RLS security policies
+- Authentication
+- Cloud sync
+- Offline resilience
+- iOS deployment ready
 
 ---
 
 ## 🚀 Recommended Next Steps
 
-**For Daily Use:**
-1. Deploy to iPhone: `flutter run --profile`
-2. Use for a few days to validate real-world behavior
-3. Then merge to main for version control
+**For Continued Learning:**
+1. Pick a feature that interests you
+2. Research implementation approach
+3. Plan in phases (like we did with offline queue)
+4. Build incrementally with testing
 
-**For Clean Release:**
-1. Merge to main now (feature is complete)
-2. Then deploy from main branch
-3. Continue development on new feature branches
+**For Production Use:**
+1. Continue daily use testing
+2. Track any bugs or UX improvements
+3. Consider TestFlight for beta testing
+4. Plan App Store submission
 
 ---
 
-**Summary:** Offline Queue System is production-ready on `feature/receipt-scanning`. Choose deployment path: daily use testing OR merge to main.
+**Summary:** Offline queue system successfully merged to main with production bug fix and security improvements. App is stable and ready for next feature development! 🎉
 
 **Last Updated:** 2025-11-23  
-**Status:** Ready for deployment decision ✅
+**Next:** Choose feature and plan implementation

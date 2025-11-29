@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'expense_list_screen.dart';
 import 'analytics_screen.dart';
+import 'home_screen.dart';
 import '../providers/expense_provider.dart';
 import '../services/supabase_service.dart';
 
@@ -27,9 +28,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
   // List of screens corresponding to each navigation destination
+  // NOTE: HomeScreen replaces AnalyticsScreen for UI redesign testing
   final List<Widget> _screens = [
     const ExpenseListScreen(),
-    const AnalyticsScreen(),
+    const HomeScreen(),  // New redesigned analytics/home screen
   ];
 
   // Auth subscription to listen for sign-in events
