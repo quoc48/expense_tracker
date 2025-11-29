@@ -5,24 +5,24 @@ import '../../utils/currency_formatter.dart';
 
 /// CategoryCard displays a category with spending amount in a bar-chart style.
 ///
-/// **Design Reference**: Figma node-id=5-1798
+/// **Design Reference**: Figma node-id=5-1798, node-id=5-995
 ///
 /// **Visual Design**:
-/// - Rounded rectangle with 20% opacity category color background
-/// - Solid color fill from bottom representing spending amount
-/// - Filled icon centered in the upper portion
-/// - Amount displayed at the bottom
+/// - Rounded rectangle card with two-color fill system
+/// - Solid color (100% opacity) from bottom = spent percentage
+/// - Light color (20% opacity) fills the remaining top portion
+/// - Centered sub-container with: icon (24px) + 8px gap + amount text
 ///
-/// **Learning: Custom Painter vs Stack**
-/// We use a Stack with positioned containers because:
-/// 1. The fill effect is a simple bottom-up rectangle (no complex shapes)
-/// 2. Stack is more performant for simple layering
-/// 3. Easier to add animations later (AnimatedContainer)
+/// **Fill Logic** (Bar Chart Style):
+/// - Zero-spend: Always 4px baseline fill
+/// - With spending: 4px baseline + proportional fill based on percentage
+/// - All cards share 100% of total spending (sum of fillPercentage = 1.0)
+/// - Available fill space = cardHeight - 4px (baseline is always present)
 ///
-/// CustomPainter would be better for:
-/// - Complex shapes (waves, curves)
-/// - Multiple overlapping fills
-/// - Performance-critical scenarios with many repaints
+/// **Typography** (from Figma):
+/// - Font: Momo Trust Sans, 14px, weight 500
+/// - Color: #000 (Black), center aligned
+/// - Font features: 'liga' off, 'clig' off
 class CategoryCard extends StatelessWidget {
   /// The category name (Vietnamese, e.g., "Thực phẩm")
   final String categoryName;
@@ -30,18 +30,21 @@ class CategoryCard extends StatelessWidget {
   /// The spending amount for this category
   final double amount;
 
-  /// The fill percentage (0.0 to 1.0) representing spending progress
-  /// If null, defaults to a visual representation based on amount
-  final double? fillPercentage;
+  /// The fill percentage (0.0 to 1.0) representing this category's share of total spending
+  /// Calculated as: categorySpent / totalSpent (all percentages sum to 1.0)
+  final double fillPercentage;
 
   /// Callback when the card is tapped
   final VoidCallback? onTap;
+
+  /// Baseline fill height in pixels (always present, even for zero-spend)
+  static const double _baselineFillHeight = 4.0;
 
   const CategoryCard({
     super.key,
     required this.categoryName,
     required this.amount,
-    this.fillPercentage,
+    required this.fillPercentage,
     this.onTap,
   });
 
@@ -50,81 +53,96 @@ class CategoryCard extends StatelessWidget {
     // Get the category color from our color system
     final categoryColor = AppColors.getCategoryColor(categoryName);
 
-    // Calculate fill height (default to 60% if no percentage provided)
-    // This creates a nice visual balance in the grid
-    final fill = fillPercentage ?? 0.6;
-
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        // Fixed aspect ratio for consistent grid layout
-        // Width determined by parent (GridView), height maintains ratio
-        decoration: BoxDecoration(
-          // 20% opacity background as per Figma design
-          color: AppColors.getCategoryBackground(categoryColor),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              // Solid color fill from bottom
-              // Represents spending progress visually
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                // Fill height based on percentage
-                child: FractionallySizedBox(
-                  heightFactor: fill,
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: categoryColor,
-                      // Only round bottom corners since fill starts from bottom
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(16),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate fill height:
+          // - Baseline: 4px (always present for all cards)
+          // - Additional: proportional to fillPercentage of remaining space
+          //
+          // Formula: fillHeight = 4px + (fillPercentage × (cardHeight - 4px))
+          // This ensures zero-spend cards show exactly 4px
+          // and cards with spending show 4px + their proportional share
+          final cardHeight = constraints.maxHeight;
+          final availableSpace = cardHeight - _baselineFillHeight;
+          final proportionalFill = availableSpace * fillPercentage.clamp(0.0, 1.0);
+          final fillHeight = _baselineFillHeight + proportionalFill;
+
+          return Container(
+            decoration: BoxDecoration(
+              // 20% opacity background fills the entire card (unfilled portion)
+              color: AppColors.getCategoryBackground(categoryColor),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Stack(
+                children: [
+                  // Solid color fill from bottom (spent portion)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: fillHeight,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: categoryColor,
+                        // Only round bottom corners since fill starts from bottom
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(16),
+                          bottomRight: Radius.circular(16),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
 
-              // Content overlay (icon + amount)
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Filled icon at top
-                      // Using filled style for emphasis on colored background
-                      Icon(
-                        MinimalistIcons.getCategoryIconFill(categoryName),
-                        size: 28,
-                        color: AppColors.textBlack,
-                      ),
-
-                      // Amount at bottom - Momo Trust Sans as per Figma
-                      Text(
-                        CurrencyFormatter.formatCompact(amount),
-                        style: const TextStyle(
-                          fontFamily: 'MomoTrustSans',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                  // Centered content: icon + amount in a sub-container
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Filled icon - 24px as per Figma
+                        Icon(
+                          MinimalistIcons.getCategoryIconFill(categoryName),
+                          size: 24,
                           color: AppColors.textBlack,
                         ),
-                      ),
-                    ],
+
+                        // 8px spacing between icon and text
+                        const SizedBox(height: 8),
+
+                        // Amount text - Momo Trust Sans, 14px, w500
+                        Text(
+                          _formatAmount(amount),
+                          style: const TextStyle(
+                            fontFamily: 'MomoTrustSans',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textBlack,
+                            fontFeatures: [
+                              FontFeature.disable('liga'),
+                              FontFeature.disable('clig'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
+  }
+
+  /// Format amount for display
+  /// Zero shows as "0", otherwise use compact format
+  String _formatAmount(double amount) {
+    if (amount == 0) return '0';
+    return CurrencyFormatter.formatCompact(amount);
   }
 }
 
@@ -133,30 +151,66 @@ class CategoryCard extends StatelessWidget {
 /// **Design Reference**: Figma node-id=5-939 (Category section)
 ///
 /// **Layout**: 4 columns with consistent spacing
-/// Uses SliverGrid for efficient rendering in scrollable contexts
+/// **Display**: Always shows all 14 categories, sorted by spending (descending)
+///
+/// **Fill Logic** (Bar Chart Style):
+/// - All 14 categories together represent 100% of total spending
+/// - Each card's fill = (categorySpent / totalSpent) × 100%
+/// - This means all fill percentages sum to 100%
+/// - Categories with 0 spent show 4px minimum fill
 class CategoryCardGrid extends StatelessWidget {
   /// Map of category names to their spending amounts
   final Map<String, double> categorySpending;
 
+  /// Monthly budget (kept for potential future use, not used in fill calculation)
+  final double monthlyBudget;
+
   /// Callback when a category card is tapped
   final void Function(String categoryName)? onCategoryTap;
+
+  /// All category names in display order (matches design system)
+  static const List<String> _allCategories = [
+    'Thực phẩm',      // Food
+    'Tiền nhà',       // Housing
+    'Biếu gia đình',  // Family
+    'Cà phê',         // Coffee
+    'Du lịch',        // Travel
+    'Giáo dục',       // Education
+    'Giải trí',       // Entertainment
+    'Hoá đơn',        // Bills
+    'Quà vật',        // Gifts
+    'Sức khoẻ',       // Health
+    'Thời trang',     // Fashion
+    'Tạp hoá',        // Groceries
+    'Tết',            // Tet Holiday
+    'Đi lại',         // Transportation
+  ];
 
   const CategoryCardGrid({
     super.key,
     required this.categorySpending,
+    required this.monthlyBudget,
     this.onCategoryTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Sort categories by amount (highest first) for better UX
-    final sortedCategories = categorySpending.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    // Create list of all categories with their spending
+    // Categories not in spending map default to 0
+    final allCategoryData = _allCategories.map((name) {
+      return MapEntry(name, categorySpending[name] ?? 0.0);
+    }).toList();
 
-    // Calculate max amount for fill percentage normalization
-    final maxAmount = sortedCategories.isNotEmpty
-        ? sortedCategories.first.value
-        : 1.0;
+    // Calculate total spending across all categories
+    // This is the denominator for fill percentage calculation
+    final totalSpent = allCategoryData.fold<double>(
+      0.0,
+      (sum, entry) => sum + entry.value,
+    );
+
+    // Sort by amount descending (highest spending first)
+    // Categories with 0 spending will be at the end
+    allCategoryData.sort((a, b) => b.value.compareTo(a.value));
 
     return GridView.builder(
       // Prevent GridView from scrolling independently
@@ -171,20 +225,25 @@ class CategoryCardGrid extends StatelessWidget {
         // Slightly taller than wide for icon + text balance
         childAspectRatio: 0.85,
       ),
-      itemCount: sortedCategories.length,
+      itemCount: allCategoryData.length,
       itemBuilder: (context, index) {
-        final entry = sortedCategories[index];
+        final entry = allCategoryData[index];
+        final categoryName = entry.key;
+        final amount = entry.value;
 
-        // Normalize fill percentage relative to max spending
-        // Minimum 30% fill so cards don't look empty
-        final fillPercent = (entry.value / maxAmount).clamp(0.3, 1.0);
+        // Calculate fill percentage: categorySpent / totalSpent
+        // This creates a bar chart where all fills sum to 100%
+        // If totalSpent is 0, all cards show 0% fill (handled by CategoryCard's 4px minimum)
+        final fillPercent = totalSpent > 0
+            ? (amount / totalSpent)
+            : 0.0;
 
         return CategoryCard(
-          categoryName: entry.key,
-          amount: entry.value,
+          categoryName: categoryName,
+          amount: amount,
           fillPercentage: fillPercent,
           onTap: onCategoryTap != null
-              ? () => onCategoryTap!(entry.key)
+              ? () => onCategoryTap!(categoryName)
               : null,
         );
       },

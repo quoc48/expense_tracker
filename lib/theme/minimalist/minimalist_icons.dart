@@ -43,43 +43,45 @@ class MinimalistIcons {
 
   /// Map of category names to their LIGHT icons (14 total)
   /// Use for: forms, expense list items, general UI
+  /// Updated based on Figma design verification
   static const Map<String, IconData> categoryIcons = {
     // Row 1 (from Figma)
     'Thực phẩm': PhosphorIconsLight.forkKnife,      // Food
     'Tiền nhà': PhosphorIconsLight.house,           // Housing
-    'Biếu gia đình': PhosphorIconsLight.users,      // Family
+    'Biếu gia đình': PhosphorIconsLight.usersThree, // Family - usersThree
     'Cà phê': PhosphorIconsLight.coffee,            // Coffee
-    'Du lịch': PhosphorIconsLight.airplane,         // Travel
+    'Du lịch': PhosphorIconsLight.airplaneTilt,     // Travel - airplaneTilt
     // Row 2
     'Giáo dục': PhosphorIconsLight.graduationCap,   // Education
-    'Giải trí': PhosphorIconsLight.gift,            // Entertainment (gift box in Figma)
-    'Hoá đơn': PhosphorIconsLight.receipt,          // Bills (receipt in Figma)
+    'Giải trí': PhosphorIconsLight.popcorn,         // Entertainment - popcorn
+    'Hoá đơn': PhosphorIconsLight.invoice,          // Bills - invoice (was receipt)
     'Quà vật': PhosphorIconsLight.gift,             // Gifts
     'Sức khoẻ': PhosphorIconsLight.heartbeat,       // Health
     // Row 3
-    'Thời trang': PhosphorIconsLight.tShirt,        // Fashion
-    'Tạp hoá': PhosphorIconsLight.shoppingCart,     // Groceries (cart in Figma)
-    'Tết': PhosphorIconsLight.flower,               // Tet Holiday (flower in Figma)
-    'Đi lại': PhosphorIconsLight.motorcycle,        // Transportation (motorcycle in Figma)
+    'Thời trang': PhosphorIconsLight.handbag,       // Fashion - handbag (was bagSimple)
+    'Tạp hoá': PhosphorIconsLight.shoppingCart,     // Groceries
+    'Tết': PhosphorIconsLight.flower,               // Tet Holiday
+    'Đi lại': PhosphorIconsLight.motorcycle,        // Transportation
   };
 
   /// Map of category names to their FILL icons (14 total)
   /// Use for: CategoryCard widgets with colored backgrounds
+  /// Updated based on Figma design verification
   static const Map<String, IconData> categoryIconsFill = {
     // Row 1 (from Figma)
     'Thực phẩm': PhosphorIconsFill.forkKnife,      // Food
     'Tiền nhà': PhosphorIconsFill.house,           // Housing
-    'Biếu gia đình': PhosphorIconsFill.users,      // Family
+    'Biếu gia đình': PhosphorIconsFill.usersThree, // Family - usersThree
     'Cà phê': PhosphorIconsFill.coffee,            // Coffee
-    'Du lịch': PhosphorIconsFill.airplane,         // Travel
+    'Du lịch': PhosphorIconsFill.airplaneTilt,     // Travel - airplaneTilt
     // Row 2
     'Giáo dục': PhosphorIconsFill.graduationCap,   // Education
-    'Giải trí': PhosphorIconsFill.gift,            // Entertainment
-    'Hoá đơn': PhosphorIconsFill.receipt,          // Bills
+    'Giải trí': PhosphorIconsFill.popcorn,         // Entertainment - popcorn
+    'Hoá đơn': PhosphorIconsFill.invoice,          // Bills - invoice (was receipt)
     'Quà vật': PhosphorIconsFill.gift,             // Gifts
     'Sức khoẻ': PhosphorIconsFill.heartbeat,       // Health
     // Row 3
-    'Thời trang': PhosphorIconsFill.tShirt,        // Fashion
+    'Thời trang': PhosphorIconsFill.handbag,       // Fashion - handbag (was bagSimple)
     'Tạp hoá': PhosphorIconsFill.shoppingCart,     // Groceries
     'Tết': PhosphorIconsFill.flower,               // Tet Holiday
     'Đi lại': PhosphorIconsFill.motorcycle,        // Transportation

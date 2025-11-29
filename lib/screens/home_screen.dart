@@ -73,12 +73,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Analytics Summary Card
                       _buildSummaryCard(context, expenseProvider),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       // Category Section Header
                       _buildSectionHeader(context, 'Category'),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
 
                       // Category Grid
                       _buildCategoryGrid(context, expenseProvider),
@@ -192,7 +192,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Builds a section header with title
   ///
-  /// **Design Reference**: Figma - Section headers use Momo Trust Sans
+  /// **Design Reference**: Figma node-id=5-995
+  /// - Font: Momo Trust Sans, 14px, weight 600
+  /// - Color: #000 (Black)
+  /// - Font features: 'liga' off, 'clig' off
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -200,16 +203,29 @@ class _HomeScreenState extends State<HomeScreen> {
         title,
         style: const TextStyle(
           fontFamily: 'MomoTrustSans',
-          fontSize: 18,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.textBlack,
+          fontFeatures: [
+            FontFeature.disable('liga'),
+            FontFeature.disable('clig'),
+          ],
         ),
       ),
     );
   }
 
   /// Builds the category spending grid
+  ///
+  /// **Design Logic**:
+  /// - Always shows all 14 categories (even if no spending)
+  /// - Fill percentage based on monthlyBudget / 14 per category
+  /// - Categories sorted by spending (highest first)
   Widget _buildCategoryGrid(BuildContext context, ExpenseProvider provider) {
+    // Get user's monthly budget for fill calculation
+    final prefsProvider = Provider.of<UserPreferencesProvider>(context);
+    final budget = prefsProvider.monthlyBudget;
+
     // Get expenses for selected month
     final monthExpenses = AnalyticsCalculator.getExpensesForMonth(
       provider.expenses,
@@ -219,59 +235,16 @@ class _HomeScreenState extends State<HomeScreen> {
     // Calculate spending by category
     final categorySpending = _calculateCategorySpending(monthExpenses);
 
-    // If no expenses, show empty state
-    if (categorySpending.isEmpty) {
-      return _buildEmptyState(context);
-    }
-
+    // Always show CategoryCardGrid (it handles empty state internally by showing all 14 categories)
     return CategoryCardGrid(
       categorySpending: categorySpending,
+      monthlyBudget: budget,
       onCategoryTap: (categoryName) {
         // TODO: Navigate to category detail or filter expenses
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Tapped: $categoryName')),
         );
       },
-    );
-  }
-
-  /// Empty state when no category data
-  Widget _buildEmptyState(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            PhosphorIconsRegular.chartPie,
-            size: 48,
-            color: AppColors.gray,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'No expenses this month',
-            style: TextStyle(
-              fontFamily: 'MomoTrustSans',
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: AppColors.gray,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Add expenses to see category breakdown',
-            style: TextStyle(
-              fontFamily: 'MomoTrustSans',
-              fontSize: 14,
-              color: AppColors.gray,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

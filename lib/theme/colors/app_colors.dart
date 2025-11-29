@@ -140,20 +140,21 @@ class AppColors {
 
   // ===== Category Colors Map (Vietnamese categories) =====
   // Maps category names to their designated colors (from Figma node-id=5-1798)
+  // Updated based on Figma design verification
   static const Map<String, Color> categoryColors = {
-    // Row 1
+    // Row 1 (from Figma image)
     'Thực phẩm': categoryOrange,          // Food - Orange
     'Tiền nhà': categoryYellow,           // Housing - Yellow
     'Biếu gia đình': categoryGreen,       // Family - Green
     'Cà phê': categoryBrown,              // Coffee - Brown
-    'Du lịch': categoryCyan,              // Travel - Cyan
-    // Row 2
-    'Giáo dục': categoryMint,             // Education - Mint/Teal
-    'Giải trí': categoryTeal,             // Entertainment - Teal
+    'Du lịch': categoryMint,              // Travel - Mint/Teal (was Cyan)
+    // Row 2 (from Figma image)
+    'Giáo dục': categoryTeal,             // Education - Teal (was Mint)
+    'Giải trí': categoryCyan,             // Entertainment - Cyan (was Teal)
     'Hoá đơn': categoryPink,              // Bills - Pink
     'Quà vật': categoryBlue,              // Gifts - Blue
     'Sức khoẻ': categoryIndigo,           // Health - Indigo
-    // Row 3
+    // Row 3 (from Figma image)
     'Thời trang': categoryPurple,         // Fashion - Purple
     'Tạp hoá': categoryYellow,            // Groceries - Yellow
     'Tết': categoryPink,                  // Tet Holiday - Pink
