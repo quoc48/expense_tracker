@@ -168,21 +168,24 @@ class CategoryCardGrid extends StatelessWidget {
   /// Callback when a category card is tapped
   final void Function(String categoryName)? onCategoryTap;
 
-  /// All category names in display order (matches design system)
+  /// All category names in display order (matches Supabase)
+  ///
+  /// **IMPORTANT**: Must match EXACTLY with Supabase category names!
+  /// Supabase is the source of truth for category spellings.
   static const List<String> _allCategories = [
     'Thực phẩm',      // Food
     'Tiền nhà',       // Housing
-    'Biếu gia đình',  // Family
+    'Biểu gia đình',  // Family (Biểu not Biếu!)
     'Cà phê',         // Coffee
     'Du lịch',        // Travel
     'Giáo dục',       // Education
     'Giải trí',       // Entertainment
     'Hoá đơn',        // Bills
     'Quà vật',        // Gifts
-    'Sức khoẻ',       // Health
+    'Sức khỏe',       // Health (khỏe not khoẻ!)
     'Thời trang',     // Fashion
     'Tạp hoá',        // Groceries
-    'Tết',            // Tet Holiday
+    'TẾT',            // Tet Holiday (uppercase TẾT!)
     'Đi lại',         // Transportation
   ];
 

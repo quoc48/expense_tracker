@@ -43,47 +43,45 @@ class MinimalistIcons {
 
   /// Map of category names to their LIGHT icons (14 total)
   /// Use for: forms, expense list items, general UI
-  /// Updated based on Figma design verification
+  ///
+  /// **IMPORTANT**: Keys must match EXACTLY with Supabase category names!
+  /// Supabase is the source of truth for category spellings.
   static const Map<String, IconData> categoryIcons = {
-    // Row 1 (from Figma)
     'Thực phẩm': PhosphorIconsLight.forkKnife,      // Food
     'Tiền nhà': PhosphorIconsLight.house,           // Housing
-    'Biếu gia đình': PhosphorIconsLight.usersThree, // Family - usersThree
+    'Biểu gia đình': PhosphorIconsLight.usersThree, // Family (Biểu not Biếu!)
     'Cà phê': PhosphorIconsLight.coffee,            // Coffee
-    'Du lịch': PhosphorIconsLight.airplaneTilt,     // Travel - airplaneTilt
-    // Row 2
+    'Du lịch': PhosphorIconsLight.airplaneTilt,     // Travel
     'Giáo dục': PhosphorIconsLight.graduationCap,   // Education
-    'Giải trí': PhosphorIconsLight.popcorn,         // Entertainment - popcorn
-    'Hoá đơn': PhosphorIconsLight.invoice,          // Bills - invoice (was receipt)
+    'Giải trí': PhosphorIconsLight.popcorn,         // Entertainment
+    'Hoá đơn': PhosphorIconsLight.invoice,          // Bills
     'Quà vật': PhosphorIconsLight.gift,             // Gifts
-    'Sức khoẻ': PhosphorIconsLight.heartbeat,       // Health
-    // Row 3
-    'Thời trang': PhosphorIconsLight.handbag,       // Fashion - handbag (was bagSimple)
+    'Sức khỏe': PhosphorIconsLight.heartbeat,       // Health (khỏe not khoẻ!)
+    'Thời trang': PhosphorIconsLight.handbag,       // Fashion
     'Tạp hoá': PhosphorIconsLight.shoppingCart,     // Groceries
-    'Tết': PhosphorIconsLight.flower,               // Tet Holiday
+    'TẾT': PhosphorIconsLight.flower,               // Tet Holiday (uppercase TẾT!)
     'Đi lại': PhosphorIconsLight.motorcycle,        // Transportation
   };
 
   /// Map of category names to their FILL icons (14 total)
-  /// Use for: CategoryCard widgets with colored backgrounds
-  /// Updated based on Figma design verification
+  /// Use for: CategoryCard widgets, ExpenseListTile icons
+  ///
+  /// **IMPORTANT**: Keys must match EXACTLY with Supabase category names!
+  /// Supabase is the source of truth for category spellings.
   static const Map<String, IconData> categoryIconsFill = {
-    // Row 1 (from Figma)
     'Thực phẩm': PhosphorIconsFill.forkKnife,      // Food
     'Tiền nhà': PhosphorIconsFill.house,           // Housing
-    'Biếu gia đình': PhosphorIconsFill.usersThree, // Family - usersThree
+    'Biểu gia đình': PhosphorIconsFill.usersThree, // Family (Biểu not Biếu!)
     'Cà phê': PhosphorIconsFill.coffee,            // Coffee
-    'Du lịch': PhosphorIconsFill.airplaneTilt,     // Travel - airplaneTilt
-    // Row 2
+    'Du lịch': PhosphorIconsFill.airplaneTilt,     // Travel
     'Giáo dục': PhosphorIconsFill.graduationCap,   // Education
-    'Giải trí': PhosphorIconsFill.popcorn,         // Entertainment - popcorn
-    'Hoá đơn': PhosphorIconsFill.invoice,          // Bills - invoice (was receipt)
+    'Giải trí': PhosphorIconsFill.popcorn,         // Entertainment
+    'Hoá đơn': PhosphorIconsFill.invoice,          // Bills
     'Quà vật': PhosphorIconsFill.gift,             // Gifts
-    'Sức khoẻ': PhosphorIconsFill.heartbeat,       // Health
-    // Row 3
-    'Thời trang': PhosphorIconsFill.handbag,       // Fashion - handbag (was bagSimple)
+    'Sức khỏe': PhosphorIconsFill.heartbeat,       // Health (khỏe not khoẻ!)
+    'Thời trang': PhosphorIconsFill.handbag,       // Fashion
     'Tạp hoá': PhosphorIconsFill.shoppingCart,     // Groceries
-    'Tết': PhosphorIconsFill.flower,               // Tet Holiday
+    'TẾT': PhosphorIconsFill.flower,               // Tet Holiday (uppercase TẾT!)
     'Đi lại': PhosphorIconsFill.motorcycle,        // Transportation
   };
 

@@ -6,29 +6,26 @@ import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/sync_provider.dart';
-import '../providers/theme_provider.dart';
 import '../widgets/sync_status_banner.dart';
 import '../widgets/sync_queue_details_sheet.dart';
-import '../widgets/expense_card.dart';
+import '../widgets/expenses/expense_list_tile.dart';
 import 'add_expense_screen.dart';
-import 'settings_screen.dart';
-import '../theme/typography/app_typography.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_spacing.dart';
-import '../theme/constants/app_constants.dart';
-import '../widgets/expandable_add_fab.dart';
-import 'scanning/camera_capture_screen.dart';
 
-/// ExpenseListScreen now uses Provider for state management instead of local state.
+/// ExpenseListScreen - Displays list of expenses with flat row design.
 ///
-/// Learning: We've migrated from setState (local state) to Provider (app-level state).
-/// Benefits:
-/// - The expense data is now accessible from ANY screen (like the Analytics screen!)
-/// - No need to pass data through constructors
-/// - Separation of concerns: UI code here, business logic in ExpenseProvider
-/// - Automatic rebuilds when data changes (no manual setState calls)
+/// **Design Reference**: Figma node-id=5-2165
 ///
-/// Note: Now a StatefulWidget to manage FAB expanded state for auto-collapse behavior
+/// **Visual Design**:
+/// - SliverAppBar matching Analytics page (same structure, no calendar icon)
+/// - Flat list with ExpenseListTile rows
+/// - Dividers between items
+/// - White background
+/// - RefreshIndicator for pull-to-refresh
+///
+/// **Learning**: This screen uses the same SliverAppBar structure as HomeScreen
+/// to ensure consistent header height and positioning across tabs.
 class ExpenseListScreen extends StatefulWidget {
   const ExpenseListScreen({super.key});
 
@@ -37,168 +34,207 @@ class ExpenseListScreen extends StatefulWidget {
 }
 
 class _ExpenseListScreenState extends State<ExpenseListScreen> {
-  /// GlobalKey to control the FAB from parent (for auto-collapse)
-  final GlobalKey<ExpandableAddFabState> _fabKey = GlobalKey<ExpandableAddFabState>();
-
-  /// Track whether the FAB is currently expanded
-  bool _isFabExpanded = false;
-
-  /// Timer for auto-collapse after 5 seconds
-  Timer? _autoCollapseTimer;
-
   /// Track previous sync state to detect completion
   SyncState? _previousSyncState;
 
   @override
-  void dispose() {
-    _autoCollapseTimer?.cancel();
-    super.dispose();
-  }
-
-  /// Start auto-collapse timer when FAB expands
-  void _startAutoCollapseTimer() {
-    _autoCollapseTimer?.cancel(); // Cancel existing timer if any
-    _autoCollapseTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && _isFabExpanded) {
-        _collapseFab();
-      }
-    });
-  }
-
-  /// Handle FAB expanded state change
-  void _onFabExpandedChanged(bool isExpanded) {
-    setState(() {
-      _isFabExpanded = isExpanded;
-    });
-
-    if (isExpanded) {
-      _startAutoCollapseTimer();
-    } else {
-      _autoCollapseTimer?.cancel();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Consumer3: Listen to ExpenseProvider, ThemeProvider, AND SyncProvider
-    // - ExpenseProvider: Rebuilds when expenses change
-    // - ThemeProvider: Rebuilds when theme changes
-    // - SyncProvider: Detect sync completion to reload expenses from Supabase
-    return Consumer3<ExpenseProvider, ThemeProvider, SyncProvider>(
-      builder: (context, expenseProvider, themeProvider, syncProvider, child) {
+    // Consumer2: Listen to ExpenseProvider AND SyncProvider
+    return Consumer2<ExpenseProvider, SyncProvider>(
+      builder: (context, expenseProvider, syncProvider, child) {
         // Detect sync completion and reload expenses from Supabase
         if (_previousSyncState == SyncState.syncing &&
             syncProvider.syncState == SyncState.synced) {
-          // Sync just completed - reload to replace temp IDs with real ones
           debugPrint('🔄 Sync completed, reloading expenses from Supabase...');
           WidgetsBinding.instance.addPostFrameCallback((_) {
             expenseProvider.loadExpenses();
           });
         }
         _previousSyncState = syncProvider.syncState;
-        // Stack with 3 layers: Scaffold -> Backdrop -> FAB
-        // This allows backdrop to capture all taps when FAB is expanded
-        return Stack(
-          children: [
-            // Layer 1: Main Scaffold (bottom)
-            Scaffold(
-              appBar: AppBar(
-                title: const Text('Expense Tracker'),
-                actions: [
-                  // Settings button
-                  IconButton(
-                    icon: const Icon(PhosphorIconsLight.gear),
-                    tooltip: 'Settings',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  // Logout button
-                  IconButton(
-                    icon: const Icon(PhosphorIconsLight.signOut),
-                    tooltip: 'Sign Out',
-                    onPressed: () => _showLogoutDialog(context),
-                  ),
-                ],
-              ),
-              body: expenseProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : expenseProvider.expenses.isEmpty
-                      ? _buildEmptyState(context)
-                      : _buildExpenseList(context, expenseProvider.expenses),
-              // No floatingActionButton here - we position it manually in Stack
-            ),
 
-            // Layer 2: FAB positioned manually (top)
-            // Auto-collapses after 3 seconds if not used
-            Positioned(
-              right: 16,
-              bottom: 16,
-              child: ExpandableAddFab(
-                key: _fabKey,
-                onManualAdd: () => _addExpenseManually(context),
-                onScanReceipt: () => _scanReceipt(context),
-                onExpandedChanged: _onFabExpandedChanged,
-              ),
-            ),
-          ],
+        return Scaffold(
+          backgroundColor: Colors.white,
+          extendBody: true,
+          extendBodyBehindAppBar: true,
+          body: SafeArea(
+            bottom: false, // Let content extend behind nav bar
+            child: expenseProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : expenseProvider.expenses.isEmpty
+                    ? _buildEmptyState(context, expenseProvider)
+                    : _buildExpenseList(
+                        context,
+                        expenseProvider.expenses,
+                        syncProvider,
+                      ),
+          ),
         );
       },
     );
   }
 
-  /// Collapse the FAB when tapping outside
-  void _collapseFab() {
-    _fabKey.currentState?.collapse();
+  /// Builds the custom app bar matching Analytics page structure
+  ///
+  /// **Design Reference**: Same as HomeScreen (node-id=5-940) but without calendar
+  /// - Title: "Expenses" - Momo Trust Sans, 14px, 600 weight, #000
+  /// - Icon: Sign-out only (no calendar for Expenses page)
+  /// - toolbarHeight: 56 (matches Analytics)
+  /// - titleSpacing: 20 (matches Analytics)
+  Widget _buildAppBar(BuildContext context) {
+    return SliverAppBar(
+      floating: false,
+      pinned: true, // Sticky header - stays visible when scrolling
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      toolbarHeight: 56, // Match Analytics page
+      titleSpacing: 20, // Match Analytics page
+      title: const Text(
+        'Expenses',
+        style: TextStyle(
+          fontFamily: 'MomoTrustSans',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textBlack,
+          fontFeatures: [
+            FontFeature.disable('liga'),
+            FontFeature.disable('clig'),
+          ],
+        ),
+      ),
+      actions: [
+        // Sign-out icon only (no calendar for Expenses page)
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: GestureDetector(
+            onTap: () => _showLogoutDialog(context),
+            child: Icon(
+              PhosphorIconsRegular.signOut,
+              size: 24,
+              color: AppColors.textBlack,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  /// Build empty state with refresh button
+  Widget _buildEmptyState(BuildContext context, ExpenseProvider expenseProvider) {
+    return CustomScrollView(
+      slivers: [
+        _buildAppBar(context),
+        SliverFillRemaining(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await expenseProvider.loadExpenses();
+            },
+            child: ListView(
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height - 300,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          PhosphorIconsLight.arrowClockwise,
+                          size: 72,
+                          color: AppColors.gray,
+                        ),
+                        SizedBox(height: AppSpacing.spaceLg),
+                        const Text(
+                          'No expenses loaded',
+                          style: TextStyle(
+                            fontFamily: 'MomoTrustSans',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textBlack,
+                          ),
+                        ),
+                        SizedBox(height: AppSpacing.spaceXs),
+                        Text(
+                          'Tap Refresh to load your expenses',
+                          style: TextStyle(
+                            fontFamily: 'MomoTrustSans',
+                            fontSize: 14,
+                            color: AppColors.gray,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: AppSpacing.spaceLg),
+                        FilledButton.icon(
+                          onPressed: () async {
+                            await expenseProvider.loadExpenses();
+                          },
+                          icon: const Icon(PhosphorIconsLight.arrowClockwise, size: 20),
+                          label: const Text('Refresh'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build the flat expense list with ExpenseListTile rows
+  Widget _buildExpenseList(
+    BuildContext context,
+    List<Expense> expenses,
+    SyncProvider syncProvider,
+  ) {
     final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
 
     return RefreshIndicator(
       onRefresh: () async {
         await expenseProvider.loadExpenses();
       },
-      child: ListView(
-        children: [
-          SizedBox(
-            height: MediaQuery.of(context).size.height - 200,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    PhosphorIconsLight.arrowClockwise,
-                    size: AppConstants.iconSize3xl * 1.5, // 72
-                    color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
-                  ),
-                  SizedBox(height: AppSpacing.spaceLg),
-                  Text(
-                    'No expenses loaded',
-                    style: ComponentTextStyles.emptyTitle(theme.textTheme),
-                  ),
-                  SizedBox(height: AppSpacing.spaceXs),
-                  Text(
-                    'Tap Refresh to load your expenses',
-                    style: ComponentTextStyles.emptyMessage(theme.textTheme),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: AppSpacing.spaceLg),
-                  FilledButton.icon(
-                    onPressed: () async {
-                      await expenseProvider.loadExpenses();
-                    },
-                    icon: const Icon(PhosphorIconsLight.arrowClockwise, size: 20),
-                    label: const Text('Refresh'),
-                  ),
-                ],
+      child: CustomScrollView(
+        slivers: [
+          // App Bar (matches Analytics page structure)
+          _buildAppBar(context),
+
+          // Sync Status Banner
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: SyncStatusBanner(
+                syncState: syncProvider.syncState,
+                pendingCount: syncProvider.pendingCount,
+                onTap: () {
+                  SyncQueueDetailsSheet.show(context);
+                },
+              ),
+            ),
+          ),
+
+          // Expense List
+          SliverPadding(
+            padding: const EdgeInsets.only(
+              left: 8,
+              right: 8,
+              bottom: 160, // Space for floating nav bar
+            ),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final expense = expenses[index];
+                  final isLastItem = index == expenses.length - 1;
+
+                  return DismissibleExpenseListTile(
+                    expense: expense,
+                    onTap: () => _editExpense(context, expense),
+                    confirmDismiss: () => _showDeleteConfirmation(context, expense),
+                    onDismissed: () => _deleteExpense(context, expense, index),
+                    showDivider: !isLastItem, // No divider on last item
+                  );
+                },
+                childCount: expenses.length,
               ),
             ),
           ),
@@ -207,104 +243,9 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     );
   }
 
-  Widget _buildExpenseList(BuildContext context, List<Expense> expenses) {
-    // Get sync status to show sync banner
-    final syncProvider = Provider.of<SyncProvider>(context);
-    final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
-
-    // Get current theme brightness for ListView key
-    // This forces ListView to rebuild visible items when theme changes
-    final brightness = Theme.of(context).brightness;
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        await expenseProvider.loadExpenses();
-      },
-      child: ListView.builder(
-        // Key based on brightness - ensures ListView rebuilds when toggling light/dark mode
-        // Without this key, Flutter reuses existing Card widgets (causing invisible text bug)
-        key: ValueKey('expense-list-$brightness'),
-        // +1 for the sync banner (shown conditionally at index 0)
-        itemCount: expenses.length + 1,
-        itemBuilder: (context, index) {
-          // First item: Sync Status Banner
-          if (index == 0) {
-            return SyncStatusBanner(
-              syncState: syncProvider.syncState,
-              pendingCount: syncProvider.pendingCount,
-              onTap: () {
-                // Show sync queue details sheet
-                SyncQueueDetailsSheet.show(context);
-              },
-            );
-          }
-
-          // Remaining items: Expense cards (adjust index by -1)
-          final expenseIndex = index - 1;
-          final expense = expenses[expenseIndex];
-          return ExpenseCard(
-            expense: expense,
-            onTap: () => _editExpense(context, expense),
-            confirmDismiss: () => _showDeleteConfirmation(context, expense),
-            onDismissed: () => _deleteExpense(context, expense, expenseIndex),
-            enableSwipe: true,
-            showWarning: false,
-            showDate: true,
-          );
-        },
-      ),
-    );
-  }
-
-  /// Navigate to camera to scan receipt
-  Future<void> _scanReceipt(BuildContext context) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CameraCaptureScreen(),
-      ),
-    );
-    // Note: Receipt review and batch save will be implemented in Phase 5
-    // For now, the flow ends after OCR processing
-  }
-
-  /// Navigate to manual entry screen (existing flow)
-  Future<void> _addExpenseManually(BuildContext context) async {
-    final result = await Navigator.push<Expense>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddExpenseScreen(),
-      ),
-    );
-
-    if (result == null || !context.mounted) {
-      return;
-    }
-
-    // Access the provider without listening (we don't need rebuilds here)
-    // listen: false tells Provider we just want to call a method, not listen to changes
-    final provider = Provider.of<ExpenseProvider>(context, listen: false);
-    final success = await provider.addExpense(result);
-
-    if (success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Added: ${result.description}'),  // Fixed: result IS the expense
-          duration: const Duration(seconds: 2),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () async {
-              // Delete the just-added expense to undo
-              await provider.deleteExpense(result.id);  // Fixed: result IS the expense
-            },
-          ),
-        ),
-      );
-    }
-  }
-
+  /// Navigate to edit expense screen
   Future<void> _editExpense(BuildContext context, Expense expense) async {
-    final result = await Navigator.push<Expense>(  // NEW: Return Expense directly
+    final result = await Navigator.push<Expense>(
       context,
       MaterialPageRoute(
         builder: (context) => AddExpenseScreen(expense: expense),
@@ -313,12 +254,12 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
 
     if (result != null && context.mounted) {
       final provider = Provider.of<ExpenseProvider>(context, listen: false);
-      final success = await provider.updateExpense(result);  // NEW: Simplified API
+      final success = await provider.updateExpense(result);
 
       if (success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Updated: ${result.description}'),  // Fixed: result IS the expense
+            content: Text('Updated: ${result.description}'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -326,6 +267,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     }
   }
 
+  /// Show delete confirmation dialog
   Future<bool?> _showDeleteConfirmation(
       BuildContext context, Expense expense) async {
     return await showDialog<bool>(
@@ -338,17 +280,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
+              onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
+              onPressed: () => Navigator.pop(context, true),
               style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
+                foregroundColor: AppColors.error,
               ),
               child: const Text('Delete'),
             ),
@@ -358,6 +296,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     );
   }
 
+  /// Delete expense and show undo snackbar
   Future<void> _deleteExpense(
       BuildContext context, Expense expense, int index) async {
     final provider = Provider.of<ExpenseProvider>(context, listen: false);
@@ -371,7 +310,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () async {
-              // Restore the expense at its original position
               await provider.restoreExpense(deletedExpense, index);
             },
           ),
@@ -381,9 +319,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   }
 
   /// Show logout confirmation dialog
-  ///
-  /// Confirms the user wants to sign out before calling AuthProvider.signOut()
-  /// After successful logout, AuthGate will automatically show LoginScreen
   Future<void> _showLogoutDialog(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -393,15 +328,11 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           content: const Text('Are you sure you want to sign out?'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
+              onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
+              onPressed: () => Navigator.pop(context, true),
               child: const Text('Sign Out'),
             ),
           ],
@@ -409,11 +340,9 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       },
     );
 
-    // If user confirmed, sign out
     if (confirmed == true && context.mounted) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.signOut();
-      // No need to navigate - AuthGate will automatically show LoginScreen
     }
   }
 }
