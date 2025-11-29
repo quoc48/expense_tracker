@@ -68,13 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 // App Bar
                 _buildAppBar(context),
 
-                // Content
+                // Content - flush with header (0 top padding per Figma spec)
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 16),
-
                       // Analytics Summary Card
                       _buildSummaryCard(context, expenseProvider),
 
@@ -114,7 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       toolbarHeight: 56,
-      titleSpacing: 20,
       title: const Text(
         'Analytic',
         style: TextStyle(

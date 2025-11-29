@@ -79,7 +79,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   /// - Title: "Expenses" - Momo Trust Sans, 14px, 600 weight, #000
   /// - Icon: Sign-out only (no calendar for Expenses page)
   /// - toolbarHeight: 56 (matches Analytics)
-  /// - titleSpacing: 20 (matches Analytics)
+  /// - Default titleSpacing (matches Analytics)
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
       floating: false,
@@ -88,7 +88,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       toolbarHeight: 56, // Match Analytics page
-      titleSpacing: 20, // Match Analytics page
       title: const Text(
         'Expenses',
         style: TextStyle(
@@ -199,10 +198,9 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           // App Bar (matches Analytics page structure)
           _buildAppBar(context),
 
-          // Sync Status Banner
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16),
+          // Sync Status Banner (only rendered when there's sync activity)
+          if (syncProvider.syncState != SyncState.idle || syncProvider.pendingCount > 0)
+            SliverToBoxAdapter(
               child: SyncStatusBanner(
                 syncState: syncProvider.syncState,
                 pendingCount: syncProvider.pendingCount,
@@ -211,9 +209,8 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 },
               ),
             ),
-          ),
 
-          // Expense List
+          // Expense List - flush with header (0 top padding per Figma spec)
           SliverPadding(
             padding: const EdgeInsets.only(
               left: 8,

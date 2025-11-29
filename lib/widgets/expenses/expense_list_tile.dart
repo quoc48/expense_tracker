@@ -92,12 +92,15 @@ class ExpenseListTile extends StatelessWidget {
           ),
         ),
         
-        // Divider (thin line between items)
+        // Divider (thin line between items) with 8px horizontal padding
         if (showDivider)
-          const Divider(
-            height: 1,
-            thickness: 0.5,
-            color: Color(0xFFE5E5EA), // iOS system gray separator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: const Divider(
+              height: 1,
+              thickness: 0.5,
+              color: Color(0xFFE5E5EA), // iOS system gray separator
+            ),
           ),
       ],
     );
