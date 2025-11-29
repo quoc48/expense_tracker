@@ -51,7 +51,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       // Use iOS-style gray background from Figma
       backgroundColor: AppColors.background,
+      // Extend body behind system UI (nav bar area)
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       body: SafeArea(
+        // Don't add bottom padding - let content scroll behind nav bar
+        bottom: false,
         child: Consumer<ExpenseProvider>(
           builder: (context, expenseProvider, child) {
             if (expenseProvider.isLoading) {
@@ -103,8 +108,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// - Icons: Calendar grid + Export arrow (Regular weight, 12px spacing)
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
-      floating: true,
-      pinned: false,
+      floating: false,
+      pinned: true, // Sticky header - stays visible when scrolling
       backgroundColor: AppColors.background,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
