@@ -12,6 +12,7 @@ import 'amount_input_field.dart';
 import 'form_input.dart';
 import 'primary_button.dart';
 import 'select_category_sheet.dart';
+import 'select_type_sheet.dart';
 
 /// A full-screen bottom sheet for adding a new expense.
 ///
@@ -107,11 +108,15 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     'Đi lại',
   ];
 
-  static const List<String> _fallbackTypes = [
-    'Phải chi',
-    'Phát sinh',
-    'Lãng phí',
+  // Expense types in display order per Figma (node-id=56-4416)
+  // This order is fixed and should not change based on usage
+  static const List<String> _typeDisplayOrder = [
+    'Phải chi',   // Necessary expenses
+    'Phát sinh',  // Unexpected expenses
+    'Lãng phí',   // Wasteful expenses
   ];
+
+  static const List<String> _fallbackTypes = _typeDisplayOrder;
 
   // Date formatter for display
   final _dateFormat = DateFormat('dd/MM/yyyy');
@@ -192,9 +197,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
         currentMonthExpenses.cast(),
       );
 
+      // Sort types in fixed display order per Figma
+      final sortedTypes = _sortTypesInDisplayOrder(types);
+
       setState(() {
         _categories = sortedCategories;
-        _expenseTypes = types;
+        _expenseTypes = sortedTypes;
         _isLoadingOptions = false;
       });
     } catch (e) {
@@ -254,6 +262,29 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     });
 
     return categories;
+  }
+
+  /// Sort expense types in fixed display order per Figma (node-id=56-4416).
+  /// Order: Phải chi → Phát sinh → Lãng phí
+  /// Any types not in the display order list will be appended at the end.
+  List<String> _sortTypesInDisplayOrder(List<String> types) {
+    final result = <String>[];
+
+    // Add types in the defined display order
+    for (final type in _typeDisplayOrder) {
+      if (types.contains(type)) {
+        result.add(type);
+      }
+    }
+
+    // Add any remaining types not in the display order (shouldn't happen normally)
+    for (final type in types) {
+      if (!result.contains(type)) {
+        result.add(type);
+      }
+    }
+
+    return result;
   }
 
   /// Dismiss keyboard by unfocusing
@@ -425,21 +456,11 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
   void _showTypePicker() async {
     _dismissKeyboard();
 
-    await showModalBottomSheet(
+    // Use the new SelectTypeSheet with proper design system styling
+    final type = await showSelectTypeSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => _buildPickerSheet(
-        title: 'Select Type',
-        items: _expenseTypes,
-        selectedItem: _selectedTypeVi,
-        onSelect: (value) {
-          setState(() => _selectedTypeVi = value);
-          Navigator.pop(context);
-        },
-      ),
+      types: _expenseTypes,
+      selectedType: _selectedTypeVi,
     );
 
     if (!mounted) return;
@@ -450,81 +471,10 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
         FocusManager.instance.primaryFocus?.unfocus();
       }
     });
-  }
 
-  /// Build a simple picker sheet for Type selection (no icons).
-  /// Note: Category selection now uses SelectCategorySheet instead.
-  Widget _buildPickerSheet({
-    required String title,
-    required List<String> items,
-    required String? selectedItem,
-    required ValueChanged<String> onSelect,
-  }) {
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Grabber
-          Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 16),
-            child: Container(
-              width: 36,
-              height: 5,
-              decoration: BoxDecoration(
-                color: AppColors.grabber,
-                borderRadius: BorderRadius.circular(2.5),
-              ),
-            ),
-          ),
-
-          // Title
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Text(
-              title,
-              style: AppTypography.style(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textBlack,
-              ),
-            ),
-          ),
-
-          // Items
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final isSelected = item == selectedItem;
-
-                return ListTile(
-                  title: Text(
-                    item,
-                    style: AppTypography.style(
-                      fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: AppColors.textBlack,
-                    ),
-                  ),
-                  trailing: isSelected
-                      ? const Icon(
-                          Icons.check,
-                          color: AppColors.textBlack,
-                          size: 20,
-                        )
-                      : null,
-                  onTap: () => onSelect(item),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
+    if (type != null) {
+      setState(() => _selectedTypeVi = type);
+    }
   }
 
   @override

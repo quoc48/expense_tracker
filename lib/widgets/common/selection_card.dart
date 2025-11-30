@@ -147,6 +147,94 @@ class SelectionCard extends StatelessWidget {
 ///   onTap: () => onSelect('Thực phẩm'),
 /// )
 /// ```
+/// A text-only selection card (no icon) for simple lists like expense types.
+///
+/// **Design Reference**: Figma node-id=56-4422
+///
+/// **Specifications**:
+/// - Label: 14px Regular, black
+/// - Selected state: Shows checkmark icon (24px) on right
+/// - Padding: 16px vertical
+/// - No icon container (text only)
+///
+/// **Usage**:
+/// ```dart
+/// SelectionCardText(
+///   label: 'Phải chi',
+///   isSelected: selectedType == 'Phải chi',
+///   onTap: () => onSelect('Phải chi'),
+/// )
+/// ```
+class SelectionCardText extends StatelessWidget {
+  /// The label text.
+  final String label;
+
+  /// Whether this card is currently selected.
+  final bool isSelected;
+
+  /// Callback when the card is tapped.
+  final VoidCallback? onTap;
+
+  /// Whether to show divider below this card.
+  final bool showDivider;
+
+  const SelectionCardText({
+    super.key,
+    required this.label,
+    this.isSelected = false,
+    this.onTap,
+    this.showDivider = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Card content
+        GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              children: [
+                // Label (expands to fill available space)
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AppTypography.style(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textBlack,
+                    ),
+                  ),
+                ),
+
+                // Checkmark for selected state
+                if (isSelected)
+                  const Icon(
+                    PhosphorIconsFill.checkCircle,
+                    size: 24,
+                    color: AppColors.textBlack,
+                  ),
+              ],
+            ),
+          ),
+        ),
+
+        // Divider
+        if (showDivider)
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.gray6,
+          ),
+      ],
+    );
+  }
+}
+
 class CategorySelectionCard extends StatelessWidget {
   /// The category name (Vietnamese).
   final String categoryName;
