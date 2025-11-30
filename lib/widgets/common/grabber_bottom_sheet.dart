@@ -51,8 +51,11 @@ class GrabberBottomSheet extends StatelessWidget {
     Widget content = Column(
       mainAxisSize: isFullScreen ? MainAxisSize.max : MainAxisSize.min,
       children: [
-        // Grabber indicator (optional)
-        if (showGrabber) const _GrabberIndicator(),
+        // Grabber indicator OR top spacer (16px when no grabber)
+        if (showGrabber)
+          const _GrabberIndicator()
+        else
+          const SizedBox(height: 16),
 
         // Content area with padding
         if (isFullScreen)
@@ -87,7 +90,7 @@ class GrabberBottomSheet extends StatelessWidget {
         left: AppSpacing.spaceMd,
         right: AppSpacing.spaceMd,
         top: 0,
-        bottom: 40,
+        bottom: 40, // Default bottom padding for sheets
       );
 }
 
@@ -132,6 +135,9 @@ class _GrabberIndicator extends StatelessWidget {
 /// Parameters:
 /// - [showGrabber]: Whether to show the grabber indicator. Defaults to true.
 /// - [isFullScreen]: Whether to expand to near full-screen. Defaults to false.
+/// - [heightFactor]: Optional height as a factor of screen height (0.0 to 1.0).
+///   When provided, the sheet will be sized to this factor of screen height.
+///   Example: 0.5 = 50% of screen height.
 /// - [useSafeArea]: Whether to respect safe area (status bar). Defaults to true for full-screen.
 ///
 /// Example:
@@ -152,8 +158,12 @@ Future<T?> showGrabberBottomSheet<T>({
   bool enableDrag = true,
   bool showGrabber = true,
   bool isFullScreen = false,
+  double? heightFactor,
   bool useSafeArea = true,
 }) {
+  // Need scroll control for full-screen or custom height
+  final needsScrollControl = isFullScreen || heightFactor != null;
+
   return showModalBottomSheet<T>(
     context: context,
     // Use transparent background so our custom Container shows
@@ -164,8 +174,8 @@ Future<T?> showGrabberBottomSheet<T>({
     isDismissible: isDismissible,
     // Allow drag to dismiss
     enableDrag: enableDrag,
-    // For full-screen mode, allow the sheet to expand
-    isScrollControlled: isFullScreen,
+    // For full-screen or custom height, allow the sheet to expand
+    isScrollControlled: needsScrollControl,
     // Use safe area for full-screen sheets
     useSafeArea: isFullScreen && useSafeArea,
     // Prevent system bottom sheet shape
@@ -179,7 +189,7 @@ Future<T?> showGrabberBottomSheet<T>({
       Widget sheet = GrabberBottomSheet(
         contentPadding: contentPadding,
         showGrabber: showGrabber,
-        isFullScreen: isFullScreen,
+        isFullScreen: isFullScreen || heightFactor != null,
         child: child,
       );
 
@@ -189,6 +199,17 @@ Future<T?> showGrabberBottomSheet<T>({
         final screenHeight = MediaQuery.of(context).size.height;
         final statusBarHeight = MediaQuery.of(context).padding.top;
         final sheetHeight = screenHeight - statusBarHeight;
+
+        return SizedBox(
+          height: sheetHeight,
+          child: sheet,
+        );
+      }
+
+      // For custom height factor, calculate height as percentage of screen
+      if (heightFactor != null) {
+        final screenHeight = MediaQuery.of(context).size.height;
+        final sheetHeight = screenHeight * heightFactor;
 
         return SizedBox(
           height: sheetHeight,

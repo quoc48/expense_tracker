@@ -64,7 +64,7 @@ class MinimalistIcons {
   };
 
   /// Map of category names to their FILL icons (14 total)
-  /// Use for: CategoryCard widgets, ExpenseListTile icons
+  /// Use for: CategoryCard widgets, ExpenseListTile icons, SelectionCard
   ///
   /// **IMPORTANT**: Keys must match EXACTLY with Supabase category names!
   /// Supabase is the source of truth for category spellings.
@@ -79,11 +79,42 @@ class MinimalistIcons {
     'Hoá đơn': PhosphorIconsFill.invoice,          // Bills
     'Quà vật': PhosphorIconsFill.gift,             // Gifts
     'Sức khỏe': PhosphorIconsFill.heartbeat,       // Health (khỏe not khoẻ!)
-    'Thời trang': PhosphorIconsFill.handbag,       // Fashion
+    'Thời trang': PhosphorIconsFill.shoppingBag,   // Fashion (shoppingBag per Figma)
     'Tạp hoá': PhosphorIconsFill.shoppingCart,     // Groceries
     'TẾT': PhosphorIconsFill.flower,               // Tet Holiday (uppercase TẾT!)
     'Đi lại': PhosphorIconsFill.motorcycle,        // Transportation
   };
+
+  // ==========================================
+  // Category Colors (from Figma Design)
+  // ==========================================
+  // Design Reference: Figma node-id=56-3815
+  // Used for SelectionCard backgrounds (10% opacity) and icon colors
+
+  /// Map of category names to their brand colors
+  /// Use for: SelectionCard icon background (10% opacity), icon color
+  static const Map<String, Color> categoryColors = {
+    'Thực phẩm': Color(0xFFFF8D28),      // Orange - Food
+    'Tiền nhà': Color(0xFFFFCC00),       // Yellow - Housing
+    'Biểu gia đình': Color(0xFF34C759), // Green - Family
+    'Cà phê': Color(0xFFAC7F5E),         // Brown - Coffee
+    'Du lịch': Color(0xFF00C8B3),        // Teal-green - Travel
+    'Giáo dục': Color(0xFF00C3D0),       // Teal - Education
+    'Giải trí': Color(0xFF00C0E8),       // Cyan - Entertainment
+    'Hoá đơn': Color(0xFFFF2D55),        // Pink - Bills
+    'Quà vật': Color(0xFF0088FF),        // Blue - Gifts
+    'Sức khỏe': Color(0xFF6155F5),       // Indigo - Health
+    'Thời trang': Color(0xFFCB30E0),     // Purple - Fashion
+    'Tạp hoá': Color(0xFFFFCC00),        // Yellow - Groceries
+    'TẾT': Color(0xFFFF2D55),            // Pink - Tet Holiday
+    'Đi lại': Color(0xFF34C759),         // Green - Transportation
+  };
+
+  /// Get category color
+  /// Returns gray if category not found
+  static Color getCategoryColor(String categoryName) {
+    return categoryColors[categoryName] ?? const Color(0xFF8E8E93);
+  }
 
   /// Get LIGHT icon for a category (for forms, lists, general UI)
   /// If category not found, returns a warning icon to indicate data issue

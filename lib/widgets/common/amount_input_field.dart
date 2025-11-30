@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../../theme/colors/app_colors.dart';
+import '../../theme/typography/app_typography.dart';
 
 /// A large centered amount input field with currency symbol.
 ///
@@ -17,9 +17,9 @@ import '../../theme/colors/app_colors.dart';
 /// - Auto-formats with comma thousand separators (e.g., 1,000,000)
 ///
 /// **Behavior**:
-/// - On open: auto-focus, show placeholder "0", keyboard appears
-/// - On typing: updates value, formats with thousand separators
-/// - Cursor appears between number and "đ"
+/// - On open: show "0" (gray), cursor appears AFTER the 0, keyboard appears
+/// - On first digit: replaces the 0, text turns black
+/// - On subsequent typing: appends digits with thousand separators
 ///
 /// **Usage**:
 /// ```dart
@@ -58,16 +58,20 @@ class AmountInputField extends StatefulWidget {
 
 class _AmountInputFieldState extends State<AmountInputField> {
   late FocusNode _focusNode;
-  bool _hasFocus = false;
-
-  // Formatter for thousand separators (using comma)
-  final _numberFormat = NumberFormat('#,###', 'en_US');
 
   @override
   void initState() {
     super.initState();
     _focusNode = widget.focusNode ?? FocusNode();
-    _focusNode.addListener(_onFocusChange);
+
+    // Initialize with "0" and position cursor at end
+    if (widget.controller.text.isEmpty) {
+      widget.controller.text = '0';
+      // Position cursor at end (after the 0)
+      widget.controller.selection = TextSelection.collapsed(
+        offset: widget.controller.text.length,
+      );
+    }
 
     // Auto-focus after build
     if (widget.autofocus) {
@@ -81,116 +85,151 @@ class _AmountInputFieldState extends State<AmountInputField> {
 
   @override
   void dispose() {
-    _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
     super.dispose();
   }
 
-  void _onFocusChange() {
-    setState(() {
-      _hasFocus = _focusNode.hasFocus;
-    });
-  }
-
-  /// Format number with comma thousand separators
-  /// e.g., 1000000 → "1,000,000"
-  String _formatWithCommas(String rawNumber) {
-    if (rawNumber.isEmpty) return '0';
-    final number = int.tryParse(rawNumber);
-    if (number == null || number == 0) return '0';
-    return _numberFormat.format(number);
-  }
-
-  /// Get display text with thousand separators
-  String get _displayText {
-    return _formatWithCommas(widget.controller.text);
-  }
-
-  /// Check if showing placeholder (empty or 0)
-  bool get _isPlaceholder {
-    final text = widget.controller.text;
+  /// Check if showing placeholder value (0)
+  bool get _isZero {
+    final text = widget.controller.text.replaceAll(',', '');
     return text.isEmpty || text == '0';
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _focusNode.requestFocus(),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Number display with thousand separators
-              Text(
-                _displayText,
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  color: _isPlaceholder ? AppColors.gray : AppColors.textBlack,
-                ),
-              ),
-
-              // Cursor (only visible when focused)
-              if (_hasFocus)
-                Container(
-                  width: 1,
-                  height: 54,
-                  color: AppColors.textBlack,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                ),
-
-              // Spacing between number and currency (4px from Figma)
-              const SizedBox(width: 4),
-
-              // Currency symbol "đ"
-              const Text(
-                'đ',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.gray,
-                ),
-              ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Visible TextField styled as large number display
+        // Uses IntrinsicWidth to size to content
+        IntrinsicWidth(
+          child: TextField(
+            controller: widget.controller,
+            focusNode: _focusNode,
+            // Use number keyboard for iOS
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: false,
+              signed: false,
+            ),
+            inputFormatters: [
+              _AmountInputFormatter(), // Custom formatter that handles 0 replacement
             ],
-          ),
-
-          // Hidden TextField to capture keyboard input
-          SizedBox(
-            height: 0,
-            child: Opacity(
-              opacity: 0,
-              child: TextField(
-                controller: widget.controller,
-                focusNode: _focusNode,
-                // Use number keyboard for iOS
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: false,
-                  signed: false,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(12), // Max 12 digits (999,999,999,999)
-                ],
-                onChanged: (value) {
-                  setState(() {}); // Trigger rebuild to update display
-                  widget.onChanged?.call(value);
-                },
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
+            onChanged: (value) {
+              setState(() {}); // Rebuild to update color
+              // Remove commas to get raw value for callback
+              final rawValue = value.replaceAll(',', '');
+              widget.onChanged?.call(rawValue);
+            },
+            textAlign: TextAlign.center,
+            style: AppTypography.style(
+              fontSize: 40,
+              fontWeight: FontWeight.w700,
+              // Gray when 0, black otherwise
+              color: _isZero ? AppColors.gray : AppColors.textBlack,
+            ),
+            // Standard iOS cursor
+            cursorColor: AppColors.textBlack,
+            cursorWidth: 2,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+              isDense: true,
             ),
           ),
-        ],
-      ),
+        ),
+
+        // Spacing between number and currency (4px from Figma)
+        const SizedBox(width: 4),
+
+        // Currency symbol "đ"
+        Text(
+          'đ',
+          style: AppTypography.style(
+            fontSize: 40,
+            fontWeight: FontWeight.w700,
+            color: AppColors.gray,
+          ),
+        ),
+      ],
     );
+  }
+}
+
+/// Custom TextInputFormatter for amount input.
+///
+/// Handles:
+/// 1. Only digits allowed
+/// 2. When text is "0" and user types a digit, replace 0 with that digit
+/// 3. Thousand separator formatting (commas)
+/// 4. Max 12 digits
+/// 5. Never allows empty - minimum is "0"
+class _AmountInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Get raw digits only from new value
+    String rawNew = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    String rawOld = oldValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // If user deleted everything, show "0"
+    if (rawNew.isEmpty) {
+      return const TextEditingValue(
+        text: '0',
+        selection: TextSelection.collapsed(offset: 1),
+      );
+    }
+
+    // If old value was "0" and user typed a digit, replace 0 with new digit
+    if (rawOld == '0' && rawNew.length == 2 && rawNew.startsWith('0')) {
+      rawNew = rawNew.substring(1); // Remove leading 0
+    }
+
+    // Remove leading zeros (except single 0)
+    while (rawNew.length > 1 && rawNew.startsWith('0')) {
+      rawNew = rawNew.substring(1);
+    }
+
+    // Limit to 12 digits
+    if (rawNew.length > 12) {
+      rawNew = rawNew.substring(0, 12);
+    }
+
+    // Parse as integer
+    final number = int.tryParse(rawNew);
+    if (number == null) {
+      return oldValue;
+    }
+
+    // Format with thousand separators
+    final formatted = _formatWithCommas(number);
+
+    // Position cursor at end
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _formatWithCommas(int number) {
+    if (number == 0) return '0';
+
+    final str = number.toString();
+    final buffer = StringBuffer();
+    final length = str.length;
+
+    for (int i = 0; i < length; i++) {
+      if (i > 0 && (length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(str[i]);
+    }
+
+    return buffer.toString();
   }
 }

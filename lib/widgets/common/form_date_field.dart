@@ -3,9 +3,9 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/typography/app_typography.dart';
 
-/// A styled select/dropdown field with label for forms.
+/// A styled date picker field with label for forms.
 ///
-/// **Design Reference**: Figma node-id=56-3279
+/// **Design Reference**: Figma node-id=56-3279 (same as FormSelectField)
 ///
 /// **Specifications**:
 /// - Label: 14px Regular, black, above input
@@ -13,40 +13,40 @@ import '../../theme/typography/app_typography.dart';
 /// - Input container: 48px height, gray6 (#F2F2F7) background, 12px radius
 /// - Input padding: 16px horizontal
 /// - Text: 14px Regular, black when has value, gray2 when placeholder
-/// - Caret-down icon: 20x20, right side
+/// - Calendar icon: 20x20, right side (differs from FormSelectField's caret)
 /// - Letter spacing: 0.28px
 ///
 /// **Behavior**:
-/// - Tappable - calls [onTap] callback
+/// - Tappable - calls [onTap] callback to show date picker
 /// - Shows placeholder when [value] is null
-/// - Shows value text when [value] is provided
+/// - Shows formatted date text when [value] is provided
 ///
 /// **Usage**:
 /// ```dart
-/// FormSelectField(
-///   label: 'Category',
-///   placeholder: 'Select one',
-///   value: selectedCategory,
-///   onTap: () => _showCategoryPicker(),
+/// FormDateField(
+///   label: 'Date',
+///   placeholder: 'Select date',
+///   value: formattedDate,
+///   onTap: () => _showDatePicker(),
 /// )
 /// ```
-class FormSelectField extends StatelessWidget {
+class FormDateField extends StatelessWidget {
   /// The label text displayed above the input.
   final String label;
 
   /// Placeholder text shown when value is null.
   final String placeholder;
 
-  /// The current selected value (displayed as text).
+  /// The current selected value (displayed as formatted date text).
   final String? value;
 
   /// Callback when the field is tapped.
   final VoidCallback? onTap;
 
-  const FormSelectField({
+  const FormDateField({
     super.key,
     required this.label,
-    this.placeholder = 'Select one',
+    this.placeholder = 'Select date',
     this.value,
     this.onTap,
   });
@@ -101,9 +101,9 @@ class FormSelectField extends StatelessWidget {
                   ),
                 ),
 
-                // Caret-down icon
+                // Calendar icon (the key difference from FormSelectField)
                 const Icon(
-                  PhosphorIconsRegular.caretDown,
+                  PhosphorIconsRegular.calendarDots,
                   size: 20,
                   color: AppColors.textBlack,
                 ),

@@ -14,6 +14,43 @@ class AppTypography {
   // Private constructor to prevent instantiation
   AppTypography._();
 
+  /// The primary font family name used across the app
+  /// This is a custom font loaded from assets (not Google Fonts)
+  static const String fontFamily = 'MomoTrustSans';
+
+  /// Creates a TextStyle with Momo Trust Sans font
+  /// Use this for custom components that need explicit font styling
+  ///
+  /// Note: This uses the local asset font, not Google Fonts CDN
+  ///
+  /// Example:
+  /// ```dart
+  /// Text(
+  ///   'Hello',
+  ///   style: AppTypography.style(
+  ///     fontSize: 16,
+  ///     fontWeight: FontWeight.w600,
+  ///     color: Colors.black,
+  ///   ),
+  /// )
+  /// ```
+  static TextStyle style({
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.normal,
+    Color? color,
+    double? letterSpacing,
+    double? height,
+  }) {
+    return TextStyle(
+      fontFamily: fontFamily,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      letterSpacing: letterSpacing,
+      height: height,
+    );
+  }
+
   /// Creates a complete text theme with Momo Trust Sans via Google Fonts
   /// Uses GoogleFonts.getFont() for fonts that may not have dedicated methods yet
   static TextTheme createTextTheme({

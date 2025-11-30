@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../theme/colors/app_colors.dart';
+import '../../theme/typography/app_typography.dart';
 
 /// A header widget for bottom sheets with centered title and close button.
 ///
@@ -42,7 +43,7 @@ class SheetHeader extends StatelessWidget {
           Center(
             child: Text(
               title,
-              style: const TextStyle(
+              style: AppTypography.style(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textBlack,
@@ -61,7 +62,7 @@ class SheetHeader extends StatelessWidget {
                 width: 24,
                 height: 24,
                 child: Icon(
-                  PhosphorIconsLight.x,
+                  PhosphorIconsRegular.x,
                   size: 24,
                   color: AppColors.textBlack,
                 ),

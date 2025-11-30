@@ -2,7 +2,24 @@ import 'package:flutter/material.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/constants/app_spacing.dart';
 import '../../theme/minimalist/minimalist_icons.dart';
+import '../../theme/typography/app_typography.dart';
 import 'grabber_bottom_sheet.dart';
+
+// ============================================================================
+// DESIGN SYSTEM RULE: Typography
+// ============================================================================
+// Always use AppTypography.style() for all text in custom components.
+// This ensures consistent "MomoTrustSans" font across the app.
+//
+// Example:
+//   style: AppTypography.style(
+//     fontSize: 14,
+//     fontWeight: FontWeight.w500,
+//     color: AppColors.textBlack,
+//   )
+//
+// DO NOT use raw TextStyle() with hardcoded fontFamily.
+// ============================================================================
 
 /// The input method options for adding an expense.
 enum AddExpenseInputMethod {
@@ -116,7 +133,7 @@ class _InputMethodCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.spaceXs),
             Text(
               label,
-              style: const TextStyle(
+              style: AppTypography.style(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textBlack,
