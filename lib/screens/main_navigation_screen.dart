@@ -5,8 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'expense_list_screen.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
-import 'add_expense_screen.dart';
-import '../models/expense.dart';
+import '../widgets/common/add_expense_sheet.dart';
 import '../providers/expense_provider.dart';
 import '../services/supabase_service.dart';
 import '../widgets/home/floating_nav_bar.dart';
@@ -106,7 +105,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   /// Handle FAB tap to show add expense options bottom sheet.
   ///
   /// Shows a bottom sheet with 3 options:
-  /// - Manual: Opens AddExpenseScreen for manual entry
+  /// - Manual: Opens AddExpenseSheet for manual entry
   /// - Camera: Opens camera for receipt scanning
   /// - Voice: Future feature (does nothing for now)
   void _handleAddExpense() async {
@@ -127,14 +126,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
   }
 
-  /// Navigate to manual expense entry screen
+  /// Navigate to manual expense entry using the new bottom sheet.
+  ///
+  /// Uses the redesigned AddExpenseSheet (full-screen modal).
   Future<void> _navigateToManualEntry() async {
-    final result = await Navigator.push<Expense>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddExpenseScreen(),
-      ),
-    );
+    final result = await showAddExpenseSheet(context: context);
 
     // If user saved an expense, add it via provider
     if (result != null && mounted) {
