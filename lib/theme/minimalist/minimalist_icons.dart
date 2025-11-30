@@ -138,6 +138,21 @@ class MinimalistIcons {
   static const IconData fieldFilter = PhosphorIconsLight.funnel;
 
   // ==========================================
+  // Input Method Icons (Add Expense Sheet)
+  // ==========================================
+  // Used in AddExpenseOptionsSheet for selecting input method
+  // Design Reference: Figma node-id=58-3460
+
+  /// Manual entry - pencil icon
+  static const IconData inputManual = PhosphorIconsLight.pencilSimpleLine;
+
+  /// Camera/scan receipt - camera icon
+  static const IconData inputCamera = PhosphorIconsLight.camera;
+
+  /// Voice input - user speaking icon
+  static const IconData inputVoice = PhosphorIconsLight.userSound;
+
+  // ==========================================
   // Action Icons
   // ==========================================
 

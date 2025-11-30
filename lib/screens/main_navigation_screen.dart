@@ -5,9 +5,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'expense_list_screen.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
+import 'add_expense_screen.dart';
+import '../models/expense.dart';
 import '../providers/expense_provider.dart';
 import '../services/supabase_service.dart';
 import '../widgets/home/floating_nav_bar.dart';
+import '../widgets/common/add_expense_options_sheet.dart';
 
 /// MainNavigationScreen is the root screen that contains the bottom navigation bar.
 /// It manages which screen is currently displayed based on the selected tab.
@@ -100,13 +103,50 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  /// Handle FAB tap to add new expense
-  void _handleAddExpense() {
-    // Navigate to add expense screen
-    // For now, switch to Expenses tab which has the add functionality
-    // TODO: Navigate directly to AddExpenseScreen
-    setState(() {
-      _selectedIndex = 1; // Switch to Expenses tab
-    });
+  /// Handle FAB tap to show add expense options bottom sheet.
+  ///
+  /// Shows a bottom sheet with 3 options:
+  /// - Manual: Opens AddExpenseScreen for manual entry
+  /// - Camera: Opens camera for receipt scanning
+  /// - Voice: Future feature (does nothing for now)
+  void _handleAddExpense() async {
+    final method = await showAddExpenseOptionsSheet(context: context);
+
+    if (!mounted || method == null) return;
+
+    switch (method) {
+      case AddExpenseInputMethod.manual:
+        _navigateToManualEntry();
+        break;
+      case AddExpenseInputMethod.camera:
+        _navigateToCamera();
+        break;
+      case AddExpenseInputMethod.voice:
+        // Future feature - do nothing for now
+        break;
+    }
+  }
+
+  /// Navigate to manual expense entry screen
+  Future<void> _navigateToManualEntry() async {
+    final result = await Navigator.push<Expense>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddExpenseScreen(),
+      ),
+    );
+
+    // If user saved an expense, add it via provider
+    if (result != null && mounted) {
+      await Provider.of<ExpenseProvider>(context, listen: false)
+          .addExpense(result);
+    }
+  }
+
+  /// Navigate to camera for receipt scanning
+  void _navigateToCamera() {
+    // TODO: Implement camera navigation
+    // This will be connected to the existing receipt scanning feature
+    debugPrint('Camera option tapped - to be implemented');
   }
 }

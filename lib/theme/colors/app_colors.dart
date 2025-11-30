@@ -14,6 +14,11 @@ class AppColors {
   static const Color gray = Color(0xFF8E8E93);            // Secondary text
   static const Color gray6 = Color(0xFFF2F2F7);           // Card backgrounds
 
+  // ===== Overlay & Sheet Colors (from Figma node-id=58-3460) =====
+  // Used for modal overlays, bottom sheets, and grabber indicators
+  static const Color overlayDark = Color(0x33000000);     // 20% black - modal backdrop
+  static const Color grabber = Color(0x4D3C3C43);         // rgba(60,60,67,0.3) - iOS grabber
+
   // ===== Text Colors (from Figma) =====
   static const Color textBlack = Color(0xFF000000);       // Primary text, titles
 
