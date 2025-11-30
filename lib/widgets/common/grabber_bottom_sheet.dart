@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/constants/app_spacing.dart';
 
-/// A reusable iOS-style bottom sheet with grabber indicator.
+/// A reusable iOS-style bottom sheet with optional grabber indicator.
 ///
 /// Features:
 /// - Semi-transparent overlay backdrop (tap to dismiss)
-/// - iOS-style grabber/drag indicator at top
+/// - Optional iOS-style grabber/drag indicator at top
 /// - Slide-up animation
 /// - Customizable content via [child] parameter
 /// - 24px rounded top corners (matches iOS design)
+/// - Support for full-screen mode (expands to fill available space)
 ///
 /// Design Reference: Figma node-id=58-3460
 ///
@@ -25,17 +26,50 @@ class GrabberBottomSheet extends StatelessWidget {
   final Widget child;
 
   /// Optional padding for the content area.
-  /// Defaults to horizontal 16px, top 0px (grabber has its own spacing), bottom 40px.
+  /// Defaults to horizontal 16px, top 0px, bottom 40px.
   final EdgeInsetsGeometry? contentPadding;
+
+  /// Whether to show the grabber indicator at the top.
+  /// Defaults to true.
+  final bool showGrabber;
+
+  /// Whether the sheet should expand to fill available space.
+  /// When true, the sheet will be near full-screen (below status bar).
+  /// Defaults to false (sheet sizes to content).
+  final bool isFullScreen;
 
   const GrabberBottomSheet({
     super.key,
     required this.child,
     this.contentPadding,
+    this.showGrabber = true,
+    this.isFullScreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget content = Column(
+      mainAxisSize: isFullScreen ? MainAxisSize.max : MainAxisSize.min,
+      children: [
+        // Grabber indicator (optional)
+        if (showGrabber) const _GrabberIndicator(),
+
+        // Content area with padding
+        if (isFullScreen)
+          Expanded(
+            child: Padding(
+              padding: contentPadding ?? _defaultPadding,
+              child: child,
+            ),
+          )
+        else
+          Padding(
+            padding: contentPadding ?? _defaultPadding,
+            child: child,
+          ),
+      ],
+    );
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -45,27 +79,16 @@ class GrabberBottomSheet extends StatelessWidget {
         ),
         // No shadow as per design requirement
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Grabber indicator
-          const _GrabberIndicator(),
-
-          // Content area with padding
-          Padding(
-            padding: contentPadding ??
-                const EdgeInsets.only(
-                  left: AppSpacing.spaceMd,
-                  right: AppSpacing.spaceMd,
-                  top: 0,
-                  bottom: 40,
-                ),
-            child: child,
-          ),
-        ],
-      ),
+      child: content,
     );
   }
+
+  EdgeInsetsGeometry get _defaultPadding => const EdgeInsets.only(
+        left: AppSpacing.spaceMd,
+        right: AppSpacing.spaceMd,
+        top: 0,
+        bottom: 40,
+      );
 }
 
 /// iOS-style grabber/drag indicator widget.
@@ -106,6 +129,11 @@ class _GrabberIndicator extends StatelessWidget {
 ///
 /// Returns the result from [Navigator.pop] if any.
 ///
+/// Parameters:
+/// - [showGrabber]: Whether to show the grabber indicator. Defaults to true.
+/// - [isFullScreen]: Whether to expand to near full-screen. Defaults to false.
+/// - [useSafeArea]: Whether to respect safe area (status bar). Defaults to true for full-screen.
+///
 /// Example:
 /// ```dart
 /// final result = await showGrabberBottomSheet<String>(
@@ -122,6 +150,9 @@ Future<T?> showGrabberBottomSheet<T>({
   EdgeInsetsGeometry? contentPadding,
   bool isDismissible = true,
   bool enableDrag = true,
+  bool showGrabber = true,
+  bool isFullScreen = false,
+  bool useSafeArea = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -133,6 +164,10 @@ Future<T?> showGrabberBottomSheet<T>({
     isDismissible: isDismissible,
     // Allow drag to dismiss
     enableDrag: enableDrag,
+    // For full-screen mode, allow the sheet to expand
+    isScrollControlled: isFullScreen,
+    // Use safe area for full-screen sheets
+    useSafeArea: isFullScreen && useSafeArea,
     // Prevent system bottom sheet shape
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.only(
@@ -140,9 +175,28 @@ Future<T?> showGrabberBottomSheet<T>({
         topRight: Radius.circular(24),
       ),
     ),
-    builder: (context) => GrabberBottomSheet(
-      contentPadding: contentPadding,
-      child: child,
-    ),
+    builder: (context) {
+      Widget sheet = GrabberBottomSheet(
+        contentPadding: contentPadding,
+        showGrabber: showGrabber,
+        isFullScreen: isFullScreen,
+        child: child,
+      );
+
+      // For full-screen, wrap in a sized container
+      if (isFullScreen) {
+        // Get screen height minus status bar
+        final screenHeight = MediaQuery.of(context).size.height;
+        final statusBarHeight = MediaQuery.of(context).padding.top;
+        final sheetHeight = screenHeight - statusBarHeight;
+
+        return SizedBox(
+          height: sheetHeight,
+          child: sheet,
+        );
+      }
+
+      return sheet;
+    },
   );
 }
