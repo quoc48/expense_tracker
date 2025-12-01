@@ -5,6 +5,7 @@ import '../../models/expense.dart';
 import '../../repositories/expense_repository.dart';
 import '../../repositories/supabase_expense_repository.dart';
 import '../../theme/colors/app_colors.dart';
+import '../../theme/minimalist/minimalist_icons.dart';
 import '../../theme/typography/app_typography.dart';
 import 'grabber_bottom_sheet.dart';
 import 'sheet_header.dart';
@@ -12,6 +13,7 @@ import 'amount_input_field.dart';
 import 'form_input.dart';
 import 'primary_button.dart';
 import 'select_category_sheet.dart';
+import 'select_date_sheet.dart';
 import 'select_type_sheet.dart';
 
 /// A full-screen bottom sheet for adding a new expense.
@@ -156,7 +158,8 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     // If editing, pre-populate the form
     if (widget.expense != null) {
       final expense = widget.expense!;
-      _amountController.text = expense.amount.toInt().toString();
+      // Format amount with thousand separators for display
+      _amountController.text = _formatAmountWithCommas(expense.amount.toInt());
       _descriptionController.text = expense.description;
       _noteController.text = expense.note ?? '';
       _selectedDate = expense.date;
@@ -165,6 +168,25 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
 
       if (mounted) setState(() {});
     }
+  }
+
+  /// Format an integer amount with comma thousand separators.
+  /// e.g., 34000 → "34,000"
+  String _formatAmountWithCommas(int amount) {
+    if (amount == 0) return '0';
+
+    final str = amount.toString();
+    final buffer = StringBuffer();
+    final length = str.length;
+
+    for (int i = 0; i < length; i++) {
+      if (i > 0 && (length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(str[i]);
+    }
+
+    return buffer.toString();
   }
 
   /// Load categories and expense types from Supabase
@@ -364,7 +386,11 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     }
   }
 
-  void _saveExpense() {
+  /// Save expense with visible loading state.
+  ///
+  /// Shows loading spinner for minimum 1 second to provide visual feedback
+  /// that the action is being processed, then closes the sheet.
+  Future<void> _saveExpense() async {
     if (!_validateForm()) return;
 
     setState(() => _isSaving = true);
@@ -385,36 +411,28 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
           : _noteController.text.trim(),
     );
 
+    // Show loading state for minimum 1 second for better UX feedback
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (!mounted) return;
+
     // Return the expense object
     Navigator.pop(context, expense);
   }
 
+  /// Show the custom date picker sheet matching Figma design (node-id=58-1198).
   Future<void> _pickDate() async {
     _dismissKeyboard();
 
-    final DateTime? picked = await showDatePicker(
+    // Use the custom SelectDateSheet with Figma-accurate calendar styling
+    final DateTime? picked = await showSelectDateSheet(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 730)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.textBlack,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textBlack,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      selectedDate: _selectedDate,
     );
 
     if (!mounted) return;
 
-    // Ensure keyboard stays dismissed after picker closes
+    // Ensure keyboard stays dismissed after sheet closes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         FocusManager.instance.primaryFocus?.unfocus();
@@ -552,12 +570,21 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                         // Gap between form fields (24px from Figma)
                         const SizedBox(height: 24),
 
-                        // Category
+                        // Category (with icon when selected per Figma node-id=56-4626)
                         FormInput(
                           variant: FormInputVariant.select,
                           label: 'Category',
                           placeholder: 'Select category',
                           value: _selectedCategoryVi,
+                          leadingWidget: _selectedCategoryVi != null
+                              ? Icon(
+                                  MinimalistIcons.categoryIconsFill[_selectedCategoryVi] ??
+                                      MinimalistIcons.categoryIconsFill.values.first,
+                                  size: 20,
+                                  color: MinimalistIcons.categoryColors[_selectedCategoryVi] ??
+                                      AppColors.gray,
+                                )
+                              : null,
                           onTap: () {
                             _clearCategoryError();
                             _showCategoryPicker();
@@ -605,9 +632,9 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                         // Gap: Forms to Button (32px from Figma)
                         const SizedBox(height: 32),
 
-                        // Save Button
+                        // Save Button (per Figma: "Add Expense" for new, "Update" for edit)
                         PrimaryButton(
-                          label: isEditing ? 'Update Expense' : 'Add Expense',
+                          label: isEditing ? 'Update' : 'Add Expense',
                           isLoading: _isSaving,
                           onPressed: _saveExpense,
                         ),

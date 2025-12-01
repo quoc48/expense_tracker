@@ -56,12 +56,15 @@ class AddExpenseOptionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Manual option
+        // Voice option (future feature - does nothing for now)
         Expanded(
           child: _InputMethodCard(
-            icon: MinimalistIcons.inputManual,
-            label: 'Manual',
-            onTap: () => Navigator.pop(context, AddExpenseInputMethod.manual),
+            icon: MinimalistIcons.inputVoice,
+            label: 'Voice',
+            onTap: () {
+              // Future feature - do nothing for now
+              // Could show a "Coming soon" message if desired
+            },
           ),
         ),
         const SizedBox(width: AppSpacing.spaceMd),
@@ -76,15 +79,12 @@ class AddExpenseOptionsSheet extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.spaceMd),
 
-        // Voice option (future feature - does nothing for now)
+        // Manual option
         Expanded(
           child: _InputMethodCard(
-            icon: MinimalistIcons.inputVoice,
-            label: 'Voice',
-            onTap: () {
-              // Future feature - do nothing for now
-              // Could show a "Coming soon" message if desired
-            },
+            icon: MinimalistIcons.inputManual,
+            label: 'Manual',
+            onTap: () => Navigator.pop(context, AddExpenseInputMethod.manual),
           ),
         ),
       ],
@@ -92,7 +92,7 @@ class AddExpenseOptionsSheet extends StatelessWidget {
   }
 }
 
-/// Individual option card for input method selection.
+/// Individual option card for input method selection with tap state feedback.
 ///
 /// Specifications from Figma:
 /// - Height: 100px
@@ -101,7 +101,8 @@ class AddExpenseOptionsSheet extends StatelessWidget {
 /// - Icon size: 24px
 /// - Label: 14px medium weight
 /// - Gap between icon and label: 8px
-class _InputMethodCard extends StatelessWidget {
+/// - Tap state: Slightly darker background
+class _InputMethodCard extends StatefulWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -113,26 +114,60 @@ class _InputMethodCard extends StatelessWidget {
   });
 
   @override
+  State<_InputMethodCard> createState() => _InputMethodCardState();
+}
+
+class _InputMethodCardState extends State<_InputMethodCard> {
+  bool _isPressed = false;
+
+  void _handleTapDown(TapDownDetails details) {
+    setState(() => _isPressed = true);
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    setState(() => _isPressed = false);
+  }
+
+  void _handleTapCancel() {
+    setState(() => _isPressed = false);
+  }
+
+  /// Handle tap with visual feedback delay
+  Future<void> _handleTap() async {
+    // Keep pressed state visible briefly before executing action
+    setState(() => _isPressed = true);
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (mounted) {
+      widget.onTap();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleTap,
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      behavior: HitTestBehavior.opaque,
       child: Container(
         height: 100,
         decoration: BoxDecoration(
-          color: AppColors.gray6,
+          // Use #E5E5EA for pressed state - visible contrast from gray6 (#F2F2F7)
+          color: _isPressed ? const Color(0xFFE5E5EA) : AppColors.gray6,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              icon,
+              widget.icon,
               size: 24,
               color: AppColors.textBlack,
             ),
             const SizedBox(height: AppSpacing.spaceXs),
             Text(
-              label,
+              widget.label,
               style: AppTypography.style(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

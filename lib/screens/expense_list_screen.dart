@@ -9,7 +9,10 @@ import '../providers/sync_provider.dart';
 import '../widgets/sync_status_banner.dart';
 import '../widgets/sync_queue_details_sheet.dart';
 import '../widgets/expenses/expense_list_tile.dart';
-import 'add_expense_screen.dart';
+import '../widgets/common/add_expense_sheet.dart';
+import '../widgets/common/success_overlay.dart';
+import '../widgets/common/tappable_icon.dart';
+import '../widgets/common/undo_snackbar.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_spacing.dart';
 
@@ -102,16 +105,16 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         ),
       ),
       actions: [
-        // Sign-out icon only (no calendar for Expenses page)
+        // Sign-out icon with tap state feedback
         Padding(
           padding: const EdgeInsets.only(right: 16),
-          child: GestureDetector(
+          child: TappableIcon(
+            icon: PhosphorIconsRegular.signOut,
             onTap: () => _showLogoutDialog(context),
-            child: Icon(
-              PhosphorIconsRegular.signOut,
-              size: 24,
-              color: AppColors.textBlack,
-            ),
+            iconSize: 24,
+            iconColor: AppColors.textBlack,
+            containerSize: 32, // Slightly larger for easier tapping
+            isCircular: true,
           ),
         ),
       ],
@@ -240,52 +243,86 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     );
   }
 
-  /// Navigate to edit expense screen
+  /// Navigate to edit expense using the redesigned bottom sheet.
+  ///
+  /// Uses the same AddExpenseSheet as manual entry, but pre-populated with
+  /// existing expense data. Shows success overlay after update.
   Future<void> _editExpense(BuildContext context, Expense expense) async {
-    final result = await Navigator.push<Expense>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddExpenseScreen(expense: expense),
-      ),
+    // Show the edit expense sheet (same UI as add, pre-populated with expense)
+    final result = await showAddExpenseSheet(
+      context: context,
+      expense: expense,
     );
 
+    // If user saved changes, update via provider and show success overlay
     if (result != null && context.mounted) {
       final provider = Provider.of<ExpenseProvider>(context, listen: false);
       final success = await provider.updateExpense(result);
 
       if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Updated: ${result.description}'),
-            duration: const Duration(seconds: 2),
-          ),
+        // Show success overlay (auto-closes after 3s or tap outside to dismiss)
+        await showSuccessOverlay(
+          context: context,
+          message: 'Expense updated.',
         );
       }
     }
   }
 
   /// Show delete confirmation dialog
+  ///
+  /// Uses MomoTrustSans font for consistency with the rest of the app.
   Future<bool?> _showDeleteConfirmation(
       BuildContext context, Expense expense) async {
     return await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Delete Expense'),
+          title: Text(
+            'Delete Expense',
+            style: const TextStyle(
+              fontFamily: 'MomoTrustSans',
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textBlack,
+            ),
+          ),
           content: Text(
             'Are you sure you want to delete "${expense.description}"?',
+            style: TextStyle(
+              fontFamily: 'MomoTrustSans',
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.gray,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: 'MomoTrustSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textBlack,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.error,
               ),
-              child: const Text('Delete'),
+              child: Text(
+                'Delete',
+                style: TextStyle(
+                  fontFamily: 'MomoTrustSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.error,
+                ),
+              ),
             ),
           ],
         );
@@ -293,44 +330,76 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     );
   }
 
-  /// Delete expense and show undo snackbar
+  /// Delete expense and show floating undo snackbar.
+  ///
+  /// Uses the custom UndoSnackbar component positioned 16px above the nav bar,
+  /// matching the Figma design (node-id=62-1695).
   Future<void> _deleteExpense(
       BuildContext context, Expense expense, int index) async {
     final provider = Provider.of<ExpenseProvider>(context, listen: false);
     final deletedExpense = await provider.deleteExpense(expense.id);
 
     if (deletedExpense != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Deleted: ${expense.description}'),
-          duration: const Duration(seconds: 3),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () async {
-              await provider.restoreExpense(deletedExpense, index);
-            },
-          ),
-        ),
+      // Show floating undo snackbar above nav bar
+      showUndoSnackbar(
+        context: context,
+        message: 'Expense removed.',
+        onUndo: () async {
+          await provider.restoreExpense(deletedExpense, index);
+        },
       );
     }
   }
 
   /// Show logout confirmation dialog
+  ///
+  /// Uses MomoTrustSans font for consistency with the rest of the app.
   Future<void> _showLogoutDialog(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Sign Out'),
-          content: const Text('Are you sure you want to sign out?'),
+          title: Text(
+            'Sign Out',
+            style: const TextStyle(
+              fontFamily: 'MomoTrustSans',
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textBlack,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to sign out?',
+            style: TextStyle(
+              fontFamily: 'MomoTrustSans',
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.gray,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: 'MomoTrustSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textBlack,
+                ),
+              ),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Sign Out'),
+              child: Text(
+                'Sign Out',
+                style: const TextStyle(
+                  fontFamily: 'MomoTrustSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         );

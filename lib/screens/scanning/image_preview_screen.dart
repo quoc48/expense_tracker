@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
@@ -12,23 +11,34 @@ import '../../providers/expense_provider.dart';
 import '../../providers/sync_provider.dart';
 import '../../repositories/supabase_expense_repository.dart';
 import '../../widgets/expense_card.dart';
+import '../../theme/colors/app_colors.dart';
+import '../../theme/typography/app_typography.dart';
+import '../../widgets/common/tappable_icon.dart';
 
 import '../../screens/add_expense_screen.dart';
 
 /// Scanning state enum for managing the three distinct states
 enum ScanningState {
-  preview,    // Initial state: preview image with zoom
+  preview,    // Initial state: sheet-style image preview (Figma node-id=62-1863)
   processing, // Processing the receipt with Vision AI
   results,    // Showing parsed results for review/edit
 }
 
 /// Preview screen for captured/selected receipt image
 ///
-/// Allows user to:
-/// - Review the image quality with pinch-to-zoom
-/// - See quality warnings (blur, size issues)
-/// - Retake if needed
-/// - Process the receipt with Vision AI
+/// **Design Reference**: Figma node-id=62-1863
+///
+/// **Preview State UI (Bottom Sheet)**:
+/// - Modal bottom sheet overlaying camera screen
+/// - White background with 24px top rounded corners
+/// - Header: Back button ("< Camera") left, X close button right
+/// - Image: Simple display with cover fit, 12px rounded corners
+/// - Button: "Use this picture" - 48px height, black bg, white text
+///
+/// **Processing State**: Shows progress checklist during Vision AI processing
+/// **Results State**: Displays parsed items for review and editing
+///
+/// **Usage**: Call [showImagePreviewSheet] instead of pushing this widget directly.
 class ImagePreviewScreen extends StatefulWidget {
   final String imagePath;
 
@@ -41,36 +51,61 @@ class ImagePreviewScreen extends StatefulWidget {
   State<ImagePreviewScreen> createState() => _ImagePreviewScreenState();
 }
 
-class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
-  final TransformationController _transformationController =
-      TransformationController();
+/// Shows the image preview as a bottom sheet overlay.
+///
+/// **Design Reference**: Figma node-id=62-1863
+///
+/// Returns `true` if the user confirmed ("Use this picture") and processing started,
+/// `false` if cancelled.
+///
+/// **Usage**:
+/// ```dart
+/// final result = await showImagePreviewSheet(
+///   context: context,
+///   imagePath: photo.path,
+/// );
+/// ```
+Future<bool?> showImagePreviewSheet({
+  required BuildContext context,
+  required String imagePath,
+}) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true, // Allow sheet to take full height
+    backgroundColor: Colors.transparent, // We'll handle bg in the widget
+    isDismissible: false, // Don't dismiss on tap outside
+    enableDrag: false, // Disable drag to dismiss
+    builder: (context) => ImagePreviewScreen(imagePath: imagePath),
+  );
+}
 
+class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   // Services
   late VisionParserService _visionParser;
   late ExpensePatternService _patternService;
 
   // State management
   ScanningState _currentState = ScanningState.preview;
-  
-  // Preview state variables
-  bool _isAnalyzing = true;
-  bool _isBlurry = false;
-  bool _isTooSmall = false;
-  ui.Image? _image;
-  
+
+  // Preview state variables - simplified (no zoom/quality analysis)
+  // The new sheet-style UI doesn't need quality warnings or zoom
+
   // Processing state variables
   String _processingStep = 'Analyzing image...';
-  
+
   // Results state variables
   List<ScannedItem> _scannedItems = [];
   DateTime _selectedDate = DateTime.now();
   bool _isSaving = false; // Track saving state
 
+  // Tap state for "Use this picture" button
+  bool _isUseButtonPressed = false;
+
   @override
   void initState() {
     super.initState();
     _initializeServices();
-    _analyzeImageQuality();
+    // Note: Removed _analyzeImageQuality() - new sheet-style UI is simplified
   }
 
   /// Initialize pattern learning and vision parser services
@@ -94,43 +129,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   @override
   void dispose() {
-    _transformationController.dispose();
-    _image?.dispose();
     _patternService.dispose();
     super.dispose();
-  }
-
-  /// Analyze image quality for blur and size
-  Future<void> _analyzeImageQuality() async {
-    try {
-      final file = File(widget.imagePath);
-      final bytes = await file.readAsBytes();
-      final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      _image = frame.image;
-
-      setState(() {
-        // Check if image is too small for good OCR
-        // Minimum recommended: 800x800 pixels
-        _isTooSmall = _image!.width < 800 || _image!.height < 800;
-
-        // Simple blur detection: very small images often indicate blur
-        // More sophisticated blur detection could use Laplacian variance
-        _isBlurry = _image!.width < 600 || _image!.height < 600;
-
-        _isAnalyzing = false;
-      });
-    } catch (e) {
-      debugPrint('Error analyzing image: $e');
-      setState(() {
-        _isAnalyzing = false;
-      });
-    }
-  }
-
-  /// Reset zoom to default
-  void _resetZoom() {
-    _transformationController.value = Matrix4.identity();
   }
 
   /// Process the receipt image with Vision AI
@@ -263,77 +263,50 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _currentState == ScanningState.results 
-          ? Theme.of(context).scaffoldBackgroundColor 
-          : Colors.black,
-      appBar: _buildAppBar(context),
-      body: _buildBody(context),
-    );
-  }
+    // All states use bottom sheet style
+    // Background color changes based on state
+    final backgroundColor = switch (_currentState) {
+      ScanningState.preview => Colors.white,
+      ScanningState.processing => Colors.white,
+      ScanningState.results => Colors.white,
+    };
 
-  /// Build dynamic AppBar based on current state
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    String title;
-    List<Widget> actions = [];
-    
-    switch (_currentState) {
-      case ScanningState.preview:
-        title = 'Preview Image';
-        actions = [
-          IconButton(
-            icon: const Icon(PhosphorIconsRegular.arrowsOut),
-            onPressed: _resetZoom,
-            tooltip: 'Reset zoom',
-          ),
-        ];
-        break;
-      case ScanningState.processing:
-        title = 'Processing...';
-        break;
-      case ScanningState.results:
-        title = 'Review Items';
-        break;
-    }
-
-    return AppBar(
-      backgroundColor: _currentState == ScanningState.results 
-          ? null 
-          : Colors.black,
-      foregroundColor: _currentState == ScanningState.results 
-          ? null 
-          : Colors.white,
-      title: Text(title),
-      leading: const SizedBox.shrink(), // No leading widget
-      actions: [
-        ...actions,
-        IconButton(
-          icon: const Icon(PhosphorIconsRegular.x),
-          onPressed: () => _handleClose(context),
-          tooltip: 'Close',
+    return Container(
+      // Take most of the screen height, leaving space at top to show camera behind
+      height: MediaQuery.of(context).size.height * 0.92,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
-      ],
+      ),
+      child: _buildBody(context),
     );
   }
 
-  /// Handle close button - behavior depends on state
+  /// Handle close button - cancels entire flow and returns to expense list
+  ///
+  /// For results state, shows confirmation dialog first.
+  /// This is different from back button which only goes back to camera.
   void _handleClose(BuildContext context) {
     if (_currentState == ScanningState.results) {
       // Show confirmation dialog before closing
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           title: const Text('Discard changes?'),
           content: const Text('Unsaved items will be lost. Are you sure?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(); // Close preview screen
+                Navigator.of(dialogContext).pop(); // Close dialog
+                // Cancel entire flow - return to expense list
+                Navigator.of(context).popUntil((route) => route.isFirst);
               },
               child: const Text('Discard'),
             ),
@@ -341,7 +314,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         ),
       );
     } else {
-      Navigator.of(context).pop();
+      // Cancel entire flow - return to expense list
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 
@@ -359,59 +333,161 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   // ========== STATE VIEW BUILDERS ==========
 
-  /// Build Preview State view
+  /// Build Preview State view with new sheet-style UI
+  ///
+  /// **Design Reference**: Figma node-id=62-1863
+  ///
+  /// **Layout**:
+  /// - White background (set in Scaffold)
+  /// - Header: Back button ("< Camera") left, X close right
+  /// - Image: Cover fit, 12px rounded corners, flexible height
+  /// - Button: "Use this picture" - 48px, black bg, white text, fixed at bottom
+  ///
+  /// **Spacing**: 16px horizontal, 16px top, 40px bottom edge
   Widget _buildPreviewState(BuildContext context) {
-    return Column(
-      children: [
-        // Quality warnings
-        if (!_isAnalyzing && (_isBlurry || _isTooSmall))
-          _buildQualityWarnings(),
+    return SafeArea(
+      // Disable bottom SafeArea - we handle bottom spacing manually (40px)
+      bottom: false,
+      child: Column(
+        children: [
+          // Top content with horizontal padding
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+            child: _buildPreviewHeader(context),
+          ),
 
-        // Image preview with zoom
-        Expanded(
-          child: _buildImageViewer(),
-        ),
+          const SizedBox(height: 24),
 
-        // Helpful tip
-        _buildTipText(),
-
-        // Bottom actions
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                // Retake button
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text('Retake'),
-                  ),
-                ),
-
-                const SizedBox(width: 16),
-
-                // Process button
-                Expanded(
-                  child: FilledButton(
-                    onPressed: _processReceipt,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text('Process Receipt'),
-                  ),
-                ),
-              ],
+          // Image display (flexible height, cover fit)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildPreviewImage(),
             ),
           ),
+
+          // "Use this picture" button - fixed at bottom with 40px spacing
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 40),
+            child: _buildUseThisPictureButton(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build preview header with back and close buttons
+  ///
+  /// **Design Reference**: Figma node-id=62-1863
+  /// - Back button: caret-left icon + "Camera" text
+  /// - Close button: X icon with tap state feedback
+  Widget _buildPreviewHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Back button: "< Camera"
+        GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          behavior: HitTestBehavior.opaque,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                PhosphorIconsRegular.caretLeft,
+                size: 24,
+                color: AppColors.textBlack,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Camera',
+                style: AppTypography.style(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textBlack,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Close button - closes sheet and returns to camera
+        TappableIcon(
+          icon: PhosphorIconsRegular.x,
+          onTap: () => _handleClose(context),
+          iconSize: 24,
+          iconColor: AppColors.textBlack,
+          containerSize: 32,
+          isCircular: true,
         ),
       ],
     );
+  }
+
+  /// Build image display with rounded corners
+  ///
+  /// **Design Reference**: Figma node-id=62-1863
+  /// - Full width, flexible height
+  /// - Cover fit (aspect ratio preserved, may crop)
+  /// - 12px rounded corners
+  Widget _buildPreviewImage() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.gray6, // Light gray background while loading
+        ),
+        child: Image.file(
+          File(widget.imagePath),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  /// Build "Use this picture" button with tap state feedback
+  ///
+  /// **Design Reference**: Figma node-id=62-1863
+  /// - Height: 48px
+  /// - Background: Black (pressed: gray)
+  /// - Text: White, 16px medium
+  /// - Border radius: 12px
+  Widget _buildUseThisPictureButton() {
+    return GestureDetector(
+      onTap: _handleUseThisPicture,
+      onTapDown: (_) => setState(() => _isUseButtonPressed = true),
+      onTapUp: (_) => setState(() => _isUseButtonPressed = false),
+      onTapCancel: () => setState(() => _isUseButtonPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        width: double.infinity,
+        height: 48,
+        decoration: BoxDecoration(
+          color: _isUseButtonPressed ? AppColors.gray : AppColors.textBlack,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          'Use this picture',
+          style: AppTypography.style(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Handle "Use this picture" button tap
+  ///
+  /// Adds a brief delay to show visual feedback before processing
+  Future<void> _handleUseThisPicture() async {
+    setState(() => _isUseButtonPressed = true);
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (mounted) {
+      _processReceipt();
+    }
   }
 
   /// Build Processing State view with checklist progress
@@ -644,9 +720,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   }
 
   /// Build bottom actions bar
+  ///
+  /// **Spacing**: 16px horizontal/top, 40px bottom (consistent with preview)
   Widget _buildBottomActions(BuildContext context, double total) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      // 16px sides/top, 40px bottom - consistent spacing across all states
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
@@ -657,72 +736,70 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
         ],
       ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Total summary
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total (${_scannedItems.length} items)',
-                  style: Theme.of(context).textTheme.titleMedium,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Total summary
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total (${_scannedItems.length} items)',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              Text(
+                _formatAmount(total),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                Text(
-                  _formatAmount(total),
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Action buttons
+          Row(
+            children: [
+              // Add manual item button
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _addManualItem,
+                  icon: const Icon(PhosphorIconsRegular.plus),
+                  label: const Text('Add Item'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
-              ],
-            ),
+              ),
 
-            const SizedBox(height: 16),
+              const SizedBox(width: 12),
 
-            // Action buttons
-            Row(
-              children: [
-                // Add manual item button
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _addManualItem,
-                    icon: const Icon(PhosphorIconsRegular.plus),
-                    label: const Text('Add Item'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
+              // Save all button
+              Expanded(
+                flex: 2,
+                child: FilledButton.icon(
+                  onPressed: (_scannedItems.isEmpty || _isSaving) ? null : _saveAllItems,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(PhosphorIconsRegular.check),
+                  label: Text(_isSaving ? 'Saving...' : 'Save All'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
-
-                const SizedBox(width: 12),
-
-                // Save all button
-                Expanded(
-                  flex: 2,
-                  child: FilledButton.icon(
-                    onPressed: (_scannedItems.isEmpty || _isSaving) ? null : _saveAllItems,
-                    icon: _isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Icon(PhosphorIconsRegular.check),
-                    label: Text(_isSaving ? 'Saving...' : 'Save All'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -984,109 +1061,4 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     }
   }
 
-  // ========== WIDGET BUILDERS ==========
-
-  /// Quality warning banner
-  Widget _buildQualityWarnings() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade900.withValues(alpha: 0.9),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            PhosphorIconsRegular.warning,
-            color: Colors.white,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _getQualityWarningText(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getQualityWarningText() {
-    if (_isBlurry && _isTooSmall) {
-      return 'Ảnh có thể bị mờ và quá nhỏ. Thử chụp lại với ánh sáng tốt hơn.';
-    } else if (_isBlurry) {
-      return 'Ảnh có thể bị mờ. Hãy chắc chắn rằng ảnh rõ nét.';
-    } else if (_isTooSmall) {
-      return 'Ảnh hơi nhỏ. Chụp gần hơn để có kết quả tốt hơn.';
-    }
-    return '';
-  }
-
-  /// Zoomable image viewer with InteractiveViewer
-  Widget _buildImageViewer() {
-    return InteractiveViewer(
-      transformationController: _transformationController,
-      minScale: 0.5,
-      maxScale: 4.0,
-      boundaryMargin: const EdgeInsets.all(20),
-      child: Center(
-        child: Image.file(
-          File(widget.imagePath),
-          fit: BoxFit.contain,
-        ),
-      ),
-    );
-  }
-
-  /// Helpful tip text
-  Widget _buildTipText() {
-    if (_isAnalyzing) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Text(
-          'Đang phân tích chất lượng ảnh...',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 13,
-          ),
-        ),
-      );
-    }
-
-    if (_isBlurry || _isTooSmall) {
-      // Warning already shown above, don't repeat
-      return const SizedBox(height: 8);
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            PhosphorIconsRegular.info,
-            size: 16,
-            color: Colors.white.withValues(alpha: 0.7),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              'Kéo ngón tay để phóng to, kiểm tra văn bản rõ ràng',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

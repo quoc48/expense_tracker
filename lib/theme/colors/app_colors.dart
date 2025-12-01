@@ -12,6 +12,8 @@ class AppColors {
   // These colors follow Apple's Human Interface Guidelines
   static const Color background = Color(0xFFEDEFF1);      // Main app background
   static const Color gray = Color(0xFF8E8E93);            // Secondary text
+  static const Color gray3 = Color(0xFFC7C7CC);           // Disabled/placeholder text
+  static const Color gray5 = Color(0xFFE5E5EA);           // Borders, dividers
   static const Color gray6 = Color(0xFFF2F2F7);           // Card backgrounds
 
   // ===== Overlay & Sheet Colors (from Figma node-id=58-3460) =====

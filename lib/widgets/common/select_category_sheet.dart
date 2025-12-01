@@ -4,6 +4,7 @@ import '../../theme/colors/app_colors.dart';
 import '../../theme/typography/app_typography.dart';
 import 'grabber_bottom_sheet.dart';
 import 'selection_card.dart';
+import 'tappable_icon.dart';
 
 // ============================================================================
 // DESIGN SYSTEM COMPONENT: SelectCategorySheet
@@ -111,16 +112,15 @@ class SelectCategorySheet extends StatelessWidget {
           ),
         ),
 
-        // Close button - 24px icon directly (no container)
+        // Close button with tap state feedback
         // This aligns with the 24px checkmark icons in selection cards
-        GestureDetector(
+        TappableIcon(
+          icon: PhosphorIconsRegular.x,
           onTap: () => Navigator.pop(context),
-          behavior: HitTestBehavior.opaque,
-          child: const Icon(
-            PhosphorIconsRegular.x,
-            size: 24,
-            color: AppColors.textBlack,
-          ),
+          iconSize: 24,
+          iconColor: AppColors.textBlack,
+          containerSize: 28, // Slightly larger for easier tapping
+          isCircular: true,
         ),
       ],
     );

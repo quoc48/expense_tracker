@@ -6,6 +6,7 @@ import '../providers/expense_provider.dart';
 import '../providers/user_preferences_provider.dart';
 import '../theme/colors/app_colors.dart';
 import '../utils/analytics_calculator.dart';
+import '../widgets/common/tappable_icon.dart';
 import '../widgets/home/analytics_summary_card.dart';
 import '../widgets/home/category_card.dart';
 
@@ -133,30 +134,30 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Calendar icon
-              GestureDetector(
+              // Calendar icon with tap state feedback
+              TappableIcon(
+                icon: PhosphorIconsRegular.calendarDots,
                 onTap: () => _showMonthPicker(context),
-                child: Icon(
-                  PhosphorIconsRegular.calendarDots,
-                  size: 24,
-                  color: AppColors.textBlack,
-                ),
+                iconSize: 24,
+                iconColor: AppColors.textBlack,
+                containerSize: 32, // Slightly larger for easier tapping
+                isCircular: true,
               ),
               // 12px spacing between icons as per Figma
               const SizedBox(width: 12),
-              // Export/Logout icon
-              GestureDetector(
+              // Export/Logout icon with tap state feedback
+              TappableIcon(
+                icon: PhosphorIconsRegular.signOut,
                 onTap: () {
                   // TODO: Implement export functionality
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Export coming soon')),
                   );
                 },
-                child: Icon(
-                  PhosphorIconsRegular.signOut,
-                  size: 24,
-                  color: AppColors.textBlack,
-                ),
+                iconSize: 24,
+                iconColor: AppColors.textBlack,
+                containerSize: 32, // Slightly larger for easier tapping
+                isCircular: true,
               ),
             ],
           ),

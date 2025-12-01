@@ -102,6 +102,10 @@ class FormInput extends StatelessWidget {
   /// When provided, the input shows a red border and error text below.
   final String? errorText;
 
+  /// Optional leading widget (e.g., category icon) for select variant.
+  /// Displayed before the value text with 8px gap.
+  final Widget? leadingWidget;
+
   const FormInput({
     super.key,
     required this.variant,
@@ -117,6 +121,7 @@ class FormInput extends StatelessWidget {
     this.focusNode,
     this.readOnly = false,
     this.errorText,
+    this.leadingWidget,
   });
 
   // Design constants
@@ -251,6 +256,12 @@ class FormInput extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // Leading widget (e.g., category icon) - only show when has value
+            if (leadingWidget != null && hasValue) ...[
+              leadingWidget!,
+              const SizedBox(width: 8), // Gap between icon and text
+            ],
+
             // Value or placeholder text
             Expanded(
               child: Text(
@@ -265,7 +276,7 @@ class FormInput extends StatelessWidget {
               ),
             ),
 
-            // Icon
+            // Trailing icon (caret or calendar)
             Icon(
               icon,
               size: 20,

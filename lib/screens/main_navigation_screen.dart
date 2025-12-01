@@ -5,11 +5,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'expense_list_screen.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
+import 'scanning/camera_capture_screen.dart';
 import '../widgets/common/add_expense_sheet.dart';
 import '../providers/expense_provider.dart';
 import '../services/supabase_service.dart';
 import '../widgets/home/floating_nav_bar.dart';
 import '../widgets/common/add_expense_options_sheet.dart';
+import '../widgets/common/success_overlay.dart';
 
 /// MainNavigationScreen is the root screen that contains the bottom navigation bar.
 /// It manages which screen is currently displayed based on the selected tab.
@@ -129,20 +131,39 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   /// Navigate to manual expense entry using the new bottom sheet.
   ///
   /// Uses the redesigned AddExpenseSheet (full-screen modal).
+  /// After saving, shows a success overlay that auto-dismisses in 3 seconds
+  /// or can be dismissed by tapping outside.
   Future<void> _navigateToManualEntry() async {
     final result = await showAddExpenseSheet(context: context);
 
-    // If user saved an expense, add it via provider
+    // If user saved an expense, add it via provider and show success overlay
     if (result != null && mounted) {
+      // Save expense to database
       await Provider.of<ExpenseProvider>(context, listen: false)
           .addExpense(result);
+
+      // Show success overlay (auto-closes after 3s or tap outside to dismiss)
+      if (mounted) {
+        await showSuccessOverlay(
+          context: context,
+          message: 'Expense added.',
+        );
+      }
     }
   }
 
   /// Navigate to camera for receipt scanning
+  ///
+  /// Opens the full-screen camera interface for capturing receipt photos.
+  /// After capturing/selecting an image, the flow continues to:
+  /// 1. ImagePreviewScreen (crop/confirm)
+  /// 2. OCR processing
+  /// 3. Expense form pre-filled with scanned data
   void _navigateToCamera() {
-    // TODO: Implement camera navigation
-    // This will be connected to the existing receipt scanning feature
-    debugPrint('Camera option tapped - to be implemented');
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const CameraCaptureScreen(),
+      ),
+    );
   }
 }

@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 /// Context for currency formatting - determines how numbers are displayed
 enum CurrencyContext {
   /// Full format with thousand separators and currency symbol
-  /// Example: "50.000₫" (Vietnamese period separator)
+  /// Example: "50,000đ" (comma separator for consistency)
   full,
 
   /// Compact format for charts and small spaces
@@ -11,22 +11,22 @@ enum CurrencyContext {
   compact,
 
   /// Short compact with currency symbol
-  /// Example: "50k₫", "1.2M₫"
+  /// Example: "50kđ", "1.2Mđ"
   shortCompact,
 }
 
-/// Utility class for formatting Vietnamese đồng (₫) amounts
+/// Utility class for formatting Vietnamese đồng (đ) amounts
 ///
 /// Features:
-/// - Vietnamese number formatting (period as thousands separator)
+/// - Comma as thousands separator for consistency across the app
 /// - Integer-only (no decimals for đồng)
 /// - Context-based formatting (full, compact, shortCompact)
 ///
 /// Usage:
 /// ```dart
-/// CurrencyFormatter.format(50000, context: CurrencyContext.full);  // "50.000₫"
+/// CurrencyFormatter.format(50000, context: CurrencyContext.full);  // "50,000đ"
 /// CurrencyFormatter.format(50000, context: CurrencyContext.compact);  // "50k"
-/// CurrencyFormatter.format(1500000, context: CurrencyContext.shortCompact);  // "1.5M₫"
+/// CurrencyFormatter.format(1500000, context: CurrencyContext.shortCompact);  // "1.5Mđ"
 /// ```
 class CurrencyFormatter {
   // Private constructor to prevent instantiation
@@ -56,15 +56,14 @@ class CurrencyFormatter {
     }
   }
 
-  /// Format with full Vietnamese style: "50.000₫"
-  /// Uses period (.) as thousands separator, no decimals
+  /// Format with comma thousands separator: "50,000đ"
+  /// Uses comma (,) as thousands separator for consistency, no decimals
+  /// Currency symbol always appears after the number (Vietnamese style)
   static String formatFull(double amount) {
-    final formatter = NumberFormat.currency(
-      symbol: currencySymbol,
-      decimalDigits: 0,
-      locale: 'vi_VN',  // Vietnamese locale uses period as separator
-    );
-    return formatter.format(amount);
+    // Use decimalFormat to get comma separator without currency symbol position issues
+    final formatter = NumberFormat('#,##0', 'en_US');
+    final formattedNumber = formatter.format(amount);
+    return '$formattedNumber$currencySymbol';
   }
 
   /// Format in compact style for charts: "50k", "8.5m", "1.5b"
@@ -101,7 +100,7 @@ class CurrencyFormatter {
   /// Useful for form validation and editing
   ///
   /// Handles:
-  /// - Vietnamese formatting: "50.000" -> 50000.0
+  /// - Comma formatting: "50,000" -> 50000.0
   /// - Raw numbers: "50000" -> 50000.0
   /// - Invalid input: returns null
   static double? parse(String input) {
@@ -113,8 +112,8 @@ class CurrencyFormatter {
         .replaceAll(' ', '')
         .trim();
 
-    // Remove thousand separators (periods in Vietnamese, commas in international)
-    cleaned = cleaned.replaceAll('.', '').replaceAll(',', '');
+    // Remove thousand separators (commas)
+    cleaned = cleaned.replaceAll(',', '');
 
     // Try to parse
     return double.tryParse(cleaned);

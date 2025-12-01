@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/typography/app_typography.dart';
+import 'tappable_icon.dart';
 
 /// A header widget for bottom sheets with centered title and close button.
 ///
@@ -51,22 +52,17 @@ class SheetHeader extends StatelessWidget {
             ),
           ),
 
-          // Close button at right
+          // Close button at right with tap state feedback
           Positioned(
             right: 0,
             top: 0,
-            child: GestureDetector(
+            child: TappableIcon(
+              icon: PhosphorIconsRegular.x,
               onTap: onClose,
-              behavior: HitTestBehavior.opaque,
-              child: const SizedBox(
-                width: 24,
-                height: 24,
-                child: Icon(
-                  PhosphorIconsRegular.x,
-                  size: 24,
-                  color: AppColors.textBlack,
-                ),
-              ),
+              iconSize: 24,
+              iconColor: AppColors.textBlack,
+              containerSize: 24,
+              isCircular: true,
             ),
           ),
         ],

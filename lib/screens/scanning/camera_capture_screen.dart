@@ -4,16 +4,25 @@ import 'package:image_picker/image_picker.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/scanning/camera_service.dart';
 import '../../services/scanning/permission_service.dart';
+import '../../widgets/common/tappable_icon.dart';
 import 'image_preview_screen.dart';
 
 /// Full-screen camera interface for capturing receipt photos
 ///
-/// Features:
+/// **Design Reference**: Figma node-id=62-2484
+///
+/// **Layout Structure**:
+/// - Full-screen camera preview with 80% black overlay outside safe area
+/// - Top: Close button (white circle, 40x40) aligned right
+/// - Center: Image safe area (full-width - 32px, 30% white bg, 12px radius)
+/// - Bottom: Gallery | Capture | Flash buttons in horizontal row
+///
+/// **Features**:
 /// - Live camera preview
 /// - Gallery picker
-/// - Receipt framing guidelines (vertical rectangle)
+/// - Flash toggle
+/// - Receipt framing guidelines
 /// - Permission handling
-/// - Simplified UI focused on receipt scanning
 class CameraCaptureScreen extends StatefulWidget {
   const CameraCaptureScreen({super.key});
 
@@ -31,6 +40,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
   bool _hasPermission = false;
   String? _errorMessage;
   bool _isCapturing = false;
+  bool _isFlashOn = false;
 
   @override
   void initState() {
@@ -160,13 +170,10 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
       final photo = await _cameraService.takePicture();
 
       if (photo != null && mounted) {
-        // Navigate to preview screen
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ImagePreviewScreen(
-              imagePath: photo.path,
-            ),
-          ),
+        // Show preview as bottom sheet overlay (Figma node-id=62-1863)
+        await showImagePreviewSheet(
+          context: context,
+          imagePath: photo.path,
         );
       }
     } finally {
@@ -185,13 +192,10 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
       );
 
       if (image != null && mounted) {
-        // Navigate to preview screen with selected image
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ImagePreviewScreen(
-              imagePath: image.path,
-            ),
-          ),
+        // Show preview as bottom sheet overlay (Figma node-id=62-1863)
+        await showImagePreviewSheet(
+          context: context,
+          imagePath: image.path,
         );
       }
     } catch (e) {
@@ -203,6 +207,23 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
           ),
         );
       }
+    }
+  }
+
+  /// Toggle flash on/off
+  Future<void> _toggleFlash() async {
+    final controller = _cameraService.controller;
+    if (controller == null) return;
+
+    try {
+      if (_isFlashOn) {
+        await controller.setFlashMode(FlashMode.off);
+      } else {
+        await controller.setFlashMode(FlashMode.torch);
+      }
+      setState(() => _isFlashOn = !_isFlashOn);
+    } catch (e) {
+      debugPrint('Error toggling flash: $e');
     }
   }
 
@@ -341,80 +362,30 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
     );
   }
 
-  /// Top app bar with centered title and close button
+  /// Top bar with close button aligned right
+  ///
+  /// **Figma Specs** (node-id=62-2489):
+  /// - Close button: White circle 40x40, padding 4px, X icon 24px
+  /// - Position: Top-right with 16px padding
   Widget _buildAppBar() {
     return Positioned(
       top: 0,
       left: 0,
       right: 0,
       child: SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-        child: Row(
-          children: [
-            const Spacer(),
-            const Text(
-              'Scanning Receipt',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(PhosphorIconsRegular.x),
-              color: Colors.white,
-              iconSize: 28,
-            ),
-          ],
-        ),
-      ),
-      ),
-    );
-  }
-
-  /// Bottom controls with capture and gallery buttons
-  Widget _buildBottomControls() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 24,
-            bottom: 40,  // Even more space at bottom
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // Large capture button
-              _buildCaptureButton(),
-              
-              const SizedBox(height: 56),  // More spacing between buttons
-              
-              // Gallery button with icon + text (no border)
-              TextButton.icon(
-                onPressed: _pickFromGallery,
-                icon: const Icon(PhosphorIconsRegular.imageSquare, size: 20),
-                label: const Text(
-                  'Upload Receipt from Gallery',
-                  style: TextStyle(fontWeight: FontWeight.w500),  // Medium weight
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              // Close button - white circle with X icon and tap feedback
+              TappableCircleButton(
+                icon: PhosphorIconsRegular.x,
+                onTap: () => Navigator.of(context).pop(),
+                size: 40,
+                iconSize: 24,
+                backgroundColor: Colors.white,
+                iconColor: Colors.black,
               ),
             ],
           ),
@@ -423,39 +394,81 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
     );
   }
 
-  /// Large capture button
-  Widget _buildCaptureButton() {
-    return GestureDetector(
-      onTap: _isCapturing ? null : _capturePhoto,
-      child: Container(
-        width: 72,
-        height: 72,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white,
-            width: 4,
+  /// Bottom controls with Gallery | Capture | Flash buttons
+  ///
+  /// **Figma Specs** (node-id=62-2855):
+  /// - Layout: Row with 56px gap between items
+  /// - Gallery button: White circle 40x40, image icon 24px
+  /// - Capture button: 66x66 with ring design
+  /// - Flash button: White circle 40x40, lightning icon 24px
+  /// - Bottom padding: 40px (absolute, no SafeArea)
+  Widget _buildBottomControls() {
+    return Positioned(
+      bottom: 40, // Absolute 40px from screen bottom per Figma
+      left: 16,
+      right: 16,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Gallery button - white circle with image icon and tap feedback
+          TappableCircleButton(
+            icon: PhosphorIconsFill.image,
+            onTap: _pickFromGallery,
+            size: 40,
+            iconSize: 24,
+            backgroundColor: Colors.white,
+            iconColor: Colors.black,
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(4.0),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _isCapturing ? Colors.white54 : Colors.white,
-            ),
+
+          const SizedBox(width: 56), // Gap from Figma
+
+          // Capture button - large ring design with tap feedback
+          TappableCaptureButton(
+            onTap: _capturePhoto,
+            isCapturing: _isCapturing,
+            size: 66,
           ),
-        ),
+
+          const SizedBox(width: 56), // Gap from Figma
+
+          // Flash button - lightning-slash when off, lightning-fill when on
+          TappableCircleButton(
+            icon: _isFlashOn
+                ? PhosphorIconsFill.lightning
+                : PhosphorIconsRegular.lightningSlash,
+            onTap: _toggleFlash,
+            size: 40,
+            iconSize: 24,
+            backgroundColor: Colors.white,
+            iconColor: Colors.black,
+            activeIconColor: Colors.amber,
+            isActive: _isFlashOn,
+          ),
+        ],
       ),
     );
   }
 
   /// Dark overlay outside the capture frame to focus attention
+  ///
+  /// **Figma Specs** (node-id=62-2486):
+  /// - Overlay color: rgba(0,0,0,0.8) - 80% black
+  /// - Safe area: Full width - 32px (16px margins), 12px border radius
+  /// - Safe area positioned with top bar space and bottom controls space
   Widget _buildDarkOverlay() {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final frameWidth = screenWidth * 0.70;
-    final frameHeight = screenHeight * 0.65;  // Balanced height with margins
+    final safeAreaPadding = MediaQuery.of(context).padding;
+
+    // Frame dimensions: full width with 16px margins on each side
+    final frameWidth = screenWidth - 32;
+
+    // Calculate vertical space:
+    // Top: safe area + 16px padding + 40px close button + 16px gap
+    // Bottom: 40px padding + 66px capture button + 16px gap (absolute, no safe area)
+    final topOffset = safeAreaPadding.top + 16 + 40 + 16;
+    final bottomOffset = 40 + 66 + 16; // No safe area padding - absolute positioning
+    final frameHeight = screenHeight - topOffset - bottomOffset;
 
     return CustomPaint(
       size: Size(screenWidth, screenHeight),
@@ -463,55 +476,39 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
         frameWidth: frameWidth,
         frameHeight: frameHeight,
         borderRadius: 12,
+        topOffset: topOffset,
       ),
     );
   }
 
   /// Guidelines overlay to help frame receipts
+  ///
+  /// **Figma Specs** (node-id=62-2492):
+  /// - Border: Subtle white border with 12px rounded corners
+  /// - No corner markers - just clean rounded rectangle
   Widget _buildGuidelinesOverlay() {
-    return Center(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final safeAreaPadding = MediaQuery.of(context).padding;
+
+    // Match the same dimensions as the overlay cutout
+    final frameWidth = screenWidth - 32;
+    final topOffset = safeAreaPadding.top + 16 + 40 + 16;
+    final bottomOffset = 40 + 66 + 16; // No safe area - absolute positioning
+    final frameHeight = screenHeight - topOffset - bottomOffset;
+
+    return Positioned(
+      top: topOffset,
+      left: 16,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.70,
-        height: MediaQuery.of(context).size.height * 0.65,  // Balanced height
+        width: frameWidth,
+        height: frameHeight,
         decoration: BoxDecoration(
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.5),
-            width: 2,
+            color: Colors.white.withValues(alpha: 0.3),
+            width: 1,
           ),
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            // Corner markers
-            ...List.generate(4, (index) {
-              return Positioned(
-                top: index < 2 ? 0 : null,
-                bottom: index >= 2 ? 0 : null,
-                left: index % 2 == 0 ? 0 : null,
-                right: index % 2 == 1 ? 0 : null,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: index < 2
-                          ? BorderSide(color: Colors.white, width: 3)
-                          : BorderSide.none,
-                      bottom: index >= 2
-                          ? BorderSide(color: Colors.white, width: 3)
-                          : BorderSide.none,
-                      left: index % 2 == 0
-                          ? BorderSide(color: Colors.white, width: 3)
-                          : BorderSide.none,
-                      right: index % 2 == 1
-                          ? BorderSide(color: Colors.white, width: 3)
-                          : BorderSide.none,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ],
         ),
       ),
     );
@@ -519,28 +516,34 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen>
 }
 
 /// Custom painter for dark overlay with transparent cutout
+///
+/// **Figma Specs** (node-id=62-2486):
+/// - Overlay: 80% black opacity
+/// - Cutout: Rounded rectangle for safe area
 class _OverlayPainter extends CustomPainter {
   final double frameWidth;
   final double frameHeight;
   final double borderRadius;
+  final double topOffset;
 
   _OverlayPainter({
     required this.frameWidth,
     required this.frameHeight,
     required this.borderRadius,
+    required this.topOffset,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Calculate frame position (centered)
+    // Calculate frame position (horizontally centered, vertically positioned)
     final frameLeft = (size.width - frameWidth) / 2;
-    final frameTop = (size.height - frameHeight) / 2;
+    final frameTop = topOffset;
 
-    // Create the overlay path
+    // Create the overlay path (full screen)
     final overlayPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // Create the cutout path (rounded rectangle)
+    // Create the cutout path (rounded rectangle for safe area)
     final cutoutPath = Path()
       ..addRRect(
         RRect.fromRectAndRadius(
@@ -556,14 +559,18 @@ class _OverlayPainter extends CustomPainter {
       cutoutPath,
     );
 
-    // Draw the overlay with semi-transparent black
+    // Draw the overlay with 80% black per Figma spec
     final paint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.6)
+      ..color = Colors.black.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
 
     canvas.drawPath(finalPath, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _OverlayPainter oldDelegate) {
+    return frameWidth != oldDelegate.frameWidth ||
+        frameHeight != oldDelegate.frameHeight ||
+        topOffset != oldDelegate.topOffset;
+  }
 }

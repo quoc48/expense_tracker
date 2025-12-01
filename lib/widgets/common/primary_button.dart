@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/typography/app_typography.dart';
@@ -17,7 +18,7 @@ import '../../theme/typography/app_typography.dart';
 /// **States**:
 /// - Enabled: Black background, tappable
 /// - Disabled: Gray background (#C7C7CC), not tappable
-/// - Loading: Shows CircularProgressIndicator instead of text
+/// - Loading: Shows CupertinoActivityIndicator (iOS-style spinner)
 ///
 /// **Usage**:
 /// ```dart
@@ -45,17 +46,25 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isEnabled = onPressed != null && !isLoading;
+    // Disabled only when no callback provided (not during loading)
+    final isDisabled = onPressed == null;
+    // Not tappable during loading or when disabled
+    final isTappable = onPressed != null && !isLoading;
+
+    // Background: black when enabled/loading, gray only when truly disabled
+    final backgroundColor = isDisabled
+        ? const Color(0xFFC7C7CC)
+        : AppColors.textBlack;
 
     return SizedBox(
       width: double.infinity, // Full width
       height: 48,
       child: ElevatedButton(
-        onPressed: isEnabled ? onPressed : null,
+        onPressed: isTappable ? onPressed : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isEnabled ? AppColors.textBlack : const Color(0xFFC7C7CC),
+          backgroundColor: backgroundColor,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFC7C7CC),
+          disabledBackgroundColor: backgroundColor, // Keep same color when loading
           disabledForegroundColor: Colors.white,
           elevation: 0, // Flat design
           shape: RoundedRectangleBorder(
@@ -64,13 +73,9 @@ class PrimaryButton extends StatelessWidget {
           padding: EdgeInsets.zero, // We control height via SizedBox
         ),
         child: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
+            ? const CupertinoActivityIndicator(
+                color: Colors.white,
+                radius: 10,
               )
             : Text(
                 label,

@@ -4,6 +4,7 @@ import '../../theme/colors/app_colors.dart';
 import '../../theme/typography/app_typography.dart';
 import 'grabber_bottom_sheet.dart';
 import 'selection_card.dart';
+import 'tappable_icon.dart';
 
 // ============================================================================
 // DESIGN SYSTEM COMPONENT: SelectTypeSheet
@@ -107,15 +108,14 @@ class SelectTypeSheet extends StatelessWidget {
           ),
         ),
 
-        // Close button - 24px icon directly (no container)
-        GestureDetector(
+        // Close button with tap state feedback
+        TappableIcon(
+          icon: PhosphorIconsRegular.x,
           onTap: () => Navigator.pop(context),
-          behavior: HitTestBehavior.opaque,
-          child: const Icon(
-            PhosphorIconsRegular.x,
-            size: 24,
-            color: AppColors.textBlack,
-          ),
+          iconSize: 24,
+          iconColor: AppColors.textBlack,
+          containerSize: 28, // Slightly larger for easier tapping
+          isCircular: true,
         ),
       ],
     );
