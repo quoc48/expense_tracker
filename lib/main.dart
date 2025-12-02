@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'providers/user_preferences_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/sync_provider.dart';
+import 'providers/recurring_expense_provider.dart';
 import 'services/connectivity_monitor.dart';
 import 'services/queue_service.dart';
 import 'repositories/supabase_expense_repository.dart';
@@ -128,6 +129,11 @@ class ExpenseTrackerApp extends StatelessWidget {
             connectivityMonitor: connectivityMonitor,
             expenseRepository: SupabaseExpenseRepository(),
           ),
+        ),
+        // RecurringExpenseProvider manages recurring expense templates
+        // Auto-creates monthly expenses when the app opens
+        ChangeNotifierProvider(
+          create: (context) => RecurringExpenseProvider(),
         ),
       ],
       // Consumer listens to ThemeProvider and rebuilds MaterialApp when theme changes

@@ -124,6 +124,9 @@ class RecurringExpenseProvider extends ChangeNotifier {
   ///
   /// Uses optimistic UI: adds to list immediately, then saves to database.
   /// On failure, removes from list and shows error.
+  ///
+  /// **Auto-Creation:** After saving, immediately creates this month's expense
+  /// so user doesn't have to wait until next app open.
   Future<bool> createRecurringExpense(RecurringExpense expense) async {
     try {
       // Optimistic update
@@ -139,6 +142,15 @@ class RecurringExpenseProvider extends ChangeNotifier {
       if (index != -1) {
         _expenses[index] = saved;
         notifyListeners();
+      }
+
+      // Immediately create this month's expense
+      // So user sees it right away instead of waiting for next app open
+      final createdExpense = await _service.forceCreateExpense(saved.id);
+      if (createdExpense != null) {
+        debugPrint('✅ Immediately created expense for: ${saved.description}');
+        // Refresh to get updated lastCreatedDate
+        await loadRecurringExpenses();
       }
 
       _error = null;

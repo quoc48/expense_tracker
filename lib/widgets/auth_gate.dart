@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/auth_provider.dart';
+import '../providers/recurring_expense_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/main_navigation_screen.dart';
 
@@ -54,7 +56,74 @@ class AuthGate extends StatelessWidget {
       return const LoginScreen();
     }
 
-    // If authenticated, show main app
+    // If authenticated, show main app with recurring expense auto-creation
+    return const _AuthenticatedApp();
+  }
+}
+
+/// Wrapper widget that handles post-login tasks like recurring expense auto-creation
+///
+/// **Why a separate widget?**
+/// - AuthGate.build() can be called multiple times during rebuilds
+/// - We only want to process recurring expenses ONCE per login session
+/// - StatefulWidget with initState ensures one-time execution
+class _AuthenticatedApp extends StatefulWidget {
+  const _AuthenticatedApp();
+
+  @override
+  State<_AuthenticatedApp> createState() => _AuthenticatedAppState();
+}
+
+class _AuthenticatedAppState extends State<_AuthenticatedApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Process recurring expenses after the first frame renders
+    // This ensures the widget tree is built and context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _processRecurringExpenses();
+    });
+  }
+
+  /// Process recurring expenses to auto-create monthly expenses
+  ///
+  /// **Flow:**
+  /// 1. Wait briefly for auth token to be fully ready
+  /// 2. Load all recurring expense templates from Supabase
+  /// 3. Check each active template: does it need expense creation for this month?
+  /// 4. Create expenses for templates that haven't been created this month yet
+  /// 5. Update lastCreatedDate on processed templates
+  ///
+  /// This runs silently in the background - no UI feedback needed.
+  Future<void> _processRecurringExpenses() async {
+    // Capture provider before async gap
+    final provider = context.read<RecurringExpenseProvider>();
+    
+    try {
+      // Small delay to ensure auth token is fully refreshed
+      // This fixes race condition where token refresh happens simultaneously
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Verify user is still authenticated
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        debugPrint('⚠️ Skipping recurring expenses - user not authenticated');
+        return;
+      }
+
+      final count = await provider.processAutoCreation();
+
+      if (count > 0) {
+        debugPrint('✅ Auto-created $count recurring expenses');
+      }
+    } catch (e) {
+      // Silent failure - recurring expense auto-creation is non-critical
+      debugPrint('⚠️ Recurring expense auto-creation failed: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return const MainNavigationScreen();
   }
 }
