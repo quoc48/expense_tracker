@@ -10,12 +10,14 @@ import '../../models/expense.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/sync_provider.dart';
 import '../../repositories/supabase_expense_repository.dart';
-import '../../widgets/expense_card.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/typography/app_typography.dart';
+import '../../theme/minimalist/minimalist_icons.dart';
 import '../../widgets/common/tappable_icon.dart';
-
-import '../../screens/add_expense_screen.dart';
+import '../../widgets/common/add_expense_sheet.dart';
+import '../../widgets/common/select_date_sheet.dart';
+import '../../widgets/common/primary_button.dart';
+import '../../widgets/common/success_overlay.dart';
 
 /// Scanning state enum for managing the three distinct states
 enum ScanningState {
@@ -79,7 +81,8 @@ Future<bool?> showImagePreviewSheet({
   );
 }
 
-class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
+class _ImagePreviewScreenState extends State<ImagePreviewScreen>
+    with SingleTickerProviderStateMixin {
   // Services
   late VisionParserService _visionParser;
   late ExpensePatternService _patternService;
@@ -92,6 +95,11 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   // Processing state variables
   String _processingStep = 'Analyzing image...';
+  double _processingProgress = 0.0; // 0.0 to 1.0 for progress bar
+
+  // Animation controller for scanning line effect
+  late AnimationController _scanAnimationController;
+  late Animation<double> _scanLinePosition;
 
   // Results state variables
   List<ScannedItem> _scannedItems = [];
@@ -105,7 +113,27 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   void initState() {
     super.initState();
     _initializeServices();
+    _initializeAnimations();
     // Note: Removed _analyzeImageQuality() - new sheet-style UI is simplified
+  }
+
+  /// Initialize scanning line animation
+  ///
+  /// **Animation Details**:
+  /// - Duration: 1.5 seconds for one complete cycle
+  /// - Direction: Top (0.0) to bottom (1.0) and back
+  /// - Repeat: Continuous while processing state is active
+  void _initializeAnimations() {
+    _scanAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    // Linear animation from 0.0 to 1.0
+    _scanLinePosition = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(_scanAnimationController);
   }
 
   /// Initialize pattern learning and vision parser services
@@ -129,15 +157,26 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   @override
   void dispose() {
+    _scanAnimationController.dispose();
     _patternService.dispose();
     super.dispose();
   }
 
   /// Process the receipt image with Vision AI
+  ///
+  /// **Progress Tracking**:
+  /// - 0.0-0.15: Initial analysis setup
+  /// - 0.15-0.85: Vision AI processing (main work)
+  /// - 0.85-0.95: Categorizing items
+  /// - 0.95-1.0: Finalizing and cleanup
   Future<void> _processReceipt() async {
+    // Start animation and reset progress
+    _scanAnimationController.repeat(reverse: true);
+
     setState(() {
       _currentState = ScanningState.processing;
       _processingStep = 'Analyzing image...';
+      _processingProgress = 0.0;
     });
 
     try {
@@ -146,42 +185,47 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
       // Check if Vision parser is configured
       if (!_visionParser.isConfigured) {
+        _scanAnimationController.stop();
         throw Exception('Vision AI chưa được cấu hình. Vui lòng thêm OPENAI_API_KEY vào file .env');
       }
 
-      // Step 1: Analyzing
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Step 1: Initial analysis (0% -> 15%)
+      await _updateProgress(0.15, 'Analyzing image...');
       if (!mounted) return;
-      
+
+      // Step 2: Processing with Vision AI (15% -> 85%)
       setState(() {
         _processingStep = 'Extracting items...';
       });
 
-      // Process image with Vision AI
       debugPrint('👁️ Processing receipt with Vision AI...');
       final startTime = DateTime.now();
+
+      // Simulate incremental progress during API call
+      // Real progress happens in background, we animate smoothly to 85%
+      _animateProgressTo(0.85, const Duration(milliseconds: 3000));
+
       final scannedItems = await _visionParser.parseReceiptImage(imageFile);
 
       if (scannedItems.isEmpty) {
+        _scanAnimationController.stop();
         throw Exception('Không tìm thấy mặt hàng nào trong hóa đơn');
       }
 
       final processingTime = DateTime.now().difference(startTime).inMilliseconds;
       debugPrint('✅ Vision AI extracted ${scannedItems.length} items in ${processingTime}ms');
 
-      // Step 2: Categorizing
+      // Step 3: Categorizing (85% -> 95%)
       if (!mounted) return;
-      setState(() {
-        _processingStep = 'Categorizing items...';
-      });
-      await Future.delayed(const Duration(milliseconds: 500));
+      await _updateProgress(0.95, 'Categorizing items...');
 
-      // Step 3: Complete
+      // Step 4: Complete (95% -> 100%)
       if (!mounted) return;
-      setState(() {
-        _processingStep = 'Complete!';
-      });
+      await _updateProgress(1.0, 'Complete!');
       await Future.delayed(const Duration(milliseconds: 300));
+
+      // Stop animation
+      _scanAnimationController.stop();
 
       // CRITICAL - Delete temp image file (privacy)
       await _deleteTempImageFile(imageFile);
@@ -197,13 +241,48 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       debugPrint('❌ Error processing receipt: $e');
       debugPrint('Stack trace: $stackTrace');
 
+      _scanAnimationController.stop();
+
       if (mounted) {
         setState(() {
           _currentState = ScanningState.preview;
+          _processingProgress = 0.0;
         });
         _showErrorDialog(e.toString());
       }
     }
+  }
+
+  /// Update progress with smooth animation
+  Future<void> _updateProgress(double target, String step) async {
+    if (!mounted) return;
+    setState(() {
+      _processingStep = step;
+      _processingProgress = target;
+    });
+    await Future.delayed(const Duration(milliseconds: 300));
+  }
+
+  /// Animate progress smoothly to target value over duration
+  void _animateProgressTo(double target, Duration duration) {
+    final startProgress = _processingProgress;
+    final totalSteps = 20;
+    final stepDuration = duration ~/ totalSteps;
+    final increment = (target - startProgress) / totalSteps;
+
+    int currentStep = 0;
+    Future.doWhile(() async {
+      if (!mounted || currentStep >= totalSteps) return false;
+
+      await Future.delayed(Duration(milliseconds: stepDuration.inMilliseconds));
+      if (!mounted) return false;
+
+      currentStep++;
+      setState(() {
+        _processingProgress = startProgress + (increment * currentStep);
+      });
+      return currentStep < totalSteps;
+    });
   }
 
   /// Delete temporary image file after processing (PRIVACY CRITICAL)
@@ -295,12 +374,36 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       showDialog(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Discard changes?'),
-          content: const Text('Unsaved items will be lost. Are you sure?'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Discard changes?',
+            style: AppTypography.style(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textBlack,
+            ),
+          ),
+          content: Text(
+            'Unsaved items will be lost. Are you sure?',
+            style: AppTypography.style(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.gray,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: AppTypography.style(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textBlack,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
@@ -308,7 +411,14 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                 // Cancel entire flow - return to expense list
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
-              child: const Text('Discard'),
+              child: Text(
+                'Discard',
+                style: AppTypography.style(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.red,
+                ),
+              ),
             ),
           ],
         ),
@@ -490,101 +600,178 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     }
   }
 
-  /// Build Processing State view with checklist progress
+  /// Build Processing State view with new sheet-style UI
+  ///
+  /// **Design Reference**: Figma node-id=62-2550
+  ///
+  /// **Layout**:
+  /// - Same sheet style as preview (white bg, 24px rounded corners)
+  /// - Header: "< Camera" back + X close (reuses preview header)
+  /// - Image with pink/magenta scanning overlay effect
+  /// - Animated scanning line moving top-to-bottom
+  /// - Bottom: "Scanning ..." text + progress bar
+  /// - 40px bottom padding
   Widget _buildProcessingState(BuildContext context) {
-    return Container(
-      color: Colors.black87,
-      child: Center(
-        child: Card(
-          margin: const EdgeInsets.all(24),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Title
-                const Text(
-                  'Processing Receipt',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
+          // Header - same as preview state
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+            child: _buildPreviewHeader(context),
+          ),
 
-                // Progress steps
-                _buildProcessingStep(
-                  'Analyzing image...',
-                  _processingStep == 'Analyzing image...',
-                  _processingStep != 'Analyzing image...',
-                ),
-                const SizedBox(height: 16),
-                _buildProcessingStep(
-                  'Extracting items...',
-                  _processingStep == 'Extracting items...',
-                  _processingStep == 'Categorizing items...' || _processingStep == 'Complete!',
-                ),
-                const SizedBox(height: 16),
-                _buildProcessingStep(
-                  'Categorizing items...',
-                  _processingStep == 'Categorizing items...',
-                  _processingStep == 'Complete!',
-                ),
-                const SizedBox(height: 16),
-                _buildProcessingStep(
-                  'Complete!',
-                  _processingStep == 'Complete!',
-                  false,
-                ),
+          const SizedBox(height: 24),
 
-                const SizedBox(height: 24),
-
-                // Cancel button
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentState = ScanningState.preview;
-                    });
-                  },
-                  child: const Text('Cancel'),
-                ),
-              ],
+          // Image with scanning overlay effect
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildScanningImage(),
             ),
           ),
-        ),
+
+          // Bottom section: "Scanning ..." text + progress bar
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 40),
+            child: _buildProcessingBottom(),
+          ),
+        ],
       ),
     );
   }
 
-  /// Build a processing step indicator
-  Widget _buildProcessingStep(String label, bool isActive, bool isComplete) {
-    return Row(
-      children: [
-        // Icon
-        if (isComplete)
-          Icon(PhosphorIconsRegular.checkCircle, color: Colors.green.shade600, size: 24)
-        else if (isActive)
-          SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Theme.of(context).colorScheme.primary,
+  /// Build image with scanning overlay effect
+  ///
+  /// **Design Reference**: Figma node-id=62-2550
+  ///
+  /// **Effect**:
+  /// - Image displayed with cover fit
+  /// - Green semi-transparent overlay (radar-style)
+  /// - Animated scanning line moving top-to-bottom with glow
+  Widget _buildScanningImage() {
+    // Green color for radar-style scanning effect
+    const scanColor = Color(0xFF4CAF50); // Material Green 500
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Stack(
+        children: [
+          // Base image
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.gray6,
             ),
-          )
-        else
-          Icon(PhosphorIconsRegular.circle, color: Colors.grey.shade400, size: 24),
+            child: Image.file(
+              File(widget.imagePath),
+              fit: BoxFit.cover,
+            ),
+          ),
 
-        const SizedBox(width: 12),
+          // Green radar-style scanning overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: scanColor.withValues(alpha: 0.12), // Green at 12% opacity
+              ),
+            ),
+          ),
 
-        // Label
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-              color: isComplete || isActive ? null : Colors.grey.shade600,
+          // Animated scanning line
+          AnimatedBuilder(
+            animation: _scanAnimationController,
+            builder: (context, child) {
+              return Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final linePosition = _scanLinePosition.value * constraints.maxHeight;
+                    return Stack(
+                      children: [
+                        // Scanning line with glow effect
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: linePosition - 2,
+                          child: Container(
+                            height: 4,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  scanColor.withValues(alpha: 0.8),
+                                  scanColor,
+                                  scanColor.withValues(alpha: 0.8),
+                                  Colors.transparent,
+                                ],
+                                stops: const [0.0, 0.1, 0.5, 0.9, 1.0],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: scanColor.withValues(alpha: 0.6),
+                                  blurRadius: 12,
+                                  spreadRadius: 3,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build bottom section with step name and progress bar
+  ///
+  /// **Design Reference**: Figma node-id=62-2550
+  ///
+  /// **Updates**:
+  /// - Shows current processing step name (e.g., "Analyzing image...")
+  /// - Black progress bar instead of blue
+  Widget _buildProcessingBottom() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Processing step name (dynamic)
+        Text(
+          _processingStep,
+          style: AppTypography.style(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textBlack,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Progress bar (black)
+        Container(
+          width: double.infinity,
+          height: 8,
+          decoration: BoxDecoration(
+            color: AppColors.gray6,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: _processingProgress.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.textBlack, // Black progress bar
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
           ),
         ),
@@ -592,98 +779,324 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     );
   }
 
-  /// Build Results State view with scanned items
+  /// Build Results State view with new sheet-style UI
+  ///
+  /// **Design Reference**: Figma node-id=62-2616
+  ///
+  /// **Layout**:
+  /// - Header: "Scan Results" + X close button
+  /// - Summary row: Total | Date (tappable) | # Items
+  /// - Item list: Category icon + Description/Date + Amount
+  /// - Bottom: "+ New Item" + "Add Expenses" buttons
   Widget _buildResultsState(BuildContext context) {
     final total = _scannedItems.fold<double>(0.0, (sum, item) => sum + item.amount);
 
-    return Column(
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
+          // Header: "Scan Results" + X close
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+            child: _buildResultsHeader(context),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Summary row: Total | Date | # Items
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildSummaryRow(context, total),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Items list (no top divider, dividers between items)
+          Expanded(
+            child: _scannedItems.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    itemCount: _scannedItems.length,
+                    padding: EdgeInsets.zero,
+                    itemBuilder: (context, index) => _buildDismissibleItemRow(index),
+                  ),
+          ),
+
+          // Bottom actions: "+ New Item" + "Add Expenses"
+          _buildResultsBottomActions(context),
+        ],
+      ),
+    );
+  }
+
+  /// Build Results header with "Scan Results" title and X close button
+  ///
+  /// **Design Reference**: Figma node-id=62-2616
+  Widget _buildResultsHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Date summary section
-        _buildDateSummary(context),
+        // Spacer for symmetry (same width as close button)
+        const SizedBox(width: 32),
 
-        // Items list
-        Expanded(
-          child: _scannedItems.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  itemCount: _scannedItems.length,
-                  padding: const EdgeInsets.all(16),
-                  itemBuilder: (context, index) {
-                    final item = _scannedItems[index];
-                    
-                    // Convert ScannedItem to temporary Expense for display
-                    final tempExpense = Expense(
-                      id: 'temp_$index',
-                      amount: item.amount,
-                      description: item.description,
-                      categoryNameVi: _validateCategory(item.categoryNameVi), // Validate!
-                      typeNameVi: item.typeNameVi,
-                      date: _selectedDate,
-                    );
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ExpenseCard(
-                        expense: tempExpense,
-                        showWarning: item.confidence < 0.8,
-                        showDate: false,
-                        enableSwipe: true,
-                        onTap: () => _editItem(index),
-                        onDismissed: () => _removeItem(index),
-                      ),
-                    );
-                  },
-                ),
+        // Title - centered
+        Text(
+          'Scan Results',
+          style: AppTypography.style(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textBlack,
+          ),
         ),
 
-        // Bottom summary and actions
-        _buildBottomActions(context, total),
+        // Close button
+        TappableIcon(
+          icon: PhosphorIconsRegular.x,
+          onTap: () => _handleClose(context),
+          iconSize: 24,
+          iconColor: AppColors.textBlack,
+          containerSize: 32,
+          isCircular: true,
+        ),
       ],
     );
   }
 
-  /// Build date summary section
-  Widget _buildDateSummary(BuildContext context) {
+  /// Build summary row with Total, Date picker, and Items count
+  ///
+  /// **Design Reference**: Figma node-id=62-2616
+  ///
+  /// **Layout**: Three columns - Total (flex) | Date (flex) | # Items (fixed width)
+  Widget _buildSummaryRow(BuildContext context, double total) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).dividerColor,
-          ),
-        ),
+        color: AppColors.gray6, // Light grey background
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(
-            PhosphorIconsRegular.calendar,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(width: 12),
+          // Total column (flexible)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Receipt Date',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  'Total',
+                  style: AppTypography.style(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.gray,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _formatDate(_selectedDate),
-                  style: Theme.of(context).textTheme.titleMedium,
+                  _formatAmount(total),
+                  style: AppTypography.style(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textBlack,
+                  ),
                 ),
               ],
             ),
           ),
-          TextButton(
-            onPressed: () => _selectDate(context),
-            child: const Text('Change'),
+
+          // Date column (tappable, flexible)
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _selectDateSheet(context),
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Date',
+                    style: AppTypography.style(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.gray,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min, // Don't expand beyond content
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _formatDateSlash(_selectedDate),
+                          style: AppTypography.style(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textBlack,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        PhosphorIconsRegular.calendarDots,
+                        size: 20,
+                        color: AppColors.textBlack,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Items count column (fixed width to prevent overflow)
+          SizedBox(
+            width: 60,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '# Items',
+                  style: AppTypography.style(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.gray,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_scannedItems.length}',
+                  style: AppTypography.style(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textBlack,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  /// Build dismissible item row with swipe-to-delete
+  ///
+  /// **Design Reference**: Figma node-id=62-2616
+  ///
+  /// Wraps the item row in a Dismissible for swipe-left-to-delete functionality.
+  /// Shows divider between items (not after last item).
+  Widget _buildDismissibleItemRow(int index) {
+    final isLastItem = index == _scannedItems.length - 1;
+
+    return Dismissible(
+      key: Key(_scannedItems[index].id),
+      direction: DismissDirection.endToStart, // Swipe left only
+      onDismissed: (_) => _removeItemSilent(index),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: Colors.red,
+        child: const Icon(
+          PhosphorIconsRegular.trash,
+          color: Colors.white,
+          size: 24,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildItemRow(index),
+          // Divider between items (not after last item)
+          if (!isLastItem)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: const Divider(height: 1, thickness: 0.5),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Build individual item row in the list
+  ///
+  /// **Design Reference**: Figma node-id=62-2616
+  ///
+  /// **Layout**: Category icon (colored bg) + Description/Date + Amount
+  Widget _buildItemRow(int index) {
+    final item = _scannedItems[index];
+    final validCategory = _validateCategory(item.categoryNameVi);
+    final categoryColor = MinimalistIcons.getCategoryColor(validCategory);
+
+    return InkWell(
+      onTap: () => _editItemSheet(index),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            // Category icon with circular colored background (matches expense list)
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: categoryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  MinimalistIcons.getCategoryIconFill(validCategory),
+                  size: 18,
+                  color: categoryColor,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // Description and date
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.description,
+                    style: AppTypography.style(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textBlack,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatDateFull(_selectedDate),
+                    style: AppTypography.style(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.gray,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Amount
+            Text(
+              _formatAmount(item.amount),
+              style: AppTypography.style(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textBlack,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Remove item silently (no snackbar/undo)
+  void _removeItemSilent(int index) {
+    setState(() {
+      _scannedItems.removeAt(index);
+    });
   }
 
   /// Build empty state view
@@ -695,23 +1108,24 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           Icon(
             PhosphorIconsRegular.receipt,
             size: 64,
-            color: Colors.grey.shade400,
+            color: AppColors.gray,
           ),
           const SizedBox(height: 16),
           Text(
             'No items found',
-            style: TextStyle(
+            style: AppTypography.style(
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              color: Colors.grey.shade600,
+              color: AppColors.gray,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Try adding items manually',
-            style: TextStyle(
+            style: AppTypography.style(
               fontSize: 14,
-              color: Colors.grey.shade500,
+              fontWeight: FontWeight.w400,
+              color: AppColors.gray,
             ),
           ),
         ],
@@ -719,89 +1133,137 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     );
   }
 
-  /// Build bottom actions bar
+  /// Build bottom actions with "+ New Item" and "Add Expenses" buttons
   ///
-  /// **Spacing**: 16px horizontal/top, 40px bottom (consistent with preview)
-  Widget _buildBottomActions(BuildContext context, double total) {
+  /// **Design Reference**: Figma node-id=62-2616
+  ///
+  /// Both buttons have equal width (1:1 ratio).
+  /// - New Item: SecondaryButton (transparent, with plus icon)
+  /// - Add Expenses: PrimaryButton (filled black)
+  Widget _buildResultsBottomActions(BuildContext context) {
     return Container(
-      // 16px sides/top, 40px bottom - consistent spacing across all states
       padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          // Total summary
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total (${_scannedItems.length} items)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              Text(
-                _formatAmount(total),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ],
+          // "+ New Item" button (transparent, equal width)
+          Expanded(
+            child: SecondaryButton(
+              label: 'New Item',
+              icon: PhosphorIconsRegular.plus,
+              onPressed: _addNewItemSheet,
+            ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(width: 12),
 
-          // Action buttons
-          Row(
-            children: [
-              // Add manual item button
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _addManualItem,
-                  icon: const Icon(PhosphorIconsRegular.plus),
-                  label: const Text('Add Item'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Save all button
-              Expanded(
-                flex: 2,
-                child: FilledButton.icon(
-                  onPressed: (_scannedItems.isEmpty || _isSaving) ? null : _saveAllItems,
-                  icon: _isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Icon(PhosphorIconsRegular.check),
-                  label: Text(_isSaving ? 'Saving...' : 'Save All'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
-            ],
+          // "Add Expenses" button (filled black, equal width)
+          Expanded(
+            child: PrimaryButton(
+              label: 'Add Expenses',
+              isLoading: _isSaving,
+              onPressed: (_scannedItems.isEmpty || _isSaving) ? null : _saveAllItems,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  /// Open date picker sheet (same as Add Expense)
+  Future<void> _selectDateSheet(BuildContext context) async {
+    final DateTime? picked = await showSelectDateSheet(
+      context: context,
+      selectedDate: _selectedDate,
+    );
+
+    if (picked != null && picked != _selectedDate && mounted) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  /// Edit item using Add Expense sheet with "Edit Item" title
+  Future<void> _editItemSheet(int index) async {
+    final item = _scannedItems[index];
+
+    // Convert ScannedItem to Expense for editing
+    final tempExpense = Expense(
+      id: 'temp_$index',
+      amount: item.amount,
+      description: item.description,
+      categoryNameVi: _validateCategory(item.categoryNameVi),
+      typeNameVi: item.typeNameVi,
+      date: _selectedDate,
+    );
+
+    // Open Add Expense sheet with "Edit Item" title
+    final result = await showAddExpenseSheet(
+      context: context,
+      expense: tempExpense,
+      customTitle: 'Edit Item',
+      customButtonLabel: 'Update',
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _scannedItems[index] = ScannedItem(
+          id: item.id,
+          description: result.description,
+          amount: result.amount,
+          categoryNameVi: result.categoryNameVi,
+          typeNameVi: result.typeNameVi,
+          confidence: 1.0, // Manual edits have full confidence
+        );
+        // Also update date if changed in the edit sheet
+        _selectedDate = result.date;
+      });
+    }
+  }
+
+  /// Add new item using Add Expense sheet with "New Item" title
+  Future<void> _addNewItemSheet() async {
+    // Create empty expense with selected date
+    final newExpense = Expense(
+      id: '',
+      amount: 0.0,
+      description: '',
+      categoryNameVi: 'Thực phẩm', // Safe default
+      typeNameVi: 'Phải chi',
+      date: _selectedDate,
+    );
+
+    // Open Add Expense sheet with "New Item" title
+    final result = await showAddExpenseSheet(
+      context: context,
+      expense: newExpense,
+      customTitle: 'New Item',
+      customButtonLabel: 'Add',
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _scannedItems.add(ScannedItem(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          description: result.description,
+          amount: result.amount,
+          categoryNameVi: result.categoryNameVi,
+          typeNameVi: result.typeNameVi,
+          confidence: 1.0, // Manual items have full confidence
+        ));
+      });
+    }
+  }
+
+  /// Format date as DD/MM/YYYY (for summary row)
+  String _formatDateSlash(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  /// Format date as "Mon DD, YYYY" (for item rows)
+  String _formatDateFull(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day.toString().padLeft(2, '0')}, ${date.year}';
   }
 
   // ========== HELPER METHODS ==========
@@ -855,118 +1317,6 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     return 'Thực phẩm';
   }
 
-  /// Format date for display
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
-  /// Select date for all items
-  Future<void> _selectDate(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 730)), // Allow 2 years future
-    );
-
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  /// Edit item at index
-  Future<void> _editItem(int index) async {
-    final item = _scannedItems[index];
-    
-    // Convert to Expense for editing
-    final tempExpense = Expense(
-      id: 'temp_$index',
-      amount: item.amount,
-      description: item.description,
-      categoryNameVi: _validateCategory(item.categoryNameVi), // Validate!
-      typeNameVi: item.typeNameVi,
-      date: _selectedDate,
-    );
-
-    // Open edit screen with hidden date field
-    final result = await Navigator.of(context).push<Expense>(
-      MaterialPageRoute(
-        builder: (context) => AddExpenseScreen(
-          expense: tempExpense,
-          hiddenFields: const {'date'}, // Hide date - controlled by summary
-        ),
-      ),
-    );
-
-    if (result != null && mounted) {
-      setState(() {
-        _scannedItems[index] = ScannedItem(
-          id: item.id, // Keep original ID
-          description: result.description,
-          amount: result.amount,
-          categoryNameVi: result.categoryNameVi,
-          typeNameVi: result.typeNameVi,
-          confidence: 1.0, // Manual edits have full confidence
-        );
-      });
-    }
-  }
-
-  /// Remove item at index
-  void _removeItem(int index) {
-    setState(() {
-      _scannedItems.removeAt(index);
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Item removed'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () {
-            // TODO: Implement undo functionality
-          },
-        ),
-      ),
-    );
-  }
-
-  /// Add manual item
-  Future<void> _addManualItem() async {
-    final newExpense = Expense(
-      id: '',
-      amount: 0.0,
-      description: '',
-      categoryNameVi: 'Thực phẩm', // Safe default - exists in Supabase
-      typeNameVi: 'Phải chi',
-      date: _selectedDate,
-    );
-
-    final result = await Navigator.of(context).push<Expense>(
-      MaterialPageRoute(
-        builder: (context) => AddExpenseScreen(
-          expense: newExpense,
-          hiddenFields: const {'date'}, // Hide date - controlled by summary
-        ),
-      ),
-    );
-
-    if (result != null && mounted) {
-      setState(() {
-        _scannedItems.add(ScannedItem(
-          id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate new ID
-          description: result.description,
-          amount: result.amount,
-          categoryNameVi: result.categoryNameVi,
-          typeNameVi: result.typeNameVi,
-          confidence: 1.0, // Manual items have full confidence
-        ));
-      });
-    }
-  }
-
   /// Save all items as expenses
   Future<void> _saveAllItems() async {
     if (_scannedItems.isEmpty || _isSaving) return;
@@ -998,44 +1348,28 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
       if (!mounted) return;
 
+      // Build success message based on item count and online status
+      final String successMessage;
+      if (isOnline) {
+        successMessage = itemCount == 1
+            ? 'Expense added.'
+            : '$itemCount expenses added.';
+      } else {
+        successMessage = itemCount == 1
+            ? 'Expense queued.'
+            : '$itemCount expenses queued.';
+      }
+
       // Navigate back to expense list (popping all scanner screens)
       // This will go: ImagePreviewScreen -> CameraScreen -> ExpenseListScreen
       Navigator.of(context).popUntil((route) => route.isFirst);
 
-      // Show success message based on online/offline state
-      if (isOnline) {
-        // ONLINE: Items saved directly to Supabase
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(PhosphorIconsRegular.checkCircle, color: Colors.white),
-                const SizedBox(width: 12),
-                Text('✅ Saved $itemCount item${itemCount > 1 ? 's' : ''}'),
-              ],
-            ),
-            backgroundColor: Colors.green.shade600,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      } else {
-        // OFFLINE: Items queued for later sync
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(PhosphorIconsRegular.package, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('📦 Queued $itemCount item${itemCount > 1 ? 's' : ''} (will sync when online)'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.blue.shade600,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+      // Show success overlay (matches manual expense flow)
+      // ignore: use_build_context_synchronously
+      await showSuccessOverlay(
+        context: context,
+        message: successMessage,
+      );
 
     } catch (e) {
       if (!mounted) return;

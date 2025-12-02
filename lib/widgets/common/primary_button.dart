@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/typography/app_typography.dart';
 
+/// Button variant enum for different button styles
+enum ButtonVariant {
+  /// Primary filled button (black background, white text)
+  primary,
+
+  /// Secondary text button (transparent background, black text, optional icon)
+  secondary,
+}
+
 /// A primary action button with consistent styling.
 ///
 /// **Design Reference**: Figma node-id=55-1049
@@ -86,6 +95,83 @@ class PrimaryButton extends StatelessWidget {
                   letterSpacing: 0.32,
                 ),
               ),
+      ),
+    );
+  }
+}
+
+/// A secondary text button with transparent background.
+///
+/// **Specifications**:
+/// - Height: 48px
+/// - Background: Transparent
+/// - Border: None
+/// - Full width (expands to parent width)
+/// - Text: 14px Medium, black, centered
+/// - Optional leading icon
+///
+/// **Usage**:
+/// ```dart
+/// SecondaryButton(
+///   label: 'New Item',
+///   icon: PhosphorIconsRegular.plus,
+///   onPressed: _handleAddItem,
+/// )
+/// ```
+class SecondaryButton extends StatelessWidget {
+  /// The button label text.
+  final String label;
+
+  /// Optional leading icon.
+  final IconData? icon;
+
+  /// Callback when the button is pressed. Pass null to disable the button.
+  final VoidCallback? onPressed;
+
+  const SecondaryButton({
+    super.key,
+    required this.label,
+    this.icon,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDisabled = onPressed == null;
+    final textColor = isDisabled ? AppColors.gray : AppColors.textBlack;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: textColor,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: EdgeInsets.zero,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 20, color: textColor),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: AppTypography.style(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

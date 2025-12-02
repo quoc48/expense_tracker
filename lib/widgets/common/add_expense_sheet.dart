@@ -53,12 +53,22 @@ import 'select_type_sheet.dart';
 /// }
 /// ```
 class AddExpenseSheet extends StatefulWidget {
-  /// Optional expense for edit mode (not yet implemented).
+  /// Optional expense for edit mode.
   final Expense? expense;
+
+  /// Custom title override (e.g., "Edit Item", "New Item" for scanning context).
+  /// If null, uses default "Add Expense" / "Edit Expense".
+  final String? customTitle;
+
+  /// Custom button label override (e.g., "Add", "Update" for scanning context).
+  /// If null, uses default "Add Expense" / "Update".
+  final String? customButtonLabel;
 
   const AddExpenseSheet({
     super.key,
     this.expense,
+    this.customTitle,
+    this.customButtonLabel,
   });
 
   @override
@@ -505,9 +515,9 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
       behavior: HitTestBehavior.opaque,
       child: Column(
         children: [
-          // Header
+          // Header - use custom title if provided, otherwise default
           SheetHeader(
-            title: isEditing ? 'Edit Expense' : 'Add Expense',
+            title: widget.customTitle ?? (isEditing ? 'Edit Expense' : 'Add Expense'),
             onClose: () => Navigator.pop(context),
           ),
 
@@ -632,9 +642,9 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                         // Gap: Forms to Button (32px from Figma)
                         const SizedBox(height: 32),
 
-                        // Save Button (per Figma: "Add Expense" for new, "Update" for edit)
+                        // Save Button - use custom label if provided
                         PrimaryButton(
-                          label: isEditing ? 'Update' : 'Add Expense',
+                          label: widget.customButtonLabel ?? (isEditing ? 'Update' : 'Add Expense'),
                           isLoading: _isSaving,
                           onPressed: _saveExpense,
                         ),
@@ -665,6 +675,8 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
 Future<Expense?> showAddExpenseSheet({
   required BuildContext context,
   Expense? expense,
+  String? customTitle,
+  String? customButtonLabel,
 }) {
   return showGrabberBottomSheet<Expense>(
     context: context,
@@ -679,6 +691,10 @@ Future<Expense?> showAddExpenseSheet({
       top: 0,
       bottom: 16,
     ),
-    child: AddExpenseSheet(expense: expense),
+    child: AddExpenseSheet(
+      expense: expense,
+      customTitle: customTitle,
+      customButtonLabel: customButtonLabel,
+    ),
   );
 }
