@@ -68,6 +68,9 @@ class SelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Adaptive text color for dark mode
+    final textColor = AppColors.getTextPrimary(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -106,17 +109,17 @@ class SelectionCard extends StatelessWidget {
                     style: AppTypography.style(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textBlack,
+                      color: textColor, // Adaptive for dark mode
                     ),
                   ),
                 ),
 
                 // Checkmark for selected state
                 if (isSelected)
-                  const Icon(
+                  Icon(
                     PhosphorIconsFill.checkCircle,
                     size: 24,
-                    color: AppColors.textBlack,
+                    color: textColor, // Adaptive for dark mode
                   ),
               ],
             ),
@@ -125,10 +128,10 @@ class SelectionCard extends StatelessWidget {
 
         // Divider
         if (showDivider)
-          const Divider(
+          Divider(
             height: 1,
             thickness: 1,
-            color: AppColors.gray6,
+            color: AppColors.getDivider(context), // Adaptive for dark mode
           ),
       ],
     );
@@ -188,6 +191,9 @@ class SelectionCardText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Adaptive text color for dark mode
+    final textColor = AppColors.getTextPrimary(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -206,17 +212,17 @@ class SelectionCardText extends StatelessWidget {
                     style: AppTypography.style(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textBlack,
+                      color: textColor, // Adaptive for dark mode
                     ),
                   ),
                 ),
 
                 // Checkmark for selected state
                 if (isSelected)
-                  const Icon(
+                  Icon(
                     PhosphorIconsFill.checkCircle,
                     size: 24,
-                    color: AppColors.textBlack,
+                    color: textColor, // Adaptive for dark mode
                   ),
               ],
             ),
@@ -225,10 +231,10 @@ class SelectionCardText extends StatelessWidget {
 
         // Divider
         if (showDivider)
-          const Divider(
+          Divider(
             height: 1,
             thickness: 1,
-            color: AppColors.gray6,
+            color: AppColors.getDivider(context), // Adaptive for dark mode
           ),
       ],
     );

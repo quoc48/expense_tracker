@@ -260,24 +260,26 @@ class _SelectDateSheetState extends State<SelectDateSheet> {
     required bool isSelected,
     required bool isOutside,
   }) {
-    return Container(
-      margin: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.textBlack : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: Text(
-          day,
-          style: AppTypography.style(
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected
-                ? Colors.white
-                : isOutside
-                    ? AppColors.gray3
-                    : AppColors.textBlack,
-            letterSpacing: isSelected ? 0 : 0.28,
+    return Builder(
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.textBlack : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Text(
+            day,
+            style: AppTypography.style(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: isSelected
+                  ? Colors.white // White on black bg - always correct
+                  : isOutside
+                      ? AppColors.getBorder(context) // Dimmed for outside days
+                      : AppColors.getTextPrimary(context), // Adaptive text
+              letterSpacing: isSelected ? 0 : 0.28,
+            ),
           ),
         ),
       ),
@@ -662,10 +664,10 @@ class _SelectDateSheetWithHeaderState
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             color: isSelected
-                ? Colors.white
+                ? Colors.white // White on black bg - always correct
                 : isOutside
-                    ? AppColors.gray3
-                    : AppColors.textBlack,
+                    ? AppColors.getBorder(context) // Dimmed for outside days
+                    : AppColors.getTextPrimary(context), // Adaptive text
             letterSpacing: isSelected ? 0 : 0.28,
           ),
         ),

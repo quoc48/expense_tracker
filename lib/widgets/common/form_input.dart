@@ -131,12 +131,14 @@ class FormInput extends StatelessWidget {
   static const double _labelGap = 8.0;
   static const double _fontSize = 14.0;
   static const double _letterSpacing = 0.28;
-  static const Color _placeholderColor = Color(0xFFAEAEB2); // gray2
+  // Note: Placeholder color is now adaptive via AppColors.getPlaceholder(context)
   static const Color _errorColor = Color(0xFFFF3B30); // iOS red
 
   @override
   Widget build(BuildContext context) {
     final hasError = errorText != null && errorText!.isNotEmpty;
+    // Adaptive text color for dark mode
+    final textColor = AppColors.getTextPrimary(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,7 +150,7 @@ class FormInput extends StatelessWidget {
           style: AppTypography.style(
             fontSize: _fontSize,
             fontWeight: FontWeight.w400,
-            color: hasError ? _errorColor : AppColors.textBlack,
+            color: hasError ? _errorColor : textColor, // Adaptive for dark mode
             height: 20 / _fontSize,
           ),
         ),
@@ -190,51 +192,60 @@ class FormInput extends StatelessWidget {
   Widget _buildTextInput(bool hasError) {
     final isMultiLine = maxLines > 1;
 
-    return Container(
-      height: isMultiLine ? null : _inputHeight,
-      constraints: isMultiLine
-          ? const BoxConstraints(minHeight: _inputHeight)
-          : null,
-      decoration: BoxDecoration(
-        color: AppColors.gray6,
-        borderRadius: BorderRadius.circular(_borderRadius),
-        border: hasError
-            ? Border.all(color: _errorColor, width: 1)
-            : null,
-      ),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        textCapitalization: textCapitalization,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        style: AppTypography.style(
-          fontSize: _fontSize,
-          fontWeight: FontWeight.w400,
-          color: AppColors.textBlack,
-          letterSpacing: _letterSpacing,
-          height: 24 / _fontSize,
-        ),
-        decoration: InputDecoration(
-          hintText: placeholder,
-          hintStyle: AppTypography.style(
-            fontSize: _fontSize,
-            fontWeight: FontWeight.w400,
-            color: _placeholderColor,
-            letterSpacing: _letterSpacing,
-            height: 24 / _fontSize,
+    return Builder(
+      builder: (context) {
+        // Adaptive colors for dark mode
+        final inputBgColor = AppColors.getCardBackground(context);
+        final textColor = AppColors.getTextPrimary(context);
+        final placeholderColor = AppColors.getPlaceholder(context);
+
+        return Container(
+          height: isMultiLine ? null : _inputHeight,
+          constraints: isMultiLine
+              ? const BoxConstraints(minHeight: _inputHeight)
+              : null,
+          decoration: BoxDecoration(
+            color: inputBgColor, // Adaptive for dark mode
+            borderRadius: BorderRadius.circular(_borderRadius),
+            border: hasError
+                ? Border.all(color: _errorColor, width: 1)
+                : null,
           ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: _horizontalPadding,
-            vertical: isMultiLine ? 12 : (_inputHeight - 24) / 2,
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            readOnly: readOnly,
+            onChanged: onChanged,
+            textCapitalization: textCapitalization,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            style: AppTypography.style(
+              fontSize: _fontSize,
+              fontWeight: FontWeight.w400,
+              color: textColor, // Adaptive for dark mode
+              letterSpacing: _letterSpacing,
+              height: 24 / _fontSize,
+            ),
+            decoration: InputDecoration(
+              hintText: placeholder,
+              hintStyle: AppTypography.style(
+                fontSize: _fontSize,
+                fontWeight: FontWeight.w400,
+                color: placeholderColor, // Adaptive for dark mode
+                letterSpacing: _letterSpacing,
+                height: 24 / _fontSize,
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: _horizontalPadding,
+                vertical: isMultiLine ? 12 : (_inputHeight - 24) / 2,
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
           ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -242,49 +253,58 @@ class FormInput extends StatelessWidget {
   Widget _buildSelectInput(IconData icon, bool hasError) {
     final hasValue = value != null && value!.isNotEmpty;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: _inputHeight,
-        padding: const EdgeInsets.symmetric(horizontal: _horizontalPadding),
-        decoration: BoxDecoration(
-          color: AppColors.gray6,
-          borderRadius: BorderRadius.circular(_borderRadius),
-          border: hasError
-              ? Border.all(color: _errorColor, width: 1)
-              : null,
-        ),
-        child: Row(
-          children: [
-            // Leading widget (e.g., category icon) - only show when has value
-            if (leadingWidget != null && hasValue) ...[
-              leadingWidget!,
-              const SizedBox(width: 8), // Gap between icon and text
-            ],
+    return Builder(
+      builder: (context) {
+        // Adaptive colors for dark mode
+        final inputBgColor = AppColors.getCardBackground(context);
+        final textColor = AppColors.getTextPrimary(context);
+        final placeholderColor = AppColors.getPlaceholder(context);
 
-            // Value or placeholder text
-            Expanded(
-              child: Text(
-                hasValue ? value! : (placeholder ?? ''),
-                style: AppTypography.style(
-                  fontSize: _fontSize,
-                  fontWeight: FontWeight.w400,
-                  color: hasValue ? AppColors.textBlack : _placeholderColor,
-                  letterSpacing: _letterSpacing,
-                  height: 24 / _fontSize,
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: _inputHeight,
+            padding: const EdgeInsets.symmetric(horizontal: _horizontalPadding),
+            decoration: BoxDecoration(
+              color: inputBgColor, // Adaptive for dark mode
+              borderRadius: BorderRadius.circular(_borderRadius),
+              border: hasError
+                  ? Border.all(color: _errorColor, width: 1)
+                  : null,
+            ),
+            child: Row(
+              children: [
+                // Leading widget (e.g., category icon) - only show when has value
+                if (leadingWidget != null && hasValue) ...[
+                  leadingWidget!,
+                  const SizedBox(width: 8), // Gap between icon and text
+                ],
+
+                // Value or placeholder text
+                Expanded(
+                  child: Text(
+                    hasValue ? value! : (placeholder ?? ''),
+                    style: AppTypography.style(
+                      fontSize: _fontSize,
+                      fontWeight: FontWeight.w400,
+                      color: hasValue ? textColor : placeholderColor, // Adaptive for dark mode
+                      letterSpacing: _letterSpacing,
+                      height: 24 / _fontSize,
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            // Trailing icon (caret or calendar)
-            Icon(
-              icon,
-              size: 20,
-              color: AppColors.textBlack,
+                // Trailing icon (caret or calendar)
+                Icon(
+                  icon,
+                  size: 20,
+                  color: textColor, // Adaptive for dark mode
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

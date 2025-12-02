@@ -6,7 +6,6 @@ import '../models/expense.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_constants.dart';
 import '../theme/constants/app_spacing.dart';
-import '../theme/minimalist/minimalist_colors.dart';
 import '../theme/typography/app_typography.dart';
 import '../utils/currency_formatter.dart';
 
@@ -87,15 +86,15 @@ class ExpenseCard extends StatelessWidget {
         ),
         minVerticalPadding: 0, // Remove default ListTile vertical padding
         leading: CircleAvatar(
-          backgroundColor: MinimalistColors.getAdaptiveGray(
+          backgroundColor: AppColors.getAdaptiveNeutral(
             context,
-            lightColor: MinimalistColors.gray100,
-            darkColor: MinimalistColors.darkGray300, // Lighter circle in dark mode
+            lightColor: AppColors.neutral100,
+            darkColor: AppColors.neutral300Dark, // Lighter circle in dark mode
           ),
           radius: 20,
           child: Icon(
             expense.categoryIcon,
-            color: MinimalistColors.getAdaptivePrimaryText(context),
+            color: AppColors.getTextPrimary(context),
             size: AppConstants.iconSizeSm,
           ),
         ),
@@ -115,7 +114,7 @@ class ExpenseCard extends StatelessWidget {
               child: Text(
                 expense.description,
                 style: ComponentTextStyles.expenseTitleCompact(theme.textTheme).copyWith(
-                  color: MinimalistColors.getAdaptivePrimaryText(context),
+                  color: AppColors.getTextPrimary(context),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -130,14 +129,14 @@ class ExpenseCard extends StatelessWidget {
                 ? dateFormat.format(expense.date) // Show only date (original behavior)
                 : '${expense.categoryNameVi} • ${expense.typeNameVi}', // Show category and type (scan results)
             style: ComponentTextStyles.expenseDateCompact(theme.textTheme).copyWith(
-              color: MinimalistColors.getAdaptiveSecondaryText(context),
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ),
         trailing: Text(
           CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
           style: AppTypography.currencyMedium(
-            color: MinimalistColors.getAdaptivePrimaryText(context),
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         onTap: onTap,
@@ -166,7 +165,7 @@ class ExpenseCard extends StatelessWidget {
         ),
         child: Icon(
           PhosphorIconsLight.trash,
-          color: MinimalistColors.gray50, // Main background - for delete icon on red background
+          color: AppColors.neutral50, // Light color for delete icon on red background
           size: AppConstants.iconSizeLg,
         ),
       ),

@@ -54,6 +54,10 @@ class FormDateField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasValue = value != null && value!.isNotEmpty;
+    // Adaptive colors for dark mode
+    final textColor = AppColors.getTextPrimary(context);
+    final inputBgColor = AppColors.getCardBackground(context);
+    final placeholderColor = AppColors.getPlaceholder(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +69,7 @@ class FormDateField extends StatelessWidget {
           style: AppTypography.style(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: AppColors.textBlack,
+            color: textColor, // Adaptive for dark mode
             height: 20 / 14, // line-height: 20px
           ),
         ),
@@ -80,7 +84,7 @@ class FormDateField extends StatelessWidget {
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: AppColors.gray6,
+              color: inputBgColor, // Adaptive for dark mode
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -93,8 +97,8 @@ class FormDateField extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: hasValue
-                          ? AppColors.textBlack
-                          : const Color(0xFFAEAEB2), // gray2
+                          ? textColor // Adaptive for dark mode
+                          : placeholderColor, // Adaptive for dark mode
                       letterSpacing: 0.28,
                       height: 24 / 14,
                     ),
@@ -102,10 +106,10 @@ class FormDateField extends StatelessWidget {
                 ),
 
                 // Calendar icon (the key difference from FormSelectField)
-                const Icon(
+                Icon(
                   PhosphorIconsRegular.calendarDots,
                   size: 20,
-                  color: AppColors.textBlack,
+                  color: textColor, // Adaptive for dark mode
                 ),
               ],
             ),

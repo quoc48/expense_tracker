@@ -61,6 +61,11 @@ class FormTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Adaptive colors for dark mode
+    final textColor = AppColors.getTextPrimary(context);
+    final inputBgColor = AppColors.getCardBackground(context);
+    final placeholderColor = AppColors.getPlaceholder(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -68,10 +73,10 @@ class FormTextField extends StatelessWidget {
         // Label
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: AppColors.textBlack,
+            color: textColor, // Adaptive for dark mode
             height: 20 / 14, // line-height: 20px
           ),
         ),
@@ -83,7 +88,7 @@ class FormTextField extends StatelessWidget {
         Container(
           height: maxLines > 1 ? null : 48,
           decoration: BoxDecoration(
-            color: AppColors.gray6,
+            color: inputBgColor, // Adaptive for dark mode
             borderRadius: BorderRadius.circular(12),
           ),
           child: TextField(
@@ -93,19 +98,19 @@ class FormTextField extends StatelessWidget {
             onChanged: onChanged,
             textCapitalization: textCapitalization,
             maxLines: maxLines,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: AppColors.textBlack,
+              color: textColor, // Adaptive for dark mode
               letterSpacing: 0.28,
               height: 24 / 14, // line-height: 24px
             ),
             decoration: InputDecoration(
               hintText: placeholder,
-              hintStyle: const TextStyle(
+              hintStyle: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFFAEAEB2), // gray2 from Figma
+                color: placeholderColor, // Adaptive for dark mode
                 letterSpacing: 0.28,
                 height: 24 / 14,
               ),

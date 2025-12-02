@@ -109,9 +109,9 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       // Wrap in Material to prevent visual artifacts
       child: Material(

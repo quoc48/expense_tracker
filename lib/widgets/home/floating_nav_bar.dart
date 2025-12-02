@@ -47,23 +47,27 @@ class FloatingNavBar extends StatelessWidget {
       height: 98,
       child: Stack(
         children: [
-          // Gradient overlay for better contrast
-          // background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.9) 100%)
+          // Gradient overlay for better contrast - adapts to theme
           Positioned.fill(
             child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0.0, 0.5, 1.0],
-                    colors: [
-                      Color(0x00FFFFFF), // 0% opacity
-                      Color(0xCCFFFFFF), // 80% opacity (0xCC = 204 = 80%)
-                      Color(0xFFFFFFFF), // 100% solid white
-                    ],
-                  ),
-                ),
+              child: Builder(
+                builder: (context) {
+                  final bgColor = AppColors.getBackground(context);
+                  return DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0.0, 0.5, 1.0],
+                        colors: [
+                          bgColor.withValues(alpha: 0), // 0% opacity
+                          bgColor.withValues(alpha: 0.8), // 80% opacity
+                          bgColor, // 100% solid
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -122,17 +126,14 @@ class _NavigationPill extends StatelessWidget {
       height: 54,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Use nav bar specific color for layered depth in dark mode
+        // Creates hierarchy: bg (#000) → cards (#141414) → nav bar (#1A1A1A)
+        color: AppColors.getNavBarBackground(context),
         // Full pill shape (stadium)
         borderRadius: BorderRadius.circular(100),
         // Shadow from Figma: 0px 16px 32px -8px rgba(12,12,13,0.1)
         boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0C0C0D).withValues(alpha: 0.1),
-            blurRadius: 32,
-            spreadRadius: -8,
-            offset: const Offset(0, 16),
-          ),
+          AppColors.getCardShadow(context),
         ],
       ),
       child: Row(
@@ -176,8 +177,8 @@ class _NavigationPill extends StatelessWidget {
 ///
 /// **Figma Specs** (node-id=5-1100):
 /// - Size: 50x50
-/// - Background: Black
-/// - Icon: White + (plus-bold), 28px
+/// - Background: Black (white in dark mode)
+/// - Icon: White + (plus-bold), 28px (black in dark mode)
 class _FabButton extends StatelessWidget {
   final VoidCallback? onTap;
 
@@ -185,21 +186,25 @@ class _FabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FAB inverts colors in dark mode for visibility
+    final fabBgColor = AppColors.isDarkMode(context) ? AppColors.white : AppColors.black;
+    final fabIconColor = AppColors.isDarkMode(context) ? AppColors.black : AppColors.white;
+
     return Semantics(
       label: 'Add expense',
       button: true,
       child: Material(
-        color: Colors.black,
+        color: fabBgColor,
         shape: const CircleBorder(),
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
-          child: const SizedBox(
+          child: SizedBox(
             width: 50,
             height: 50,
             child: Icon(
               PhosphorIconsBold.plus,
-              color: Colors.white,
+              color: fabIconColor,
               size: 28,
             ),
           ),
@@ -225,9 +230,6 @@ class _NavItem extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  // Colors from Figma
-  static const Color _unselectedColor = Color(0xFFB1B1B1);
-
   const _NavItem({
     required this.icon,
     required this.label,
@@ -237,6 +239,10 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Colors adapt for dark mode
+    final selectedColor = AppColors.getTextPrimary(context);
+    final unselectedColor = AppColors.getNeutral400(context);
+
     return Semantics(
       label: label,
       button: true,
@@ -252,8 +258,8 @@ class _NavItem extends StatelessWidget {
             child: Icon(
               icon,
               size: 28,
-              // Selected: black, Unselected: light gray
-              color: isSelected ? AppColors.textBlack : _unselectedColor,
+              // Selected: primary text, Unselected: neutral gray
+              color: isSelected ? selectedColor : unselectedColor,
             ),
           ),
         ),

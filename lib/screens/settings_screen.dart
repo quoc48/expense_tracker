@@ -30,7 +30,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEDEFF1), // Light gray background per Figma
+      backgroundColor: AppColors.getBackground(context), // Adaptive background for dark mode
       body: SafeArea(
         child: Consumer<UserPreferencesProvider>(
           builder: (context, prefsProvider, child) {
@@ -241,7 +241,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildBudgetFinanceCard(BuildContext context, UserPreferencesProvider prefsProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getSurface(context), // Adaptive surface for dark mode
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -253,7 +253,7 @@ class SettingsScreen extends StatelessWidget {
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             height: 1,
-            color: const Color(0xFFF2F2F7),
+            color: AppColors.getDivider(context), // Adaptive divider for dark mode
           ),
 
           // Recurring Expenses row (coming soon)
@@ -431,7 +431,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildAppearanceCard(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getSurface(context), // Adaptive surface for dark mode
         borderRadius: BorderRadius.circular(8),
       ),
       child: _buildThemeRow(context),

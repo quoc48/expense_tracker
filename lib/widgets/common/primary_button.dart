@@ -61,9 +61,15 @@ class PrimaryButton extends StatelessWidget {
     final isTappable = onPressed != null && !isLoading;
 
     // Background: black when enabled/loading, gray only when truly disabled
+    // Dark mode: white when enabled, darker gray when disabled
     final backgroundColor = isDisabled
-        ? const Color(0xFFC7C7CC)
-        : AppColors.textBlack;
+        ? AppColors.getNeutral400(context)
+        : (AppColors.isDarkMode(context) ? AppColors.white : AppColors.textBlack);
+
+    // Foreground: white on black, black on white
+    final foregroundColor = AppColors.isDarkMode(context) && !isDisabled
+        ? AppColors.black
+        : AppColors.white;
 
     return SizedBox(
       width: double.infinity, // Full width
@@ -72,9 +78,9 @@ class PrimaryButton extends StatelessWidget {
         onPressed: isTappable ? onPressed : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
-          foregroundColor: Colors.white,
+          foregroundColor: foregroundColor,
           disabledBackgroundColor: backgroundColor, // Keep same color when loading
-          disabledForegroundColor: Colors.white,
+          disabledForegroundColor: foregroundColor,
           elevation: 0, // Flat design
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -82,8 +88,8 @@ class PrimaryButton extends StatelessWidget {
           padding: EdgeInsets.zero, // We control height via SizedBox
         ),
         child: isLoading
-            ? const CupertinoActivityIndicator(
-                color: Colors.white,
+            ? CupertinoActivityIndicator(
+                color: foregroundColor,
                 radius: 10,
               )
             : Text(
@@ -91,7 +97,7 @@ class PrimaryButton extends StatelessWidget {
                 style: AppTypography.style(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: foregroundColor,
                   letterSpacing: 0.32,
                 ),
               ),
@@ -138,7 +144,10 @@ class SecondaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDisabled = onPressed == null;
-    final textColor = isDisabled ? AppColors.gray : AppColors.textBlack;
+    // Adaptive text color for dark mode
+    final textColor = isDisabled
+        ? AppColors.getTextSecondary(context)
+        : AppColors.getTextPrimary(context);
 
     return SizedBox(
       width: double.infinity,

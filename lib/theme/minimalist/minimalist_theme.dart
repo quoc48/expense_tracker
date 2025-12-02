@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'minimalist_colors.dart';
+import '../colors/app_colors.dart';
 import 'minimalist_typography.dart';
 
 /// Complete minimalist theme configuration
@@ -21,8 +21,8 @@ class MinimalistTheme {
     // Create text theme with the color scheme
     final textTheme = MinimalistTypography.createTextTheme(
       primaryTextColor: colorScheme.onSurface,
-      secondaryTextColor: MinimalistColors.gray600,
-      tertiaryTextColor: MinimalistColors.gray500,
+      secondaryTextColor: AppColors.neutral600,
+      tertiaryTextColor: AppColors.neutral500,
     );
 
     return ThemeData(
@@ -38,7 +38,7 @@ class MinimalistTheme {
       visualDensity: VisualDensity.standard,
 
       // Scaffold
-      scaffoldBackgroundColor: MinimalistColors.gray50,
+      scaffoldBackgroundColor: AppColors.neutral50,
 
       // AppBar
       appBarTheme: _createAppBarTheme(colorScheme, textTheme),
@@ -110,8 +110,8 @@ class MinimalistTheme {
     // Create text theme with dark colors
     final textTheme = MinimalistTypography.createTextTheme(
       primaryTextColor: colorScheme.onSurface,
-      secondaryTextColor: MinimalistColors.darkGray600,
-      tertiaryTextColor: MinimalistColors.darkGray500,
+      secondaryTextColor: AppColors.neutral600Dark,
+      tertiaryTextColor: AppColors.neutral500Dark,
     );
 
     return ThemeData(
@@ -127,7 +127,7 @@ class MinimalistTheme {
       visualDensity: VisualDensity.standard,
 
       // Scaffold
-      scaffoldBackgroundColor: MinimalistColors.darkGray50,
+      scaffoldBackgroundColor: AppColors.neutral50Dark,
 
       // AppBar
       appBarTheme: _createAppBarThemeDark(colorScheme, textTheme),
@@ -195,46 +195,46 @@ class MinimalistTheme {
   static ColorScheme _createLightColorScheme() {
     return ColorScheme.light(
       // Primary colors (black for actions)
-      primary: MinimalistColors.black,
-      onPrimary: MinimalistColors.white,
-      primaryContainer: MinimalistColors.gray900,
-      onPrimaryContainer: MinimalistColors.white,
+      primary: AppColors.black,
+      onPrimary: AppColors.white,
+      primaryContainer: AppColors.neutral900,
+      onPrimaryContainer: AppColors.white,
 
       // Secondary colors (gray for less important)
-      secondary: MinimalistColors.gray700,
-      onSecondary: MinimalistColors.white,
-      secondaryContainer: MinimalistColors.gray200,
-      onSecondaryContainer: MinimalistColors.gray900,
+      secondary: AppColors.neutral700,
+      onSecondary: AppColors.white,
+      secondaryContainer: AppColors.neutral200,
+      onSecondaryContainer: AppColors.neutral900,
 
       // Tertiary (unused, set to gray)
-      tertiary: MinimalistColors.gray500,
-      onTertiary: MinimalistColors.white,
-      tertiaryContainer: MinimalistColors.gray100,
-      onTertiaryContainer: MinimalistColors.gray900,
+      tertiary: AppColors.neutral500,
+      onTertiary: AppColors.white,
+      tertiaryContainer: AppColors.neutral100,
+      onTertiaryContainer: AppColors.neutral900,
 
       // Error colors
-      error: MinimalistColors.errorText,
-      onError: MinimalistColors.white,
-      errorContainer: MinimalistColors.errorBackground,
-      onErrorContainer: MinimalistColors.errorText,
+      error: AppColors.errorDark,
+      onError: AppColors.white,
+      errorContainer: AppColors.errorBackground,
+      onErrorContainer: AppColors.errorDark,
 
       // Surface colors
-      surface: MinimalistColors.white,
-      onSurface: MinimalistColors.gray900,
-      surfaceContainerHighest: MinimalistColors.gray100,
-      onSurfaceVariant: MinimalistColors.gray600,
+      surface: AppColors.white,
+      onSurface: AppColors.neutral900,
+      surfaceContainerHighest: AppColors.neutral100,
+      onSurfaceVariant: AppColors.neutral600,
 
       // Outline
-      outline: MinimalistColors.gray300,
-      outlineVariant: MinimalistColors.gray200,
+      outline: AppColors.neutral300,
+      outlineVariant: AppColors.neutral200,
 
       // Shadows
-      shadow: MinimalistColors.black,
+      shadow: AppColors.black,
 
       // Inverse colors
-      inverseSurface: MinimalistColors.gray900,
-      onInverseSurface: MinimalistColors.white,
-      inversePrimary: MinimalistColors.white,
+      inverseSurface: AppColors.neutral900,
+      onInverseSurface: AppColors.white,
+      inversePrimary: AppColors.white,
 
       // Surface tint
       surfaceTint: Colors.transparent,
@@ -245,46 +245,46 @@ class MinimalistTheme {
   static ColorScheme _createDarkColorScheme() {
     return ColorScheme.dark(
       // Primary colors (white for actions in dark mode)
-      primary: MinimalistColors.white,
-      onPrimary: MinimalistColors.black,  // Black icon/text on white background
-      primaryContainer: MinimalistColors.darkGray800,
-      onPrimaryContainer: MinimalistColors.darkGray900,
+      primary: AppColors.white,
+      onPrimary: AppColors.black,  // Black icon/text on white background
+      primaryContainer: AppColors.neutral800Dark,
+      onPrimaryContainer: AppColors.neutral900Dark,
 
       // Secondary colors
-      secondary: MinimalistColors.darkGray700,
-      onSecondary: MinimalistColors.darkGray900,
-      secondaryContainer: MinimalistColors.darkGray300,
-      onSecondaryContainer: MinimalistColors.darkGray900,
+      secondary: AppColors.neutral700Dark,
+      onSecondary: AppColors.neutral900Dark,
+      secondaryContainer: AppColors.neutral300Dark,
+      onSecondaryContainer: AppColors.neutral900Dark,
 
       // Tertiary
-      tertiary: MinimalistColors.darkGray600,
-      onTertiary: MinimalistColors.darkGray900,
-      tertiaryContainer: MinimalistColors.darkGray200,
-      onTertiaryContainer: MinimalistColors.darkGray900,
+      tertiary: AppColors.neutral600Dark,
+      onTertiary: AppColors.neutral900Dark,
+      tertiaryContainer: AppColors.neutral200Dark,
+      onTertiaryContainer: AppColors.neutral900Dark,
 
       // Error colors
-      error: MinimalistColors.darkAlertError,
-      onError: MinimalistColors.darkGray900,
-      errorContainer: MinimalistColors.darkAlertError.withValues(alpha: 0.2),
-      onErrorContainer: MinimalistColors.darkGray900,
+      error: AppColors.alertErrorDark,
+      onError: AppColors.neutral900Dark,
+      errorContainer: AppColors.alertErrorDark.withValues(alpha: 0.2),
+      onErrorContainer: AppColors.neutral900Dark,
 
       // Surface colors
-      surface: MinimalistColors.darkGray100,
-      onSurface: MinimalistColors.darkGray900,
-      surfaceContainerHighest: MinimalistColors.darkGray200,
-      onSurfaceVariant: MinimalistColors.darkGray600,
+      surface: AppColors.neutral100Dark,
+      onSurface: AppColors.neutral900Dark,
+      surfaceContainerHighest: AppColors.neutral200Dark,
+      onSurfaceVariant: AppColors.neutral600Dark,
 
       // Outline
-      outline: MinimalistColors.darkGray300,
-      outlineVariant: MinimalistColors.darkGray200,
+      outline: AppColors.neutral300Dark,
+      outlineVariant: AppColors.neutral200Dark,
 
       // Shadows
-      shadow: MinimalistColors.black,
+      shadow: AppColors.black,
 
       // Inverse colors
-      inverseSurface: MinimalistColors.white,
-      onInverseSurface: MinimalistColors.gray900,
-      inversePrimary: MinimalistColors.black,
+      inverseSurface: AppColors.white,
+      onInverseSurface: AppColors.neutral900,
+      inversePrimary: AppColors.black,
 
       // Surface tint
       surfaceTint: Colors.transparent,
@@ -301,7 +301,7 @@ class MinimalistTheme {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      backgroundColor: MinimalistColors.white,
+      backgroundColor: AppColors.white,
       foregroundColor: colors.onSurface,
       titleTextStyle: text.headlineLarge,
       systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -319,11 +319,11 @@ class MinimalistTheme {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(
-          color: MinimalistColors.gray200,
+          color: AppColors.neutral200,
           width: 1,
         ),
       ),
-      color: MinimalistColors.white,
+      color: AppColors.white,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
   }
@@ -338,8 +338,8 @@ class MinimalistTheme {
         elevation: 0,
         backgroundColor: colors.primary,
         foregroundColor: colors.onPrimary,
-        disabledBackgroundColor: MinimalistColors.gray300,
-        disabledForegroundColor: MinimalistColors.gray500,
+        disabledBackgroundColor: AppColors.neutral300,
+        disabledForegroundColor: AppColors.neutral500,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         minimumSize: const Size(64, 40),
         textStyle: text.labelLarge,
@@ -358,7 +358,7 @@ class MinimalistTheme {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: colors.primary,
-        disabledForegroundColor: MinimalistColors.gray400,
+        disabledForegroundColor: AppColors.neutral400,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         minimumSize: const Size(64, 36),
         textStyle: text.labelLarge,
@@ -377,8 +377,8 @@ class MinimalistTheme {
     return OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: colors.primary,
-        disabledForegroundColor: MinimalistColors.gray400,
-        side: const BorderSide(color: MinimalistColors.gray300),
+        disabledForegroundColor: AppColors.neutral400,
+        side: const BorderSide(color: AppColors.neutral300),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         minimumSize: const Size(64, 40),
         textStyle: text.labelLarge,
@@ -409,8 +409,8 @@ class MinimalistTheme {
         backgroundColor: colors.primary,      // Black in light mode (same as FAB)
         foregroundColor: colors.onPrimary,    // White in light mode (same as FAB)
         iconColor: colors.onPrimary,          // Ensure icons use same color
-        disabledBackgroundColor: MinimalistColors.gray300,
-        disabledForegroundColor: MinimalistColors.gray500,
+        disabledBackgroundColor: AppColors.neutral300,
+        disabledForegroundColor: AppColors.neutral500,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         shape: RoundedRectangleBorder(
@@ -438,15 +438,15 @@ class MinimalistTheme {
   ) {
     return InputDecorationTheme(
       filled: false,
-      fillColor: MinimalistColors.gray50,
+      fillColor: AppColors.neutral50,
       contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
 
       // Borders
       border: const UnderlineInputBorder(
-        borderSide: BorderSide(color: MinimalistColors.gray300),
+        borderSide: BorderSide(color: AppColors.neutral300),
       ),
       enabledBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: MinimalistColors.gray300),
+        borderSide: BorderSide(color: AppColors.neutral300),
       ),
       focusedBorder: UnderlineInputBorder(
         borderSide: BorderSide(color: colors.primary, width: 2),
@@ -458,7 +458,7 @@ class MinimalistTheme {
         borderSide: BorderSide(color: colors.error, width: 2),
       ),
       disabledBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: MinimalistColors.gray200),
+        borderSide: BorderSide(color: AppColors.neutral200),
       ),
 
       // Text styles
@@ -467,13 +467,13 @@ class MinimalistTheme {
       helperStyle: text.bodySmall,
       errorStyle: text.bodySmall?.copyWith(color: colors.error),
       hintStyle: text.bodyMedium?.copyWith(
-        color: MinimalistColors.gray400,
+        color: AppColors.neutral400,
       ),
 
       // Icons
-      iconColor: MinimalistColors.gray600,
-      prefixIconColor: MinimalistColors.gray600,
-      suffixIconColor: MinimalistColors.gray600,
+      iconColor: AppColors.neutral600,
+      prefixIconColor: AppColors.neutral600,
+      suffixIconColor: AppColors.neutral600,
     );
   }
 
@@ -485,7 +485,7 @@ class MinimalistTheme {
     return NavigationBarThemeData(
       height: 64,
       elevation: 0,
-      backgroundColor: MinimalistColors.white,
+      backgroundColor: AppColors.white,
       indicatorColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -496,7 +496,7 @@ class MinimalistTheme {
           );
         }
         return text.labelSmall?.copyWith(
-          color: MinimalistColors.gray500,
+          color: AppColors.neutral500,
         );
       }),
       iconTheme: WidgetStateProperty.resolveWith((states) {
@@ -507,7 +507,7 @@ class MinimalistTheme {
           );
         }
         return const IconThemeData(
-          color: MinimalistColors.gray500,
+          color: AppColors.neutral500,
           size: 24,
         );
       }),
@@ -520,9 +520,9 @@ class MinimalistTheme {
     TextTheme text,
   ) {
     return BottomNavigationBarThemeData(
-      backgroundColor: MinimalistColors.white,
+      backgroundColor: AppColors.white,
       selectedItemColor: colors.primary,
-      unselectedItemColor: MinimalistColors.gray500,
+      unselectedItemColor: AppColors.neutral500,
       selectedLabelStyle: text.labelSmall,
       unselectedLabelStyle: text.labelSmall,
       showSelectedLabels: true,
@@ -543,10 +543,10 @@ class MinimalistTheme {
         borderRadius: BorderRadius.circular(8),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      iconColor: MinimalistColors.gray600,
+      iconColor: AppColors.neutral600,
       textColor: colors.onSurface,
-      tileColor: MinimalistColors.white,
-      selectedTileColor: MinimalistColors.gray100,
+      tileColor: AppColors.white,
+      selectedTileColor: AppColors.neutral100,
       selectedColor: colors.primary,
     );
   }
@@ -554,7 +554,7 @@ class MinimalistTheme {
   /// Divider theme
   static DividerThemeData _createDividerTheme() {
     return const DividerThemeData(
-      color: MinimalistColors.gray200,
+      color: AppColors.neutral200,
       thickness: 1,
       space: 1,
     );
@@ -563,7 +563,7 @@ class MinimalistTheme {
   /// Icon theme
   static IconThemeData _createIconTheme(ColorScheme colors) {
     return const IconThemeData(
-      color: MinimalistColors.gray700,
+      color: AppColors.neutral700,
       size: 24,
     );
   }
@@ -574,18 +574,18 @@ class MinimalistTheme {
     TextTheme text,
   ) {
     return ChipThemeData(
-      backgroundColor: MinimalistColors.gray100,
-      deleteIconColor: MinimalistColors.gray600,
-      disabledColor: MinimalistColors.gray200,
+      backgroundColor: AppColors.neutral100,
+      deleteIconColor: AppColors.neutral600,
+      disabledColor: AppColors.neutral200,
       selectedColor: colors.primary,
-      secondarySelectedColor: MinimalistColors.gray700,
+      secondarySelectedColor: AppColors.neutral700,
       labelPadding: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       labelStyle: text.labelMedium!,
       secondaryLabelStyle: text.labelMedium!,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: MinimalistColors.gray300),
+        side: const BorderSide(color: AppColors.neutral300),
       ),
     );
   }
@@ -596,13 +596,13 @@ class MinimalistTheme {
     TextTheme text,
   ) {
     return DialogThemeData(
-      backgroundColor: MinimalistColors.white,
+      backgroundColor: AppColors.white,
       elevation: 0,
       titleTextStyle: text.headlineLarge,
       contentTextStyle: text.bodyLarge,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: MinimalistColors.gray200),
+        side: const BorderSide(color: AppColors.neutral200),
       ),
     );
   }
@@ -613,11 +613,11 @@ class MinimalistTheme {
     TextTheme text,
   ) {
     return SnackBarThemeData(
-      backgroundColor: MinimalistColors.gray900,
+      backgroundColor: AppColors.neutral900,
       contentTextStyle: text.bodyMedium?.copyWith(
-        color: MinimalistColors.white,
+        color: AppColors.white,
       ),
-      actionTextColor: MinimalistColors.white,
+      actionTextColor: AppColors.white,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -631,8 +631,8 @@ class MinimalistTheme {
   ) {
     return ProgressIndicatorThemeData(
       color: colors.primary,
-      linearTrackColor: MinimalistColors.gray200,
-      circularTrackColor: MinimalistColors.gray200,
+      linearTrackColor: AppColors.neutral200,
+      circularTrackColor: AppColors.neutral200,
     );
   }
 
@@ -643,13 +643,13 @@ class MinimalistTheme {
         if (states.contains(WidgetState.selected)) {
           return colors.primary;
         }
-        return MinimalistColors.gray400;
+        return AppColors.neutral400;
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
           return colors.primary.withValues(alpha: 0.5);
         }
-        return MinimalistColors.gray300;
+        return AppColors.neutral300;
       }),
     );
   }
@@ -663,8 +663,8 @@ class MinimalistTheme {
         }
         return Colors.transparent;
       }),
-      checkColor: WidgetStateProperty.all(MinimalistColors.white),
-      side: const BorderSide(color: MinimalistColors.gray400, width: 2),
+      checkColor: WidgetStateProperty.all(AppColors.white),
+      side: const BorderSide(color: AppColors.neutral400, width: 2),
     );
   }
 
@@ -675,7 +675,7 @@ class MinimalistTheme {
         if (states.contains(WidgetState.selected)) {
           return colors.primary;
         }
-        return MinimalistColors.gray400;
+        return AppColors.neutral400;
       }),
     );
   }
@@ -690,7 +690,7 @@ class MinimalistTheme {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      backgroundColor: MinimalistColors.darkGray100,
+      backgroundColor: AppColors.neutral100Dark,
       foregroundColor: colors.onSurface,
       titleTextStyle: text.headlineLarge,
       systemOverlayStyle: SystemUiOverlayStyle.light,
@@ -708,11 +708,11 @@ class MinimalistTheme {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(
-          color: MinimalistColors.darkGray300,
+          color: AppColors.neutral300Dark,
           width: 1,
         ),
       ),
-      color: MinimalistColors.darkGray200,
+      color: AppColors.neutral200Dark,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
   }
@@ -727,8 +727,8 @@ class MinimalistTheme {
         elevation: 0,
         backgroundColor: colors.primary,
         foregroundColor: colors.onPrimary,
-        disabledBackgroundColor: MinimalistColors.darkGray400,
-        disabledForegroundColor: MinimalistColors.darkGray600,
+        disabledBackgroundColor: AppColors.neutral400Dark,
+        disabledForegroundColor: AppColors.neutral600Dark,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         minimumSize: const Size(64, 40),
         textStyle: text.labelLarge,
@@ -747,7 +747,7 @@ class MinimalistTheme {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: colors.primary,
-        disabledForegroundColor: MinimalistColors.darkGray500,
+        disabledForegroundColor: AppColors.neutral500Dark,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         minimumSize: const Size(64, 36),
         textStyle: text.labelLarge,
@@ -766,8 +766,8 @@ class MinimalistTheme {
     return OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: colors.primary,
-        disabledForegroundColor: MinimalistColors.darkGray500,
-        side: const BorderSide(color: MinimalistColors.darkGray400),
+        disabledForegroundColor: AppColors.neutral500Dark,
+        side: const BorderSide(color: AppColors.neutral400Dark),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         minimumSize: const Size(64, 40),
         textStyle: text.labelLarge,
@@ -798,8 +798,8 @@ class MinimalistTheme {
         backgroundColor: colors.primary,      // White in dark mode (same as FAB)
         foregroundColor: colors.onPrimary,    // Black in dark mode (same as FAB)
         iconColor: colors.onPrimary,          // Ensure icons use same color
-        disabledBackgroundColor: MinimalistColors.darkGray400,
-        disabledForegroundColor: MinimalistColors.darkGray600,
+        disabledBackgroundColor: AppColors.neutral400Dark,
+        disabledForegroundColor: AppColors.neutral600Dark,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         shape: RoundedRectangleBorder(
@@ -827,15 +827,15 @@ class MinimalistTheme {
   ) {
     return InputDecorationTheme(
       filled: false,
-      fillColor: MinimalistColors.darkGray100,
+      fillColor: AppColors.neutral100Dark,
       contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
 
       // Borders
       border: const UnderlineInputBorder(
-        borderSide: BorderSide(color: MinimalistColors.darkGray400),
+        borderSide: BorderSide(color: AppColors.neutral400Dark),
       ),
       enabledBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: MinimalistColors.darkGray400),
+        borderSide: BorderSide(color: AppColors.neutral400Dark),
       ),
       focusedBorder: UnderlineInputBorder(
         borderSide: BorderSide(color: colors.primary, width: 2),
@@ -847,7 +847,7 @@ class MinimalistTheme {
         borderSide: BorderSide(color: colors.error, width: 2),
       ),
       disabledBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: MinimalistColors.darkGray300),
+        borderSide: BorderSide(color: AppColors.neutral300Dark),
       ),
 
       // Text styles
@@ -856,13 +856,13 @@ class MinimalistTheme {
       helperStyle: text.bodySmall,
       errorStyle: text.bodySmall?.copyWith(color: colors.error),
       hintStyle: text.bodyMedium?.copyWith(
-        color: MinimalistColors.darkGray500,
+        color: AppColors.neutral500Dark,
       ),
 
       // Icons
-      iconColor: MinimalistColors.darkGray600,
-      prefixIconColor: MinimalistColors.darkGray600,
-      suffixIconColor: MinimalistColors.darkGray600,
+      iconColor: AppColors.neutral600Dark,
+      prefixIconColor: AppColors.neutral600Dark,
+      suffixIconColor: AppColors.neutral600Dark,
     );
   }
 
@@ -874,7 +874,7 @@ class MinimalistTheme {
     return NavigationBarThemeData(
       height: 64,
       elevation: 0,
-      backgroundColor: MinimalistColors.darkGray100,
+      backgroundColor: AppColors.neutral100Dark,
       indicatorColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -885,7 +885,7 @@ class MinimalistTheme {
           );
         }
         return text.labelSmall?.copyWith(
-          color: MinimalistColors.darkGray600,
+          color: AppColors.neutral600Dark,
         );
       }),
       iconTheme: WidgetStateProperty.resolveWith((states) {
@@ -896,7 +896,7 @@ class MinimalistTheme {
           );
         }
         return const IconThemeData(
-          color: MinimalistColors.darkGray600,
+          color: AppColors.neutral600Dark,
           size: 24,
         );
       }),
@@ -909,9 +909,9 @@ class MinimalistTheme {
     TextTheme text,
   ) {
     return BottomNavigationBarThemeData(
-      backgroundColor: MinimalistColors.darkGray100,
+      backgroundColor: AppColors.neutral100Dark,
       selectedItemColor: colors.primary,
-      unselectedItemColor: MinimalistColors.darkGray600,
+      unselectedItemColor: AppColors.neutral600Dark,
       selectedLabelStyle: text.labelSmall,
       unselectedLabelStyle: text.labelSmall,
       showSelectedLabels: true,
@@ -932,10 +932,10 @@ class MinimalistTheme {
         borderRadius: BorderRadius.circular(8),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      iconColor: MinimalistColors.darkGray600,
+      iconColor: AppColors.neutral600Dark,
       textColor: colors.onSurface,
-      tileColor: MinimalistColors.darkGray100,
-      selectedTileColor: MinimalistColors.darkGray200,
+      tileColor: AppColors.neutral100Dark,
+      selectedTileColor: AppColors.neutral200Dark,
       selectedColor: colors.primary,
     );
   }
@@ -943,7 +943,7 @@ class MinimalistTheme {
   /// Divider theme (dark)
   static DividerThemeData _createDividerThemeDark() {
     return const DividerThemeData(
-      color: MinimalistColors.darkGray300,
+      color: AppColors.neutral300Dark,
       thickness: 1,
       space: 1,
     );
@@ -952,7 +952,7 @@ class MinimalistTheme {
   /// Icon theme (dark)
   static IconThemeData _createIconThemeDark(ColorScheme colors) {
     return const IconThemeData(
-      color: MinimalistColors.darkGray700,
+      color: AppColors.neutral700Dark,
       size: 24,
     );
   }
@@ -963,18 +963,18 @@ class MinimalistTheme {
     TextTheme text,
   ) {
     return ChipThemeData(
-      backgroundColor: MinimalistColors.darkGray200,
-      deleteIconColor: MinimalistColors.darkGray600,
-      disabledColor: MinimalistColors.darkGray300,
+      backgroundColor: AppColors.neutral200Dark,
+      deleteIconColor: AppColors.neutral600Dark,
+      disabledColor: AppColors.neutral300Dark,
       selectedColor: colors.primary,
-      secondarySelectedColor: MinimalistColors.darkGray700,
+      secondarySelectedColor: AppColors.neutral700Dark,
       labelPadding: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       labelStyle: text.labelMedium!,
       secondaryLabelStyle: text.labelMedium!,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: MinimalistColors.darkGray400),
+        side: const BorderSide(color: AppColors.neutral400Dark),
       ),
     );
   }
@@ -985,13 +985,13 @@ class MinimalistTheme {
     TextTheme text,
   ) {
     return DialogThemeData(
-      backgroundColor: MinimalistColors.darkGray100,
+      backgroundColor: AppColors.neutral100Dark,
       elevation: 0,
       titleTextStyle: text.headlineLarge,
       contentTextStyle: text.bodyLarge,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: MinimalistColors.darkGray300),
+        side: const BorderSide(color: AppColors.neutral300Dark),
       ),
     );
   }
@@ -1002,11 +1002,11 @@ class MinimalistTheme {
     TextTheme text,
   ) {
     return SnackBarThemeData(
-      backgroundColor: MinimalistColors.darkGray200,  // Dark background for dark mode
+      backgroundColor: AppColors.neutral200Dark,  // Dark background for dark mode
       contentTextStyle: text.bodyMedium?.copyWith(
-        color: MinimalistColors.darkGray900,  // White text
+        color: AppColors.neutral900Dark,  // White text
       ),
-      actionTextColor: MinimalistColors.white,
+      actionTextColor: AppColors.white,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -1020,8 +1020,8 @@ class MinimalistTheme {
   ) {
     return ProgressIndicatorThemeData(
       color: colors.primary,
-      linearTrackColor: MinimalistColors.darkGray300,
-      circularTrackColor: MinimalistColors.darkGray300,
+      linearTrackColor: AppColors.neutral300Dark,
+      circularTrackColor: AppColors.neutral300Dark,
     );
   }
 
@@ -1032,13 +1032,13 @@ class MinimalistTheme {
         if (states.contains(WidgetState.selected)) {
           return colors.primary;
         }
-        return MinimalistColors.darkGray500;
+        return AppColors.neutral500Dark;
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
           return colors.primary.withValues(alpha: 0.5);
         }
-        return MinimalistColors.darkGray400;
+        return AppColors.neutral400Dark;
       }),
     );
   }
@@ -1052,8 +1052,8 @@ class MinimalistTheme {
         }
         return Colors.transparent;
       }),
-      checkColor: WidgetStateProperty.all(MinimalistColors.darkGray900),
-      side: const BorderSide(color: MinimalistColors.darkGray500, width: 2),
+      checkColor: WidgetStateProperty.all(AppColors.neutral900Dark),
+      side: const BorderSide(color: AppColors.neutral500Dark, width: 2),
     );
   }
 
@@ -1064,7 +1064,7 @@ class MinimalistTheme {
         if (states.contains(WidgetState.selected)) {
           return colors.primary;
         }
-        return MinimalistColors.darkGray500;
+        return AppColors.neutral500Dark;
       }),
     );
   }

@@ -44,10 +44,11 @@ class AnalyticsSummaryCard extends StatelessWidget {
   });
 
   // Momo Trust Sans text style helper
+  // Note: color parameter is required to ensure callers explicitly handle dark mode
   TextStyle _momoTextStyle({
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.w400,
-    Color color = AppColors.textBlack,
+    required Color color,
     double? height,
   }) {
     return TextStyle(
@@ -66,15 +67,12 @@ class AnalyticsSummaryCard extends StatelessWidget {
       // Figma spec: top 24, bottom 16, left/right 0
       padding: const EdgeInsets.only(top: 24, bottom: 16, left: 0, right: 0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Use cardDark (#161616) for cards on main background in dark mode
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(16), // Figma: 16px radius
         // Subtle shadow for depth
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
+          AppColors.getCardShadow(context),
         ],
       ),
       child: Column(
@@ -87,7 +85,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
           const SizedBox(height: 16),
           Container(
             height: 1,
-            color: const Color(0xFFF2F2F7), // Figma: #F2F2F7
+            color: AppColors.getDivider(context),
           ),
 
           // Budget progress section (only show if budget is set AND showBudgetProgress is true)
@@ -97,7 +95,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
             // Divider between Part 2 and Part 3
             Container(
               height: 1,
-              color: const Color(0xFFF2F2F7), // Figma: #F2F2F7
+              color: AppColors.getDivider(context),
             ),
           ],
 
@@ -118,25 +116,25 @@ class AnalyticsSummaryCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Month label - 14px, w500, gray
+        // Month label - 14px, w500, gray (adaptive for dark mode)
         Text(
           '$monthName Spent',
           style: _momoTextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: AppColors.gray,
+            color: AppColors.getTextSecondary(context),
           ),
         ),
 
         const SizedBox(height: 8), // Figma: 8px spacing
 
-        // Large amount display - 32px, bold, black
+        // Large amount display - 32px, bold (adaptive for dark mode)
         Text(
           CurrencyFormatter.format(totalSpent),
           style: _momoTextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold, // Figma: bold weight
-            color: AppColors.textBlack,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
       ],
@@ -153,6 +151,11 @@ class AnalyticsSummaryCard extends StatelessWidget {
     // Determine color based on spending level
     final progressColor = _getProgressColor(percentage);
 
+    // Get adaptive colors for dark mode
+    final progressBarBackground = AppColors.isDarkMode(context)
+        ? AppColors.neutral300Dark
+        : AppColors.gray6;
+
     return Padding(
       // Figma: padding left/right 16px
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -167,7 +170,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
                 style: _momoTextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textBlack,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
               Text(
@@ -193,7 +196,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: percentage,
                     minHeight: 8,
-                    backgroundColor: AppColors.gray6,
+                    backgroundColor: progressBarBackground,
                     valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                   ),
                 ),
@@ -201,13 +204,13 @@ class AnalyticsSummaryCard extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // Percentage display - 12px, w500, gray
+              // Percentage display - 12px, w500 (adaptive for dark mode)
               Text(
                 '$percentageDisplay%',
                 style: _momoTextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.gray,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
             ],
@@ -240,7 +243,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
             'Not enough data for trend',
             style: _momoTextStyle(
               fontSize: 14,
-              color: AppColors.gray,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ),
@@ -319,13 +322,13 @@ class AnalyticsSummaryCard extends StatelessWidget {
 
                     clipData: const FlClipData.all(),
 
-                    // Budget baseline
+                    // Budget baseline (adaptive for dark mode)
                     extraLinesData: budgetAmount > 0
                         ? ExtraLinesData(
                             horizontalLines: [
                               HorizontalLine(
                                 y: budgetAmount,
-                                color: AppColors.gray.withValues(alpha: 0.5),
+                                color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
                                 strokeWidth: 1,
                                 dashArray: [5, 5],
                               ),
@@ -400,18 +403,18 @@ class AnalyticsSummaryCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF2F2F7), // Figma: #F2F2F7
+                        color: AppColors.getCardBackground(context),
                         borderRadius: BorderRadius.circular(2),
                       ),
                       child: Text(
                         'Budget (${CurrencyFormatter.formatCompact(budgetAmount)})',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'MomoTrustSans',
                           fontSize: 8,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textBlack, // Figma: #000
-                          fontFeatures: [
+                          color: AppColors.getTextPrimary(context),
+                          fontFeatures: const [
                             FontFeature.disable('liga'),
                             FontFeature.disable('clig'),
                           ],
@@ -426,7 +429,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
           // X-axis divider line
           Container(
             height: 1,
-            color: const Color(0xFFF2F2F7),
+            color: AppColors.getDivider(context),
           ),
 
           // Month labels row - 6 equal-width containers (Jun-Nov)
@@ -446,7 +449,10 @@ class AnalyticsSummaryCard extends StatelessWidget {
                     style: _momoTextStyle(
                       fontSize: 11,
                       fontWeight: isCurrentMonth ? FontWeight.bold : FontWeight.w400,
-                      color: isCurrentMonth ? AppColors.textBlack : AppColors.gray,
+                      // Adaptive colors for dark mode
+                      color: isCurrentMonth
+                          ? AppColors.getTextPrimary(context)
+                          : AppColors.getTextSecondary(context),
                     ),
                   ),
                 ),

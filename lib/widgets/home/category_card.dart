@@ -99,34 +99,41 @@ class CategoryCard extends StatelessWidget {
 
                   // Centered content: icon + amount in a sub-container
                   Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Filled icon - 24px as per Figma
-                        Icon(
-                          MinimalistIcons.getCategoryIconFill(categoryName),
-                          size: 24,
-                          color: AppColors.textBlack,
-                        ),
+                    child: Builder(
+                      builder: (context) {
+                        // Adaptive text color for dark mode
+                        final textColor = AppColors.getTextPrimary(context);
 
-                        // 8px spacing between icon and text
-                        const SizedBox(height: 8),
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Filled icon - 24px as per Figma (adaptive for dark mode)
+                            Icon(
+                              MinimalistIcons.getCategoryIconFill(categoryName),
+                              size: 24,
+                              color: textColor,
+                            ),
 
-                        // Amount text - Momo Trust Sans, 14px, w500
-                        Text(
-                          _formatAmount(amount),
-                          style: const TextStyle(
-                            fontFamily: 'MomoTrustSans',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textBlack,
-                            fontFeatures: [
-                              FontFeature.disable('liga'),
-                              FontFeature.disable('clig'),
-                            ],
-                          ),
-                        ),
-                      ],
+                            // 8px spacing between icon and text
+                            const SizedBox(height: 8),
+
+                            // Amount text - Momo Trust Sans, 14px, w500 (adaptive for dark mode)
+                            Text(
+                              _formatAmount(amount),
+                              style: TextStyle(
+                                fontFamily: 'MomoTrustSans',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: textColor,
+                                fontFeatures: const [
+                                  FontFeature.disable('liga'),
+                                  FontFeature.disable('clig'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],

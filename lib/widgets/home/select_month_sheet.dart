@@ -154,22 +154,22 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Title - left aligned, gray color
+        // Title - left aligned, adaptive gray color for dark mode
         Text(
           'Select Month',
           style: AppTypography.style(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: AppColors.gray,
+            color: AppColors.getTextSecondary(context),
           ),
         ),
 
-        // Close button with tap state feedback
+        // Close button with tap state feedback (adaptive for dark mode)
         TappableIcon(
           icon: PhosphorIconsRegular.x,
           onTap: () => Navigator.pop(context),
           iconSize: 24,
-          iconColor: AppColors.textBlack,
+          iconColor: AppColors.getTextPrimary(context),
           containerSize: 28,
           isCircular: true,
         ),
@@ -189,23 +189,25 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
       children: [
         // Left arrow button
         _buildNavigationButton(
+          context: context,
           icon: PhosphorIconsRegular.caretLeft,
           onTap: _canGoToPreviousYear ? _goToPreviousYear : null,
           isEnabled: _canGoToPreviousYear,
         ),
 
-        // Year label (centered via spaceBetween)
+        // Year label (centered via spaceBetween) - adaptive for dark mode
         Text(
           _displayYear.toString(),
           style: AppTypography.style(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textBlack,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
 
         // Right arrow button
         _buildNavigationButton(
+          context: context,
           icon: PhosphorIconsRegular.caretRight,
           onTap: _canGoToNextYear ? _goToNextYear : null,
           isEnabled: _canGoToNextYear,
@@ -221,10 +223,16 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
   /// - Border: 1px gray (#C7C7CC)
   /// - Icon: 20px, black when enabled, gray when disabled
   Widget _buildNavigationButton({
+    required BuildContext context,
     required IconData icon,
     required VoidCallback? onTap,
     required bool isEnabled,
   }) {
+    // Adaptive colors for dark mode
+    final borderColor = AppColors.getNeutral400(context);
+    final enabledIconColor = AppColors.getTextPrimary(context);
+    final disabledIconColor = AppColors.getTextSecondary(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -233,7 +241,7 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: const Color(0xFFC7C7CC),
+            color: borderColor,
             width: 1,
           ),
         ),
@@ -241,7 +249,7 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
           child: Icon(
             icon,
             size: 20,
-            color: isEnabled ? AppColors.textBlack : AppColors.gray,
+            color: isEnabled ? enabledIconColor : disabledIconColor,
           ),
         ),
       ),
@@ -305,6 +313,7 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
   /// **Design Reference**: Figma node-id=73-2603
   /// - Height: 40px
   /// - Selected: Black background (#000), white text, 12px rounded corners
+  ///   (inverts in dark mode: white bg, black text)
   /// - Normal: Transparent background, black text (#000)
   /// - Disabled: Transparent background, gray text (#8E8E93)
   Widget _buildMonthCell({
@@ -313,30 +322,40 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
     required bool isEnabled,
     required VoidCallback? onTap,
   }) {
-    // Determine colors based on state
-    final backgroundColor = isSelected ? AppColors.textBlack : Colors.transparent;
-    final textColor = isSelected
-        ? Colors.white
-        : (isEnabled ? AppColors.textBlack : AppColors.gray);
+    return Builder(
+      builder: (context) {
+        // Determine colors based on state - adaptive for dark mode
+        // Selected state inverts like buttons: black/white → white/black in dark mode
+        final isDark = AppColors.isDarkMode(context);
+        final backgroundColor = isSelected
+            ? (isDark ? AppColors.white : AppColors.black)
+            : Colors.transparent;
+        final textColor = isSelected
+            ? (isDark ? AppColors.black : AppColors.white) // Inverted for selected
+            : (isEnabled
+                ? AppColors.getTextPrimary(context) // Adaptive text
+                : AppColors.getTextSecondary(context)); // Dimmed for disabled
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 40,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: AppTypography.style(
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: textColor,
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: AppTypography.style(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: textColor,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

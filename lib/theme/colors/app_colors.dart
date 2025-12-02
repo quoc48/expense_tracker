@@ -4,25 +4,40 @@ import 'package:flutter/material.dart';
 /// Based on Figma design with iOS-style gray system
 ///
 /// Design Reference: Figma node-id=5-939
+///
+/// **Usage**: Use adaptive helper methods for dark mode support:
+/// - `AppColors.getBackground(context)` instead of `AppColors.background`
+/// - `AppColors.getSurface(context)` for card/sheet backgrounds
+/// - `AppColors.getTextPrimary(context)` for primary text
+/// - `AppColors.getDivider(context)` for dividers
 class AppColors {
   // Private constructor to prevent instantiation
   AppColors._();
 
-  // ===== iOS Gray System (from Figma) =====
+  // ===== iOS Gray System - Light Mode (from Figma) =====
   // These colors follow Apple's Human Interface Guidelines
   static const Color background = Color(0xFFEDEFF1);      // Main app background
   static const Color gray = Color(0xFF8E8E93);            // Secondary text
-  static const Color gray3 = Color(0xFFC7C7CC);           // Disabled/placeholder text
-  static const Color gray5 = Color(0xFFE5E5EA);           // Borders, dividers
+  static const Color gray3 = Color(0xFFC7C7CC);           // Borders
+  static const Color gray5 = Color(0xFFE5E5EA);           // Dividers
   static const Color gray6 = Color(0xFFF2F2F7);           // Card backgrounds
+  static const Color grayPlaceholder = Color(0xFFAEAEB2); // Placeholder text
+
+  // ===== iOS Gray System - Dark Mode =====
+  // Darker, more subtle colors for premium Revolut-style dark mode
+  static const Color gray3Dark = Color(0xFF2C2C2E);       // Borders - subtle
+  static const Color gray5Dark = Color(0xFF1A1A1A);       // Elevated surfaces
+  static const Color gray6Dark = Color(0xFF121212);       // Card backgrounds - darker
 
   // ===== Overlay & Sheet Colors (from Figma node-id=58-3460) =====
   // Used for modal overlays, bottom sheets, and grabber indicators
-  static const Color overlayDark = Color(0x33000000);     // 20% black - modal backdrop
+  static const Color overlayDark = Color(0x33000000);     // 20% black - modal backdrop (light mode)
+  static const Color overlayLight = Color(0x33FFFFFF);    // 20% white - modal backdrop (dark mode)
   static const Color grabber = Color(0x4D3C3C43);         // rgba(60,60,67,0.3) - iOS grabber
 
   // ===== Text Colors (from Figma) =====
   static const Color textBlack = Color(0xFF000000);       // Primary text, titles
+  static const Color textWhite = Color(0xFFFFFFFF);       // Primary text in dark mode
 
   // ===== Primary Brand Colors =====
   // Keeping teal as primary for brand consistency
@@ -62,18 +77,50 @@ class AppColors {
   static const Color infoDark = Color(0xFF0288D1);
   static const Color infoBackground = Color(0xFFE1F5FE);
 
+  // ===== Pure Black and White =====
+  // Used for CTAs, active states, and high contrast elements
+  static const Color black = Color(0xFF000000);
+  static const Color white = Color(0xFFFFFFFF);
+
+  // ===== Alert Colors (warm minimalist earth tones) =====
+  // Used for budget status indicators with a cohesive warm palette
+  static const Color alertWarning = Color(0xFFE9C46A);   // Budget 70-90% - Sandy gold
+  static const Color alertCritical = Color(0xFFF4A261);  // Budget 90-100% - Peachy orange
+  static const Color alertError = Color(0xFFE76F51);     // Budget >100% - Coral terracotta
+
+  // ===== Dark Mode Alert Colors (dimmed warm earth tones) =====
+  static const Color alertWarningDark = Color(0xFFD4B55F);   // Dimmed sandy gold
+  static const Color alertCriticalDark = Color(0xFFE09456);  // Dimmed peachy orange
+  static const Color alertErrorDark = Color(0xFFD36449);     // Dimmed coral terracotta
+
   // ===== Neutral Palette =====
+  // Used for grayscale UI elements, backgrounds, and text
   static const Color neutral50 = Color(0xFFFAFAFA);
   static const Color neutral100 = Color(0xFFF5F5F5);
   static const Color neutral200 = Color(0xFFEEEEEE);
   static const Color neutral300 = Color(0xFFE0E0E0);
-  static const Color neutral400 = Color(0xFFBDBDBD);
-  static const Color neutral500 = Color(0xFF9E9E9E);
-  static const Color neutral600 = Color(0xFF757575);
-  static const Color neutral700 = Color(0xFF616161);
-  static const Color neutral800 = Color(0xFF424242);
-  static const Color neutral900 = Color(0xFF212121);
+  static const Color neutral400 = Color(0xFFBDBDBD);  // Disabled elements
+  static const Color neutral500 = Color(0xFF9E9E9E);  // Secondary/tertiary text
+  static const Color neutral600 = Color(0xFF757575);  // Labels
+  static const Color neutral700 = Color(0xFF616161);  // Body text
+  static const Color neutral800 = Color(0xFF424242);  // Subheadings
+  static const Color neutral850 = Color(0xFF2D2D2D);  // Strong emphasis
+  static const Color neutral900 = Color(0xFF212121);  // Primary text
   static const Color neutral950 = Color(0xFF121212);
+
+  // ===== Dark Mode Neutral Palette =====
+  // Ultra-dark Revolut-style grays - subtle elevation hierarchy
+  static const Color neutral50Dark = Color(0xFF000000);   // Pure black background
+  static const Color neutral100Dark = Color(0xFF121212);  // Cards - darker
+  static const Color neutral200Dark = Color(0xFF161616);  // Sheets - slightly lighter
+  static const Color neutral300Dark = Color(0xFF1E1E1E);  // Dividers - subtle
+  static const Color neutral400Dark = Color(0xFF404040);  // Disabled
+  static const Color neutral500Dark = Color(0xFF757575);  // Tertiary text
+  static const Color neutral600Dark = Color(0xFF9E9E9E);  // Secondary text
+  static const Color neutral700Dark = Color(0xFFBDBDBD);  // Body text
+  static const Color neutral800Dark = Color(0xFFE0E0E0);  // Headings
+  static const Color neutral850Dark = Color(0xFFE8E8E8);  // Strong emphasis
+  static const Color neutral900Dark = Color(0xFFFAFAFA);  // Primary text
 
   // ===== Text Colors - Light Theme =====
   static const Color textPrimaryLight = Color(0xDE000000);    // 87% black
@@ -94,10 +141,14 @@ class AppColors {
   static const Color dividerLight = Color(0x1F000000);        // 12% black
 
   // ===== Surface Colors - Dark Theme =====
-  static const Color surfaceDark = Color(0xFF1E1E1E);
-  static const Color surfaceVariantDark = Color(0xFF2C2C2C);
-  static const Color backgroundDark = Color(0xFF121212);
-  static const Color dividerDark = Color(0x1FFFFFFF);         // 12% white
+  // Ultra-dark Revolut-style with subtle elevation hierarchy
+  static const Color surfaceDark = Color(0xFF161616);         // Sheets/bottom sheets
+  static const Color cardDark = Color(0xFF121212);            // Cards - darker, subtle
+  static const Color surfaceVariantDark = Color(0xFF1A1A1A);  // Elevated variant
+  static const Color backgroundDark = Color(0xFF000000);      // Pure black AMOLED background
+  static const Color navBarDark = Color(0xFF1A1A1A);          // Nav bar - floats above cards
+  static const Color dividerDark = Color(0xFF1E1E1E);         // Dividers - very subtle
+  static const Color inputFieldDark = Color(0xFF1A1A1A);      // Search/input fields
 
   // ===== Glassmorphism Effects =====
   static const Color glassLight = Color(0xCCFFFFFF);          // 80% opacity white
@@ -222,5 +273,131 @@ class AppColors {
   /// Get a color for a category name (with fallback)
   static Color getCategoryColor(String categoryName) {
     return categoryColors[categoryName] ?? categoryOrange;
+  }
+
+  // ===== Dark Mode Adaptive Helpers =====
+  // Use these methods to automatically adapt colors based on theme
+
+  /// Check if dark mode is active
+  static bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  /// Get adaptive background color (main app background)
+  static Color getBackground(BuildContext context) {
+    return isDarkMode(context) ? backgroundDark : background;
+  }
+
+  /// Get adaptive surface color (for sheets, cards, elevated surfaces)
+  static Color getSurface(BuildContext context) {
+    return isDarkMode(context) ? surfaceDark : surfaceLight;
+  }
+
+  /// Get adaptive nav bar background (floats above cards in dark mode)
+  /// Hierarchy: bg (#000) → cards (#121212) → sheets (#161616) → nav bar (#1A1A1A)
+  static Color getNavBarBackground(BuildContext context) {
+    return isDarkMode(context) ? navBarDark : surfaceLight;
+  }
+
+  /// Get adaptive card background (#121212 in dark - darker, more subtle)
+  /// Use this for cards that sit on the main background
+  static Color getCardBackground(BuildContext context) {
+    return isDarkMode(context) ? cardDark : gray6;
+  }
+
+  /// Get adaptive primary text color
+  static Color getTextPrimary(BuildContext context) {
+    return isDarkMode(context) ? textWhite : textBlack;
+  }
+
+  /// Get adaptive secondary text color
+  static Color getTextSecondary(BuildContext context) {
+    return isDarkMode(context) ? textSecondaryDark : gray;
+  }
+
+  /// Get adaptive divider color (iOS separator style)
+  static Color getDivider(BuildContext context) {
+    return isDarkMode(context) ? dividerDark : gray5;
+  }
+
+  /// Get adaptive border color
+  static Color getBorder(BuildContext context) {
+    return isDarkMode(context) ? gray3Dark : gray3;
+  }
+
+  /// Get adaptive input field background (for search bars, text inputs)
+  static Color getInputFieldBackground(BuildContext context) {
+    return isDarkMode(context) ? inputFieldDark : gray6;
+  }
+
+  /// Get adaptive overlay color (for modal backdrops)
+  static Color getOverlay(BuildContext context) {
+    return isDarkMode(context) ? overlayLight : overlayDark;
+  }
+
+  /// Get adaptive shadow for cards
+  static BoxShadow getCardShadow(BuildContext context) {
+    return BoxShadow(
+      color: isDarkMode(context)
+          ? Colors.black.withValues(alpha: 0.24)
+          : Colors.black.withValues(alpha: 0.08),
+      blurRadius: 4,
+      offset: const Offset(0, 2),
+    );
+  }
+
+  /// Get adaptive icon color based on active state
+  static Color getIconColor(BuildContext context, {bool isActive = false}) {
+    if (isActive) {
+      return isDarkMode(context) ? textWhite : textBlack;
+    }
+    return isDarkMode(context) ? gray : gray;
+  }
+
+  /// Get adaptive placeholder text color
+  static Color getPlaceholder(BuildContext context) {
+    return isDarkMode(context) ? gray : grayPlaceholder;
+  }
+
+  // ===== Adaptive Neutral Colors =====
+  // Use these for grayscale elements that need dark mode support
+
+  /// Get adaptive neutral color for a given light/dark pair
+  static Color getAdaptiveNeutral(
+    BuildContext context, {
+    required Color lightColor,
+    required Color darkColor,
+  }) {
+    return isDarkMode(context) ? darkColor : lightColor;
+  }
+
+  /// Get adaptive neutral850 (strong emphasis text)
+  static Color getNeutral850(BuildContext context) {
+    return isDarkMode(context) ? neutral850Dark : neutral850;
+  }
+
+  /// Get adaptive neutral600 (labels, secondary UI)
+  static Color getNeutral600(BuildContext context) {
+    return isDarkMode(context) ? neutral600Dark : neutral600;
+  }
+
+  /// Get adaptive neutral500 (tertiary text)
+  static Color getNeutral500(BuildContext context) {
+    return isDarkMode(context) ? neutral500Dark : neutral500;
+  }
+
+  /// Get adaptive neutral400 (disabled elements)
+  static Color getNeutral400(BuildContext context) {
+    return isDarkMode(context) ? neutral400Dark : neutral400;
+  }
+
+  /// Get adaptive neutral100 (card backgrounds)
+  static Color getNeutral100(BuildContext context) {
+    return isDarkMode(context) ? neutral100Dark : neutral100;
+  }
+
+  /// Get adaptive neutral300 (borders/circles in dark mode)
+  static Color getNeutral300(BuildContext context) {
+    return isDarkMode(context) ? neutral300Dark : neutral300;
   }
 }

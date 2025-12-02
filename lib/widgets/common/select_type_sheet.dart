@@ -113,7 +113,7 @@ class SelectTypeSheet extends StatelessWidget {
           icon: PhosphorIconsRegular.x,
           onTap: () => Navigator.pop(context),
           iconSize: 24,
-          iconColor: AppColors.textBlack,
+          iconColor: AppColors.getTextPrimary(context), // Adaptive for dark mode
           containerSize: 28, // Slightly larger for easier tapping
           isCircular: true,
         ),

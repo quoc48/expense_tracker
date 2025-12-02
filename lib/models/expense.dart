@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/colors/app_colors.dart';
 import '../theme/minimalist/minimalist_icons.dart';
-import '../theme/minimalist/minimalist_colors.dart';
 
 // Legacy enums kept for backward compatibility and icon/color lookup
 // These are NO LONGER used as data fields, only for UI helpers
@@ -40,11 +40,11 @@ extension ExpenseTypeExtension on ExpenseType {
   Color get color {
     switch (this) {
       case ExpenseType.mustHave:
-        return MinimalistColors.gray850;  // Strong emphasis
+        return AppColors.neutral850;  // Strong emphasis
       case ExpenseType.niceToHave:
-        return MinimalistColors.gray600;  // Labels
+        return AppColors.neutral600;  // Labels
       case ExpenseType.wasted:
-        return MinimalistColors.gray500;  // Secondary
+        return AppColors.neutral500;  // Secondary
     }
   }
 }
@@ -122,13 +122,13 @@ class Expense {
   Color get typeColor {
     switch (typeNameVi) {
       case 'Phải chi':  // Must have - darkest (most important)
-        return MinimalistColors.gray850;  // Strong emphasis
+        return AppColors.neutral850;  // Strong emphasis
       case 'Phát sinh': // Nice to have - medium
-        return MinimalistColors.gray600;  // Labels
+        return AppColors.neutral600;  // Labels
       case 'Lãng phí':  // Wasted - lightest (least desirable)
-        return MinimalistColors.gray500;  // Secondary
+        return AppColors.neutral500;  // Secondary
       default:
-        return MinimalistColors.gray400;  // Disabled
+        return AppColors.neutral400;  // Disabled
     }
   }
 

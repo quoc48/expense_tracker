@@ -342,13 +342,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
 
   @override
   Widget build(BuildContext context) {
-    // All states use bottom sheet style
-    // Background color changes based on state
-    final backgroundColor = switch (_currentState) {
-      ScanningState.preview => Colors.white,
-      ScanningState.processing => Colors.white,
-      ScanningState.results => Colors.white,
-    };
+    // All states use bottom sheet style with adaptive background
+    final backgroundColor = AppColors.getSurface(context);
 
     return Container(
       // Take most of the screen height, leaving space at top to show camera behind
@@ -559,10 +554,16 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
   ///
   /// **Design Reference**: Figma node-id=62-1863
   /// - Height: 48px
-  /// - Background: Black (pressed: gray)
+  /// - Background: Black (pressed: gray), inverted in dark mode
   /// - Text: White, 16px medium
   /// - Border radius: 12px
   Widget _buildUseThisPictureButton() {
+    // Adaptive colors for dark mode (inverted like FAB)
+    final bgColor = AppColors.isDarkMode(context)
+        ? (_isUseButtonPressed ? AppColors.neutral300Dark : AppColors.white)
+        : (_isUseButtonPressed ? AppColors.gray : AppColors.textBlack);
+    final textColor = AppColors.isDarkMode(context) ? AppColors.black : AppColors.white;
+
     return GestureDetector(
       onTap: _handleUseThisPicture,
       onTapDown: (_) => setState(() => _isUseButtonPressed = true),
@@ -573,7 +574,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
         width: double.infinity,
         height: 48,
         decoration: BoxDecoration(
-          color: _isUseButtonPressed ? AppColors.gray : AppColors.textBlack,
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
@@ -582,7 +583,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           style: AppTypography.style(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.white,
+            color: textColor,
           ),
         ),
       ),

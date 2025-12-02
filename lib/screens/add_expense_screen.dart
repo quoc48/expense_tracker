@@ -7,9 +7,9 @@ import '../models/expense.dart';
 import '../repositories/expense_repository.dart';
 import '../repositories/supabase_expense_repository.dart';
 import '../utils/currency_formatter.dart';
+import '../theme/colors/app_colors.dart';
 import '../theme/typography/app_typography.dart';
 import '../theme/minimalist/minimalist_icons.dart';
-import '../theme/minimalist/minimalist_colors.dart';
 
 /// AddExpenseScreen: Form for creating new expenses OR editing existing ones (SIMPLIFIED - Phase 5.5.1)
 ///
@@ -167,13 +167,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   Color _getColorForType(String typeNameVi) {
     switch (typeNameVi) {
       case 'Phải chi':  // Must have - darkest
-        return MinimalistColors.gray850;  // Strong emphasis
+        return AppColors.neutral850;  // Strong emphasis
       case 'Phát sinh': // Nice to have - medium
-        return MinimalistColors.gray600;  // Labels
+        return AppColors.neutral600;  // Labels
       case 'Lãng phí':  // Wasted - lightest
-        return MinimalistColors.gray500;  // Secondary
+        return AppColors.neutral500;  // Secondary
       default:
-        return MinimalistColors.gray400;  // Disabled
+        return AppColors.neutral400;  // Disabled
     }
   }
 

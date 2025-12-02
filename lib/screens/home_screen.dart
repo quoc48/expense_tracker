@@ -51,8 +51,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Use iOS-style gray background from Figma
-      backgroundColor: AppColors.background,
+      // Use iOS-style gray background from Figma - adaptive for dark mode
+      backgroundColor: AppColors.getBackground(context),
       // Extend body behind system UI (nav bar area)
       extendBody: true,
       extendBodyBehindAppBar: true,
@@ -110,17 +110,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return SliverAppBar(
       floating: false,
       pinned: true, // Sticky header - stays visible when scrolling
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       toolbarHeight: 56,
-      title: const Text(
+      title: Text(
         'Analytic',
         style: TextStyle(
           fontFamily: 'MomoTrustSans',
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.textBlack,
+          color: AppColors.getTextPrimary(context),
           fontFeatures: [
             FontFeature.disable('liga'),
             FontFeature.disable('clig'),
@@ -140,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: PhosphorIconsRegular.calendarDots,
                 onTap: () => _showMonthPicker(context),
                 iconSize: 24,
-                iconColor: AppColors.textBlack,
+                iconColor: AppColors.getTextPrimary(context),
                 containerSize: 32, // Slightly larger for easier tapping
                 isCircular: true,
               ),
@@ -156,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 iconSize: 24,
-                iconColor: AppColors.textBlack,
+                iconColor: AppColors.getTextPrimary(context),
                 containerSize: 32, // Slightly larger for easier tapping
                 isCircular: true,
               ),
@@ -217,12 +217,12 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'MomoTrustSans',
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.textBlack,
-          fontFeatures: [
+          color: AppColors.getTextPrimary(context),
+          fontFeatures: const [
             FontFeature.disable('liga'),
             FontFeature.disable('clig'),
           ],
