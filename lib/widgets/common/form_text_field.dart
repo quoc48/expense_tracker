@@ -63,7 +63,8 @@ class FormTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     // Adaptive colors for dark mode
     final textColor = AppColors.getTextPrimary(context);
-    final inputBgColor = AppColors.getCardBackground(context);
+    // Use input field background - lighter than sheet in dark mode for visibility
+    final inputBgColor = AppColors.getInputFieldBackground(context);
     final placeholderColor = AppColors.getPlaceholder(context);
 
     return Column(

@@ -144,6 +144,14 @@ class _InputMethodCardState extends State<_InputMethodCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Adaptive colors for dark mode
+    final textColor = AppColors.getTextPrimary(context);
+    final isDark = AppColors.isDarkMode(context);
+    // In dark mode: cards should be LIGHTER than sheet background (#161616)
+    // Use #1E1E1E (neutral300Dark) for cards, #252525 for pressed state
+    final bgColor = isDark ? AppColors.neutral300Dark : AppColors.gray6;
+    final pressedColor = isDark ? const Color(0xFF252525) : AppColors.getDivider(context);
+
     return GestureDetector(
       onTap: _handleTap,
       onTapDown: _handleTapDown,
@@ -153,8 +161,8 @@ class _InputMethodCardState extends State<_InputMethodCard> {
       child: Container(
         height: 100,
         decoration: BoxDecoration(
-          // Use #E5E5EA for pressed state - visible contrast from gray6 (#F2F2F7)
-          color: _isPressed ? const Color(0xFFE5E5EA) : AppColors.gray6,
+          // Use adaptive pressed state color
+          color: _isPressed ? pressedColor : bgColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -163,7 +171,7 @@ class _InputMethodCardState extends State<_InputMethodCard> {
             Icon(
               widget.icon,
               size: 24,
-              color: AppColors.textBlack,
+              color: textColor, // Adaptive for dark mode
             ),
             const SizedBox(height: AppSpacing.spaceXs),
             Text(
@@ -171,7 +179,7 @@ class _InputMethodCardState extends State<_InputMethodCard> {
               style: AppTypography.style(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textBlack,
+                color: textColor, // Adaptive for dark mode
               ),
             ),
           ],

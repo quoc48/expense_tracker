@@ -122,42 +122,53 @@ class _SuccessOverlayState extends State<SuccessOverlay>
               ),
             ),
 
-            // Centered popover
+            // Centered popover - inverted colors for visibility
+            // Light mode: white bg, black content
+            // Dark mode: black bg (#1A1A1A), white content
             Center(
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(34),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Checkmark icon (40px, bold)
-                      const Icon(
-                        PhosphorIconsBold.check,
-                        size: 40,
-                        color: AppColors.textBlack,
-                      ),
+                child: Builder(
+                  builder: (context) {
+                    final isDark = AppColors.isDarkMode(context);
+                    // Invert colors like snackbar/FAB for high contrast
+                    final bgColor = isDark ? AppColors.neutral300Dark : AppColors.white;
+                    final contentColor = isDark ? AppColors.white : AppColors.textBlack;
 
-                      // Gap (16px)
-                      const SizedBox(height: 16),
-
-                      // Success message
-                      Text(
-                        widget.message,
-                        style: AppTypography.style(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500, // Medium
-                          color: AppColors.textBlack,
-                        ),
-                        textAlign: TextAlign.center,
+                    return Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(34),
                       ),
-                    ],
-                  ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Checkmark icon (40px, bold)
+                          Icon(
+                            PhosphorIconsBold.check,
+                            size: 40,
+                            color: contentColor,
+                          ),
+
+                          // Gap (16px)
+                          const SizedBox(height: 16),
+
+                          // Success message
+                          Text(
+                            widget.message,
+                            style: AppTypography.style(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500, // Medium
+                              color: contentColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

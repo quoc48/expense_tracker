@@ -19,6 +19,16 @@ import '../../theme/colors/app_colors.dart';
 ///
 /// **Selected State**: Light cyan background pill behind selected icon
 ///
+/// **Layout Specs**:
+/// - Total height: 100px (gradient area)
+/// - Bottom padding: 32px (positions nav pill and FAB)
+/// - Horizontal padding: 16px
+///
+/// **Gradient Overlay**:
+/// - Light mode: White (#FFFFFF) gradient from transparent to solid
+/// - Dark mode: Black (#000000) gradient from transparent to solid
+/// - Stops: 0% (transparent), 50% (80% opacity), 100% (solid)
+///
 /// **Learning: Full-width vs Centered Navigation**
 /// The Figma design shows the nav bar spans the full width with the FAB
 /// integrated as part of the same bar, not as a separate floating element.
@@ -42,37 +52,37 @@ class FloatingNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get background color from color library - matches page background
+    final bgColor = AppColors.getBackground(context);
+
+    // Gradient fades content scrolling behind the nav bar
+    // Note: There's a known Flutter issue with gradient alpha blending
+    // that can cause slight color tints - will investigate separately
     return SizedBox(
-      // Fixed height from Figma: 98px for gradient overlay area
-      height: 98,
+      height: 100,
       child: Stack(
         children: [
-          // Gradient overlay for better contrast - adapts to theme
+          // Layer 1: Gradient fade (for content scrolling behind)
           Positioned.fill(
             child: IgnorePointer(
-              child: Builder(
-                builder: (context) {
-                  final bgColor = AppColors.getBackground(context);
-                  return DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: const [0.0, 0.5, 1.0],
-                        colors: [
-                          bgColor.withValues(alpha: 0), // 0% opacity
-                          bgColor.withValues(alpha: 0.8), // 80% opacity
-                          bgColor, // 100% solid
-                        ],
-                      ),
-                    ),
-                  );
-                },
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.5, 1.0],
+                    colors: [
+                      bgColor.withValues(alpha: 0),   // Top: transparent
+                      bgColor.withValues(alpha: 0.8), // Middle: 80%
+                      bgColor,                         // Bottom: solid
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
 
-          // Nav bar content positioned at bottom
+          // Layer 2: Nav content (pill + FAB)
           Positioned(
             left: 16,
             right: 16,
@@ -80,16 +90,11 @@ class FloatingNavBar extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Left: Navigation pill
                 _NavigationPill(
                   selectedIndex: selectedIndex,
                   onDestinationSelected: onDestinationSelected,
                 ),
-
-                // Auto spacing between nav and FAB
                 const Spacer(),
-
-                // Right: FAB button
                 _FabButton(onTap: onFabTap),
               ],
             ),

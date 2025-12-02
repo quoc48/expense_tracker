@@ -99,6 +99,10 @@ class _AmountInputFieldState extends State<AmountInputField> {
 
   @override
   Widget build(BuildContext context) {
+    // Adaptive colors for dark mode
+    final textColor = AppColors.getTextPrimary(context);
+    final secondaryColor = AppColors.getTextSecondary(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -128,11 +132,11 @@ class _AmountInputFieldState extends State<AmountInputField> {
             style: AppTypography.style(
               fontSize: 40,
               fontWeight: FontWeight.w700,
-              // Gray when 0, black otherwise
-              color: _isZero ? AppColors.gray : AppColors.textBlack,
+              // Gray when 0, primary color otherwise (adaptive for dark mode)
+              color: _isZero ? secondaryColor : textColor,
             ),
-            // Standard iOS cursor
-            cursorColor: AppColors.textBlack,
+            // Adaptive cursor color for dark mode
+            cursorColor: textColor,
             cursorWidth: 2,
             decoration: const InputDecoration(
               border: InputBorder.none,
@@ -145,13 +149,13 @@ class _AmountInputFieldState extends State<AmountInputField> {
         // Spacing between number and currency (4px from Figma)
         const SizedBox(width: 4),
 
-        // Currency symbol "đ"
+        // Currency symbol "đ" - always secondary color
         Text(
           'đ',
           style: AppTypography.style(
             fontSize: 40,
             fontWeight: FontWeight.w700,
-            color: AppColors.gray,
+            color: secondaryColor,
           ),
         ),
       ],

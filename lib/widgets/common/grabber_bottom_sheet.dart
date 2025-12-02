@@ -168,8 +168,8 @@ Future<T?> showGrabberBottomSheet<T>({
     context: context,
     // Use transparent background so our custom Container shows
     backgroundColor: Colors.transparent,
-    // Overlay color from design system
-    barrierColor: AppColors.overlayDark,
+    // Adaptive overlay color from design system (darker in dark mode)
+    barrierColor: AppColors.getOverlay(context),
     // Allow dismissing by tapping outside
     isDismissible: isDismissible,
     // Allow drag to dismiss

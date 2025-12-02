@@ -70,10 +70,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
         // Use cardDark (#161616) for cards on main background in dark mode
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(16), // Figma: 16px radius
-        // Subtle shadow for depth
-        boxShadow: [
-          AppColors.getCardShadow(context),
-        ],
+        // No shadow per design spec
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center, // Center all content
@@ -85,7 +82,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
           const SizedBox(height: 16),
           Container(
             height: 1,
-            color: AppColors.getDivider(context),
+            color: AppColors.getDividerSubtle(context),
           ),
 
           // Budget progress section (only show if budget is set AND showBudgetProgress is true)
@@ -95,7 +92,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
             // Divider between Part 2 and Part 3
             Container(
               height: 1,
-              color: AppColors.getDivider(context),
+              color: AppColors.getDividerSubtle(context),
             ),
           ],
 
@@ -151,10 +148,12 @@ class AnalyticsSummaryCard extends StatelessWidget {
     // Determine color based on spending level
     final progressColor = _getProgressColor(percentage);
 
-    // Get adaptive colors for dark mode
+    // Get adaptive colors for progress bar background
+    // Light mode: Use neutral300 (#E0E0E0) for good contrast against card bg (gray6 #F2F2F7)
+    // Dark mode: Use neutral300Dark (#1E1E1E) which is lighter than card bg (#121212)
     final progressBarBackground = AppColors.isDarkMode(context)
         ? AppColors.neutral300Dark
-        : AppColors.gray6;
+        : AppColors.neutral300;
 
     return Padding(
       // Figma: padding left/right 16px
@@ -356,7 +355,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
                               radius: 5,
                               color: AppColors.categoryIndigo,
                               strokeWidth: 2,
-                              strokeColor: Colors.white,
+                              strokeColor: Colors.white, // Always white stroke
                             );
                           },
                         ),
@@ -429,7 +428,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
           // X-axis divider line
           Container(
             height: 1,
-            color: AppColors.getDivider(context),
+            color: AppColors.getDividerSubtle(context),
           ),
 
           // Month labels row - 6 equal-width containers (Jun-Nov)

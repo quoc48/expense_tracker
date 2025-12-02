@@ -3,11 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../providers/user_preferences_provider.dart';
 import '../providers/theme_provider.dart';
-import '../providers/auth_provider.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/typography/app_typography.dart';
 import '../widgets/settings/budget_edit_sheet.dart';
 import '../widgets/settings/select_theme_sheet.dart';
+import '../widgets/common/logout_confirmation_dialog.dart';
 import '../widgets/common/success_overlay.dart';
 
 /// Settings screen with Figma-based design
@@ -30,14 +30,19 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.getBackground(context), // Adaptive background for dark mode
+      backgroundColor: AppColors.getBackground(context),
+      // Use same extendBody pattern as other screens for consistent layout
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       body: SafeArea(
+        // Don't add bottom padding - let content scroll behind nav bar
+        bottom: false,
         child: Consumer<UserPreferencesProvider>(
           builder: (context, prefsProvider, child) {
             // Show loading state while preferences are being fetched
             if (prefsProvider.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.textBlack),
+              return Center(
+                child: CircularProgressIndicator(color: AppColors.getTextPrimary(context)),
               );
             }
 
@@ -46,32 +51,32 @@ class SettingsScreen extends StatelessWidget {
               return _buildErrorState(context, prefsProvider);
             }
 
-            // Main settings content
-            return Column(
-              children: [
-                // Header
-                _buildHeader(context),
+            // Main settings content using CustomScrollView for consistent scrolling
+            return CustomScrollView(
+              slivers: [
+                // App Bar - matches other screens
+                _buildAppBar(context),
 
                 // Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Budget & Finance Section
-                        _buildSectionLabel('Budget & Finance'),
-                        const SizedBox(height: 16),
-                        _buildBudgetFinanceCard(context, prefsProvider),
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Budget & Finance Section
+                      _buildSectionLabel('Budget & Finance'),
+                      const SizedBox(height: 16),
+                      _buildBudgetFinanceCard(context, prefsProvider),
 
-                        const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                        // Appearance Section
-                        _buildSectionLabel('Appearance'),
-                        const SizedBox(height: 16),
-                        _buildAppearanceCard(context),
-                      ],
-                    ),
+                      // Appearance Section
+                      _buildSectionLabel('Appearance'),
+                      const SizedBox(height: 16),
+                      _buildAppearanceCard(context),
+
+                      // Bottom padding for nav bar
+                      const SizedBox(height: 120),
+                    ]),
                   ),
                 ),
               ],
@@ -99,7 +104,7 @@ class SettingsScreen extends StatelessWidget {
             style: AppTypography.style(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.textBlack,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -108,7 +113,7 @@ class SettingsScreen extends StatelessWidget {
             style: AppTypography.style(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: AppColors.gray,
+              color: AppColors.getTextSecondary(context),
             ),
             textAlign: TextAlign.center,
           ),
@@ -120,7 +125,7 @@ class SettingsScreen extends StatelessWidget {
               style: AppTypography.style(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textBlack,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ),
@@ -129,96 +134,51 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  /// Build header with "Settings" title and sign-out icon
+  /// Build app bar with "Settings" title and sign-out icon
   ///
   /// **Design Reference**: Figma node-id=62-3352
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Title
-          Text(
-            'Settings',
-            style: AppTypography.style(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textBlack,
-            ),
-          ),
+  ///
+  /// Uses SliverAppBar for consistent behavior with other screens
+  Widget _buildAppBar(BuildContext context) {
+    final textColor = AppColors.getTextPrimary(context);
 
-          // Sign out button
-          GestureDetector(
-            onTap: () => _handleSignOut(context),
-            child: const Icon(
+    return SliverAppBar(
+      floating: false,
+      pinned: true, // Sticky header - stays visible when scrolling
+      backgroundColor: AppColors.getBackground(context),
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      toolbarHeight: 56, // Match Home and ExpenseList pages
+      automaticallyImplyLeading: false, // No back button
+      title: Text(
+        'Settings',
+        style: TextStyle(
+          fontFamily: 'MomoTrustSans',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+          fontFeatures: const [
+            FontFeature.disable('liga'),
+            FontFeature.disable('clig'),
+          ],
+        ),
+      ),
+      centerTitle: false, // Left-aligned title
+      actions: [
+        // Sign out button
+        GestureDetector(
+          onTap: () => showLogoutConfirmationDialog(context),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Icon(
               PhosphorIconsRegular.signOut,
               size: 24,
-              color: AppColors.textBlack,
+              color: textColor,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
-  }
-
-  /// Handle sign out action
-  Future<void> _handleSignOut(BuildContext context) async {
-    // Show confirmation dialog
-    final shouldSignOut = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Text(
-          'Sign Out',
-          style: AppTypography.style(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textBlack,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to sign out?',
-          style: AppTypography.style(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: AppColors.gray,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(
-              'Cancel',
-              style: AppTypography.style(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textBlack,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(
-              'Sign Out',
-              style: AppTypography.style(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.red,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldSignOut == true && context.mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signOut();
-    }
   }
 
   /// Build section label
@@ -269,6 +229,8 @@ class SettingsScreen extends StatelessWidget {
   ///
   /// Layout: wallet icon + "Monthly Budget" | value + pencil icon
   Widget _buildBudgetRow(BuildContext context, UserPreferencesProvider prefsProvider) {
+    final textColor = AppColors.getTextPrimary(context);
+
     return InkWell(
       onTap: () => _showBudgetEditSheet(context, prefsProvider),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
@@ -291,7 +253,7 @@ class SettingsScreen extends StatelessWidget {
                     style: AppTypography.style(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textBlack,
+                      color: textColor,
                     ),
                   ),
                 ],
@@ -306,14 +268,14 @@ class SettingsScreen extends StatelessWidget {
                   style: AppTypography.style(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textBlack,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Icon(
                   PhosphorIconsRegular.pencilSimpleLine,
                   size: 18,
-                  color: AppColors.textBlack,
+                  color: textColor,
                 ),
               ],
             ),
@@ -369,6 +331,8 @@ class SettingsScreen extends StatelessWidget {
   ///
   /// Layout: calendar icon + "Recurring Expenses" + subtitle | caret right
   Widget _buildRecurringRow(BuildContext context) {
+    final textColor = AppColors.getTextPrimary(context);
+
     return Opacity(
       opacity: 0.5, // Disabled state
       child: Padding(
@@ -394,7 +358,7 @@ class SettingsScreen extends StatelessWidget {
                           style: AppTypography.style(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
-                            color: AppColors.textBlack,
+                            color: textColor,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -417,7 +381,7 @@ class SettingsScreen extends StatelessWidget {
             Icon(
               PhosphorIconsRegular.caretRight,
               size: 18,
-              color: AppColors.textBlack,
+              color: textColor,
             ),
           ],
         ),
@@ -444,6 +408,8 @@ class SettingsScreen extends StatelessWidget {
   ///
   /// Layout: palette icon + "Theme" | current theme + caret right
   Widget _buildThemeRow(BuildContext context) {
+    final textColor = AppColors.getTextPrimary(context);
+
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         // Get current theme mode and convert to AppThemeMode
@@ -471,7 +437,7 @@ class SettingsScreen extends StatelessWidget {
                         style: AppTypography.style(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.textBlack,
+                          color: textColor,
                         ),
                       ),
                     ],
@@ -486,14 +452,14 @@ class SettingsScreen extends StatelessWidget {
                       style: AppTypography.style(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textBlack,
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Icon(
                       PhosphorIconsRegular.caretRight,
                       size: 18,
-                      color: AppColors.textBlack,
+                      color: textColor,
                     ),
                   ],
                 ),

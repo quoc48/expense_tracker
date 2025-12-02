@@ -36,6 +36,9 @@ class SheetHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Adaptive text color for dark mode
+    final textColor = AppColors.getTextPrimary(context);
+
     return SizedBox(
       height: 24,
       child: Stack(
@@ -47,7 +50,7 @@ class SheetHeader extends StatelessWidget {
               style: AppTypography.style(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textBlack,
+                color: textColor, // Adaptive for dark mode
               ),
             ),
           ),
@@ -60,7 +63,7 @@ class SheetHeader extends StatelessWidget {
               icon: PhosphorIconsRegular.x,
               onTap: onClose,
               iconSize: 24,
-              iconColor: AppColors.textBlack,
+              iconColor: textColor, // Adaptive for dark mode
               containerSize: 24,
               isCircular: true,
             ),

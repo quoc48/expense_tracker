@@ -6,7 +6,7 @@ import '../providers/expense_provider.dart';
 import '../providers/user_preferences_provider.dart';
 import '../theme/colors/app_colors.dart';
 import '../utils/analytics_calculator.dart';
-import '../widgets/common/tappable_icon.dart';
+import '../widgets/common/logout_confirmation_dialog.dart';
 import '../widgets/home/analytics_summary_card.dart';
 import '../widgets/home/category_card.dart';
 import '../widgets/home/select_month_sheet.dart';
@@ -128,39 +128,28 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       actions: [
-        // Icons with 12px spacing between them (edge to edge)
-        // Using Row to control exact spacing without IconButton padding interference
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Calendar icon with tap state feedback
-              TappableIcon(
-                icon: PhosphorIconsRegular.calendarDots,
-                onTap: () => _showMonthPicker(context),
-                iconSize: 24,
-                iconColor: AppColors.getTextPrimary(context),
-                containerSize: 32, // Slightly larger for easier tapping
-                isCircular: true,
-              ),
-              // 12px spacing between icons as per Figma
-              const SizedBox(width: 12),
-              // Export/Logout icon with tap state feedback
-              TappableIcon(
-                icon: PhosphorIconsRegular.signOut,
-                onTap: () {
-                  // TODO: Implement export functionality
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Export coming soon')),
-                  );
-                },
-                iconSize: 24,
-                iconColor: AppColors.getTextPrimary(context),
-                containerSize: 32, // Slightly larger for easier tapping
-                isCircular: true,
-              ),
-            ],
+        // Calendar icon - matches Settings page pattern
+        GestureDetector(
+          onTap: () => _showMonthPicker(context),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(
+              PhosphorIconsRegular.calendarDots,
+              size: 24,
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
+        ),
+        // Sign out icon - matches Settings page pattern
+        GestureDetector(
+          onTap: () => showLogoutConfirmationDialog(context),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Icon(
+              PhosphorIconsRegular.signOut,
+              size: 24,
+              color: AppColors.getTextPrimary(context),
+            ),
           ),
         ),
       ],

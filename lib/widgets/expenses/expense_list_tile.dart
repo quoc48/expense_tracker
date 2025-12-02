@@ -46,9 +46,12 @@ class ExpenseListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get category color from our design system
     final categoryColor = AppColors.getCategoryColor(expense.categoryNameVi);
-    
+
     // Date format: "Nov 24, 2025" as shown in Figma
     final dateFormat = DateFormat('MMM dd, yyyy');
+
+    // Adaptive divider color for dark mode
+    final dividerColor = AppColors.getDivider(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -70,36 +73,36 @@ class ExpenseListTile extends StatelessWidget {
                     children: [
                       // Category icon circle (32x32)
                       _buildCategoryIcon(categoryColor),
-                      
+
                       // 8px gap between icon and text
                       const SizedBox(width: 8),
-                      
+
                       // Text column: Description + Date
                       Expanded(
-                        child: _buildTextColumn(dateFormat),
+                        child: _buildTextColumn(context, dateFormat),
                       ),
                     ],
                   ),
                 ),
-                
+
                 // 16px gap before amount (from Figma)
                 const SizedBox(width: 16),
-                
+
                 // Right side: Amount
-                _buildAmount(),
+                _buildAmount(context),
               ],
             ),
           ),
         ),
-        
+
         // Divider (thin line between items) with 8px horizontal padding
         if (showDivider)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: const Divider(
+            child: Divider(
               height: 1,
               thickness: 0.5,
-              color: Color(0xFFE5E5EA), // iOS system gray separator
+              color: dividerColor, // Adaptive for dark mode
             ),
           ),
       ],
@@ -129,7 +132,10 @@ class ExpenseListTile extends StatelessWidget {
   }
 
   /// Build the text column (Description + Date)
-  Widget _buildTextColumn(DateFormat dateFormat) {
+  Widget _buildTextColumn(BuildContext context, DateFormat dateFormat) {
+    final textColor = AppColors.getTextPrimary(context);
+    final secondaryColor = AppColors.getTextSecondary(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -137,28 +143,28 @@ class ExpenseListTile extends StatelessWidget {
         // Description - 14px, black, regular
         Text(
           expense.description,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'MomoTrustSans',
             fontSize: 14,
             fontWeight: FontWeight.w400, // Regular
-            color: AppColors.textBlack,
+            color: textColor, // Adaptive for dark mode
             height: 1.2, // Compact line height
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        
+
         // 4px gap between description and date
         const SizedBox(height: 4),
-        
+
         // Date - 10px, gray, regular
         Text(
           dateFormat.format(expense.date),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'MomoTrustSans',
             fontSize: 10,
             fontWeight: FontWeight.w400, // Regular
-            color: AppColors.gray, // #8E8E93
+            color: secondaryColor, // Adaptive for dark mode
             height: 1.2,
           ),
         ),
@@ -168,14 +174,16 @@ class ExpenseListTile extends StatelessWidget {
 
   /// Build the amount text (right-aligned)
   /// Format: "70,000 đ" with space before đ
-  Widget _buildAmount() {
+  Widget _buildAmount(BuildContext context) {
+    final textColor = AppColors.getTextPrimary(context);
+
     return Text(
       CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'MomoTrustSans',
         fontSize: 14,
         fontWeight: FontWeight.w400, // Regular
-        color: AppColors.textBlack,
+        color: textColor, // Adaptive for dark mode
       ),
     );
   }

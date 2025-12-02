@@ -524,9 +524,9 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
           // Content (scrollable)
           Expanded(
             child: _isLoadingOptions
-                ? const Center(
+                ? Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.textBlack,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   )
                 : SingleChildScrollView(

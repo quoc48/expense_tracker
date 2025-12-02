@@ -372,12 +372,13 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          backgroundColor: AppColors.getSurface(dialogContext),
           title: Text(
             'Discard changes?',
             style: AppTypography.style(
               fontSize: 17,
               fontWeight: FontWeight.w600,
-              color: AppColors.textBlack,
+              color: AppColors.getTextPrimary(dialogContext),
             ),
           ),
           content: Text(
@@ -385,7 +386,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
             style: AppTypography.style(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: AppColors.gray,
+              color: AppColors.getTextSecondary(dialogContext),
             ),
           ),
           actions: [
@@ -396,7 +397,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                 style: AppTypography.style(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textBlack,
+                  color: AppColors.getTextPrimary(dialogContext),
                 ),
               ),
             ),
@@ -500,7 +501,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
               Icon(
                 PhosphorIconsRegular.caretLeft,
                 size: 24,
-                color: AppColors.textBlack,
+                color: AppColors.getTextPrimary(context),
               ),
               const SizedBox(width: 4),
               Text(
@@ -508,7 +509,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                 style: AppTypography.style(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textBlack,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
             ],
@@ -520,7 +521,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           icon: PhosphorIconsRegular.x,
           onTap: () => _handleClose(context),
           iconSize: 24,
-          iconColor: AppColors.textBlack,
+          iconColor: AppColors.getTextPrimary(context),
           containerSize: 32,
           isCircular: true,
         ),
@@ -540,7 +541,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppColors.gray6, // Light gray background while loading
+          color: AppColors.getCardBackground(context), // Adaptive background while loading
         ),
         child: Image.file(
           File(widget.imagePath),
@@ -663,7 +664,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.gray6,
+              color: AppColors.getCardBackground(context),
             ),
             child: Image.file(
               File(widget.imagePath),
@@ -751,18 +752,20 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           style: AppTypography.style(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: AppColors.textBlack,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
 
         const SizedBox(height: 16),
 
-        // Progress bar (black)
+        // Progress bar (adaptive)
+        // Dark mode: Use neutral300Dark (#1E1E1E) for better contrast against black bg
+        // Light mode: Use neutral300 (#E0E0E0) for good visibility
         Container(
           width: double.infinity,
           height: 8,
           decoration: BoxDecoration(
-            color: AppColors.gray6,
+            color: AppColors.getNeutral300(context),
             borderRadius: BorderRadius.circular(4),
           ),
           child: FractionallySizedBox(
@@ -770,7 +773,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
             widthFactor: _processingProgress.clamp(0.0, 1.0),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.textBlack, // Black progress bar
+                color: AppColors.getTextPrimary(context), // Adaptive progress bar
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -846,7 +849,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           style: AppTypography.style(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textBlack,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
 
@@ -855,7 +858,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           icon: PhosphorIconsRegular.x,
           onTap: () => _handleClose(context),
           iconSize: 24,
-          iconColor: AppColors.textBlack,
+          iconColor: AppColors.getTextPrimary(context),
           containerSize: 32,
           isCircular: true,
         ),
@@ -869,10 +872,13 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
   ///
   /// **Layout**: Three columns - Total (flex) | Date (flex) | # Items (fixed width)
   Widget _buildSummaryRow(BuildContext context, double total) {
+    final textColor = AppColors.getTextPrimary(context);
+    final secondaryColor = AppColors.getTextSecondary(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.gray6, // Light grey background
+        color: AppColors.getCardBackground(context), // Adaptive background
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -887,7 +893,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                   style: AppTypography.style(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.gray,
+                    color: secondaryColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -896,7 +902,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                   style: AppTypography.style(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textBlack,
+                    color: textColor,
                   ),
                 ),
               ],
@@ -916,7 +922,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                     style: AppTypography.style(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.gray,
+                      color: secondaryColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -929,7 +935,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                           style: AppTypography.style(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textBlack,
+                            color: textColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -938,7 +944,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                       Icon(
                         PhosphorIconsRegular.calendarDots,
                         size: 20,
-                        color: AppColors.textBlack,
+                        color: textColor,
                       ),
                     ],
                   ),
@@ -958,7 +964,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                   style: AppTypography.style(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.gray,
+                    color: secondaryColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -967,7 +973,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                   style: AppTypography.style(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textBlack,
+                    color: textColor,
                   ),
                 ),
               ],
@@ -1060,7 +1066,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                     style: AppTypography.style(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textBlack,
+                      color: AppColors.getTextPrimary(context),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1071,7 +1077,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                     style: AppTypography.style(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.gray,
+                      color: AppColors.getTextSecondary(context),
                     ),
                   ),
                 ],
@@ -1084,7 +1090,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
               style: AppTypography.style(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textBlack,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ],

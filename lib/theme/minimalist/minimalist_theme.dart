@@ -228,8 +228,9 @@ class MinimalistTheme {
       outline: AppColors.neutral300,
       outlineVariant: AppColors.neutral200,
 
-      // Shadows
+      // Shadows and scrim
       shadow: AppColors.black,
+      scrim: AppColors.black, // Pure black scrim for light mode
 
       // Inverse colors
       inverseSurface: AppColors.neutral900,
@@ -278,8 +279,9 @@ class MinimalistTheme {
       outline: AppColors.neutral300Dark,
       outlineVariant: AppColors.neutral200Dark,
 
-      // Shadows
+      // Shadows and scrim
       shadow: AppColors.black,
+      scrim: AppColors.black, // Pure black scrim for dark mode (no tint)
 
       // Inverse colors
       inverseSurface: AppColors.white,

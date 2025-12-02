@@ -118,57 +118,68 @@ class _UndoSnackbarState extends State<UndoSnackbar>
             position: _slideAnimation,
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.textBlack,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color.fromRGBO(12, 12, 13, 0.1),
-                      offset: Offset(0, 16),
-                      blurRadius: 32,
-                      spreadRadius: -8,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    // Message text (left side, expands)
-                    Expanded(
-                      child: Text(
-                        widget.message,
-                        style: AppTypography.style(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+              child: Builder(
+                builder: (context) {
+                  // Invert colors in dark mode so snackbar remains visible
+                  final isDark = AppColors.isDarkMode(context);
+                  final bgColor = isDark ? AppColors.white : AppColors.textBlack;
+                  final textColor = isDark ? AppColors.textBlack : AppColors.white;
 
-                    // Undo button (right side)
-                    if (widget.onUndo != null)
-                      GestureDetector(
-                        onTap: _handleUndo,
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 16),
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: bgColor, // Inverted for dark mode
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? const Color.fromRGBO(255, 255, 255, 0.1)
+                              : const Color.fromRGBO(12, 12, 13, 0.1),
+                          offset: const Offset(0, 16),
+                          blurRadius: 32,
+                          spreadRadius: -8,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        // Message text (left side, expands)
+                        Expanded(
                           child: Text(
-                            'Undo',
+                            widget.message,
                             style: AppTypography.style(
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
-                              color: Colors.white,
+                              color: textColor, // Inverted for dark mode
                             ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
+
+                        // Undo button (right side)
+                        if (widget.onUndo != null)
+                          GestureDetector(
+                            onTap: _handleUndo,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 16),
+                              child: Text(
+                                'Undo',
+                                style: AppTypography.style(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  color: textColor, // Inverted for dark mode
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ),

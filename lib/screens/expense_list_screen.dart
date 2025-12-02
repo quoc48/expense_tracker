@@ -4,14 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../models/expense.dart';
 import '../providers/expense_provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/sync_provider.dart';
 import '../widgets/sync_status_banner.dart';
 import '../widgets/sync_queue_details_sheet.dart';
 import '../widgets/expenses/expense_list_tile.dart';
 import '../widgets/common/add_expense_sheet.dart';
+import '../widgets/common/logout_confirmation_dialog.dart';
 import '../widgets/common/success_overlay.dart';
-import '../widgets/common/tappable_icon.dart';
 import '../widgets/common/undo_snackbar.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/constants/app_spacing.dart';
@@ -56,7 +55,10 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         _previousSyncState = syncProvider.syncState;
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          // Pure white in light mode, pure black in dark mode
+          backgroundColor: AppColors.isDarkMode(context)
+              ? AppColors.backgroundDark
+              : AppColors.white,
           extendBody: true,
           extendBodyBehindAppBar: true,
           body: SafeArea(
@@ -84,20 +86,26 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   /// - toolbarHeight: 56 (matches Analytics)
   /// - Default titleSpacing (matches Analytics)
   Widget _buildAppBar(BuildContext context) {
+    // Pure white in light mode, pure black in dark mode (matches Scaffold background)
+    final bgColor = AppColors.isDarkMode(context)
+        ? AppColors.backgroundDark
+        : AppColors.white;
+    final textColor = AppColors.getTextPrimary(context);
+
     return SliverAppBar(
       floating: false,
       pinned: true, // Sticky header - stays visible when scrolling
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       toolbarHeight: 56, // Match Analytics page
-      title: const Text(
+      title: Text(
         'Expenses',
         style: TextStyle(
           fontFamily: 'MomoTrustSans',
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.textBlack,
+          color: textColor,
           fontFeatures: [
             FontFeature.disable('liga'),
             FontFeature.disable('clig'),
@@ -105,16 +113,16 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         ),
       ),
       actions: [
-        // Sign-out icon with tap state feedback
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: TappableIcon(
-            icon: PhosphorIconsRegular.signOut,
-            onTap: () => _showLogoutDialog(context),
-            iconSize: 24,
-            iconColor: AppColors.textBlack,
-            containerSize: 32, // Slightly larger for easier tapping
-            isCircular: true,
+        // Sign out icon - matches Settings page pattern
+        GestureDetector(
+          onTap: () => showLogoutConfirmationDialog(context),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Icon(
+              PhosphorIconsRegular.signOut,
+              size: 24,
+              color: textColor,
+            ),
           ),
         ),
       ],
@@ -145,13 +153,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           color: AppColors.gray,
                         ),
                         SizedBox(height: AppSpacing.spaceLg),
-                        const Text(
+                        Text(
                           'No expenses loaded',
                           style: TextStyle(
                             fontFamily: 'MomoTrustSans',
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.textBlack,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                         SizedBox(height: AppSpacing.spaceXs),
@@ -160,7 +168,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           style: TextStyle(
                             fontFamily: 'MomoTrustSans',
                             fontSize: 14,
-                            color: AppColors.gray,
+                            color: AppColors.getTextSecondary(context),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -274,17 +282,22 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   /// Uses MomoTrustSans font for consistency with the rest of the app.
   Future<bool?> _showDeleteConfirmation(
       BuildContext context, Expense expense) async {
+    final textColor = AppColors.getTextPrimary(context);
+    final secondaryColor = AppColors.getTextSecondary(context);
+    final dialogBgColor = AppColors.getSurface(context);
+
     return await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
+          backgroundColor: dialogBgColor,
           title: Text(
             'Delete Expense',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'MomoTrustSans',
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textBlack,
+              color: textColor,
             ),
           ),
           content: Text(
@@ -293,24 +306,24 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               fontFamily: 'MomoTrustSans',
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: AppColors.gray,
+              color: secondaryColor,
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: Text(
                 'Cancel',
                 style: TextStyle(
                   fontFamily: 'MomoTrustSans',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textBlack,
+                  color: textColor,
                 ),
               ),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogContext, true),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.error,
               ),
@@ -348,67 +361,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           await provider.restoreExpense(deletedExpense, index);
         },
       );
-    }
-  }
-
-  /// Show logout confirmation dialog
-  ///
-  /// Uses MomoTrustSans font for consistency with the rest of the app.
-  Future<void> _showLogoutDialog(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Sign Out',
-            style: const TextStyle(
-              fontFamily: 'MomoTrustSans',
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textBlack,
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to sign out?',
-            style: TextStyle(
-              fontFamily: 'MomoTrustSans',
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: AppColors.gray,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: 'MomoTrustSans',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textBlack,
-                ),
-              ),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                'Sign Out',
-                style: const TextStyle(
-                  fontFamily: 'MomoTrustSans',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true && context.mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signOut();
     }
   }
 }

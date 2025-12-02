@@ -158,10 +158,13 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
   ///
   /// **Design Reference**: Figma node-id=63-1613
   Widget _buildHeader(BuildContext context) {
+    // Adaptive icon color for dark mode
+    final iconColor = AppColors.getTextPrimary(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Title - gray, medium weight
+        // Title - gray, medium weight (always gray for secondary label)
         Text(
           'Monthly Budget',
           style: AppTypography.style(
@@ -174,10 +177,10 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
         // Close button
         GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Icon(
+          child: Icon(
             PhosphorIconsRegular.x,
             size: 24,
-            color: AppColors.textBlack,
+            color: iconColor, // Adaptive for dark mode
           ),
         ),
       ],

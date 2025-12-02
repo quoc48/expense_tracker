@@ -116,7 +116,7 @@ class _SelectDateSheetState extends State<SelectDateSheet> {
           icon: PhosphorIconsRegular.x,
           onTap: () => Navigator.pop(context),
           iconSize: 24,
-          iconColor: AppColors.textBlack,
+          iconColor: AppColors.getTextPrimary(context), // Adaptive for dark mode
           containerSize: 28, // Slightly larger for easier tapping
           isCircular: true,
         ),
@@ -188,7 +188,7 @@ class _SelectDateSheetState extends State<SelectDateSheet> {
               style: AppTypography.style(
                 fontSize: 12,
                 fontWeight: FontWeight.w600, // SemiBold
-                color: AppColors.textBlack,
+                color: AppColors.getTextPrimary(context), // Adaptive for dark mode
                 letterSpacing: 0.24,
               ),
             ),
@@ -253,7 +253,7 @@ class _SelectDateSheetState extends State<SelectDateSheet> {
   /// **Design Reference**: Figma node-id=58-1564 (normal), 58-1568 (selected)
   /// - Cell: flexible width, 40px height
   /// - Normal text: 14px Regular, black, 0.28 letter-spacing
-  /// - Selected: black background, white text, 14px SemiBold, 12px radius
+  /// - Selected: inverted colors (dark mode: white bg/black text, light mode: black bg/white text)
   /// - Outside: 14px Regular, gray3 (#C7C7CC)
   Widget _buildDayCell({
     required String day,
@@ -261,28 +261,35 @@ class _SelectDateSheetState extends State<SelectDateSheet> {
     required bool isOutside,
   }) {
     return Builder(
-      builder: (context) => Container(
-        margin: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.textBlack : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: Text(
-            day,
-            style: AppTypography.style(
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              color: isSelected
-                  ? Colors.white // White on black bg - always correct
-                  : isOutside
-                      ? AppColors.getBorder(context) // Dimmed for outside days
-                      : AppColors.getTextPrimary(context), // Adaptive text
-              letterSpacing: isSelected ? 0 : 0.28,
+      builder: (context) {
+        // For selected state, invert colors based on theme
+        final isDark = AppColors.isDarkMode(context);
+        final selectedBgColor = isDark ? AppColors.white : AppColors.textBlack;
+        final selectedTextColor = isDark ? AppColors.textBlack : AppColors.white;
+
+        return Container(
+          margin: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: isSelected ? selectedBgColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              day,
+              style: AppTypography.style(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected
+                    ? selectedTextColor // Inverted for selected state
+                    : isOutside
+                        ? AppColors.getBorder(context) // Dimmed for outside days
+                        : AppColors.getTextPrimary(context), // Adaptive text
+                letterSpacing: isSelected ? 0 : 0.28,
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -307,6 +314,7 @@ class _CalendarHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final monthYear = DateFormat('MMMM, yyyy').format(focusedDay);
+    final textColor = AppColors.getTextPrimary(context);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -327,7 +335,7 @@ class _CalendarHeader extends StatelessWidget {
                 style: AppTypography.style(
                   fontSize: 14,
                   fontWeight: FontWeight.w600, // SemiBold
-                  color: AppColors.textBlack,
+                  color: textColor, // Adaptive for dark mode
                 ),
               ),
             ),
@@ -395,6 +403,13 @@ class _TappableNavButtonState extends State<_TappableNavButton> {
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = AppColors.getTextPrimary(context);
+    final borderColor = AppColors.getDivider(context);
+    // Subtle press highlight - adapts to theme
+    final pressColor = AppColors.isDarkMode(context)
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.05);
+
     return GestureDetector(
       onTap: widget.onTap,
       onTapDown: _handleTapDown,
@@ -406,9 +421,9 @@ class _TappableNavButtonState extends State<_TappableNavButton> {
         height: 32,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: _isPressed ? Colors.black.withValues(alpha: 0.05) : Colors.transparent,
+          color: _isPressed ? pressColor : Colors.transparent,
           border: Border.all(
-            color: AppColors.gray5,
+            color: borderColor, // Adaptive for dark mode
             width: 1,
           ),
         ),
@@ -416,7 +431,7 @@ class _TappableNavButtonState extends State<_TappableNavButton> {
           child: Icon(
             widget.icon,
             size: 18,
-            color: AppColors.textBlack,
+            color: iconColor, // Adaptive for dark mode
           ),
         ),
       ),
@@ -553,7 +568,7 @@ class _SelectDateSheetWithHeaderState
           icon: PhosphorIconsRegular.x,
           onTap: () => Navigator.pop(context),
           iconSize: 24,
-          iconColor: AppColors.textBlack,
+          iconColor: AppColors.getTextPrimary(context), // Adaptive for dark mode
           containerSize: 28, // Slightly larger for easier tapping
           isCircular: true,
         ),
@@ -599,7 +614,7 @@ class _SelectDateSheetWithHeaderState
               style: AppTypography.style(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textBlack,
+                color: AppColors.getTextPrimary(context), // Adaptive for dark mode
                 letterSpacing: 0.24,
               ),
             ),
@@ -607,6 +622,7 @@ class _SelectDateSheetWithHeaderState
         },
         defaultBuilder: (context, day, focusedDay) {
           return _buildDayCell(
+            context,
             day: day.day.toString(),
             isSelected: false,
             isOutside: false,
@@ -614,6 +630,7 @@ class _SelectDateSheetWithHeaderState
         },
         selectedBuilder: (context, day, focusedDay) {
           return _buildDayCell(
+            context,
             day: day.day.toString(),
             isSelected: true,
             isOutside: false,
@@ -622,6 +639,7 @@ class _SelectDateSheetWithHeaderState
         todayBuilder: (context, day, focusedDay) {
           final isSelected = isSameDay(_selectedDay, day);
           return _buildDayCell(
+            context,
             day: day.day.toString(),
             isSelected: isSelected,
             isOutside: false,
@@ -629,6 +647,7 @@ class _SelectDateSheetWithHeaderState
         },
         outsideBuilder: (context, day, focusedDay) {
           return _buildDayCell(
+            context,
             day: day.day.toString(),
             isSelected: false,
             isOutside: true,
@@ -646,15 +665,21 @@ class _SelectDateSheetWithHeaderState
     );
   }
 
-  Widget _buildDayCell({
+  Widget _buildDayCell(
+    BuildContext context, {
     required String day,
     required bool isSelected,
     required bool isOutside,
   }) {
+    // For selected state, invert colors based on theme
+    final isDark = AppColors.isDarkMode(context);
+    final selectedBgColor = isDark ? AppColors.white : AppColors.textBlack;
+    final selectedTextColor = isDark ? AppColors.textBlack : AppColors.white;
+
     return Container(
       margin: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.textBlack : Colors.transparent,
+        color: isSelected ? selectedBgColor : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
@@ -664,7 +689,7 @@ class _SelectDateSheetWithHeaderState
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             color: isSelected
-                ? Colors.white // White on black bg - always correct
+                ? selectedTextColor // Inverted for selected state
                 : isOutside
                     ? AppColors.getBorder(context) // Dimmed for outside days
                     : AppColors.getTextPrimary(context), // Adaptive text

@@ -32,7 +32,7 @@ class AppColors {
   // ===== Overlay & Sheet Colors (from Figma node-id=58-3460) =====
   // Used for modal overlays, bottom sheets, and grabber indicators
   static const Color overlayDark = Color(0x33000000);     // 20% black - modal backdrop (light mode)
-  static const Color overlayLight = Color(0x33FFFFFF);    // 20% white - modal backdrop (dark mode)
+  static const Color overlayLight = Color(0x80000000);    // 50% black - modal backdrop (dark mode, darker for AMOLED)
   static const Color grabber = Color(0x4D3C3C43);         // rgba(60,60,67,0.3) - iOS grabber
 
   // ===== Text Colors (from Figma) =====
@@ -148,7 +148,7 @@ class AppColors {
   static const Color backgroundDark = Color(0xFF000000);      // Pure black AMOLED background
   static const Color navBarDark = Color(0xFF1A1A1A);          // Nav bar - floats above cards
   static const Color dividerDark = Color(0xFF1E1E1E);         // Dividers - very subtle
-  static const Color inputFieldDark = Color(0xFF1A1A1A);      // Search/input fields
+  static const Color inputFieldDark = Color(0xFF1E1E1E);      // Input fields - lighter than sheet (#161616)
 
   // ===== Glassmorphism Effects =====
   static const Color glassLight = Color(0xCCFFFFFF);          // 80% opacity white
@@ -302,7 +302,9 @@ class AppColors {
   /// Get adaptive card background (#121212 in dark - darker, more subtle)
   /// Use this for cards that sit on the main background
   static Color getCardBackground(BuildContext context) {
-    return isDarkMode(context) ? cardDark : gray6;
+    // Light mode: Pure white for cards (per Figma spec)
+    // Dark mode: #121212 for cards on pure black background
+    return isDarkMode(context) ? cardDark : white;
   }
 
   /// Get adaptive primary text color
@@ -318,6 +320,13 @@ class AppColors {
   /// Get adaptive divider color (iOS separator style)
   static Color getDivider(BuildContext context) {
     return isDarkMode(context) ? dividerDark : gray5;
+  }
+
+  /// Get adaptive subtle divider color (lighter, for use on white cards)
+  /// Light mode: #F2F2F7 (gray6) - very subtle on white background
+  /// Dark mode: same as regular divider
+  static Color getDividerSubtle(BuildContext context) {
+    return isDarkMode(context) ? dividerDark : gray6;
   }
 
   /// Get adaptive border color
