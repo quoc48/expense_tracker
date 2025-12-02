@@ -29,12 +29,18 @@ class AnalyticsSummaryCard extends StatelessWidget {
   /// Currently selected/displayed month
   final DateTime selectedMonth;
 
+  /// Whether to show the budget progress bar section.
+  /// When false, hides the progress bar but keeps the budget line on the chart.
+  /// Defaults to true.
+  final bool showBudgetProgress;
+
   const AnalyticsSummaryCard({
     super.key,
     required this.totalSpent,
     required this.budgetAmount,
     required this.monthlyTrends,
     required this.selectedMonth,
+    this.showBudgetProgress = true,
   });
 
   // Momo Trust Sans text style helper
@@ -84,8 +90,9 @@ class AnalyticsSummaryCard extends StatelessWidget {
             color: const Color(0xFFF2F2F7), // Figma: #F2F2F7
           ),
 
-          // Budget progress section (only show if budget is set)
-          if (budgetAmount > 0) ...[
+          // Budget progress section (only show if budget is set AND showBudgetProgress is true)
+          // Note: The budget line on the chart still shows based on budgetAmount > 0
+          if (budgetAmount > 0 && showBudgetProgress) ...[
             _buildBudgetProgress(context),
             // Divider between Part 2 and Part 3
             Container(

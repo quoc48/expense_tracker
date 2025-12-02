@@ -9,6 +9,7 @@ import '../utils/analytics_calculator.dart';
 import '../widgets/common/tappable_icon.dart';
 import '../widgets/home/analytics_summary_card.dart';
 import '../widgets/home/category_card.dart';
+import '../widgets/home/select_month_sheet.dart';
 
 /// HomeScreen displays the main analytics dashboard with spending summary.
 ///
@@ -167,6 +168,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Builds the analytics summary card with spending data
+  ///
+  /// **Budget Display Logic**:
+  /// - Budget LINE on chart: Always visible (when budget > 0)
+  /// - Budget PROGRESS BAR: Only shown for current month
+  /// - Past months: Hide progress bar, keep budget line on chart
   Widget _buildSummaryCard(BuildContext context, ExpenseProvider provider) {
     // Get user's budget
     final prefsProvider = Provider.of<UserPreferencesProvider>(context);
@@ -182,14 +188,21 @@ class _HomeScreenState extends State<HomeScreen> {
       (sum, expense) => sum + expense.amount,
     );
 
-    // Get monthly trends for chart (last 6 months)
+    // Get monthly trends for chart (last 6 months ending at selected month)
     final monthlyTrends = _calculateMonthlyTrends(provider.expenses);
+
+    // Only show budget progress bar for current month
+    // Budget line on chart still shows for all months
+    final currentMonth = AnalyticsCalculator.currentMonth;
+    final isCurrentMonth = _selectedMonth.year == currentMonth.year &&
+        _selectedMonth.month == currentMonth.month;
 
     return AnalyticsSummaryCard(
       totalSpent: totalSpent,
-      budgetAmount: budget,
+      budgetAmount: budget, // Always pass budget (for chart line)
       monthlyTrends: monthlyTrends,
       selectedMonth: _selectedMonth,
+      showBudgetProgress: isCurrentMonth, // Only show progress bar for current month
     );
   }
 
@@ -251,24 +264,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Shows a month picker dialog
+  /// Shows the month selector bottom sheet.
+  ///
+  /// **Design Reference**: Figma node-id=73-2603
+  ///
+  /// Uses the new SelectMonthSheet with:
+  /// - Year navigation (left/right buttons + year display)
+  /// - Month grid (4x3, Jan-Dec)
+  /// - Selected state highlighting
+  /// - Future months disabled
   Future<void> _showMonthPicker(BuildContext context) async {
-    final now = DateTime.now();
-
-    // Simple month picker using showDatePicker
-    // Only allows selecting months (day is fixed to 1)
-    final picked = await showDatePicker(
+    final picked = await showSelectMonthSheet(
       context: context,
-      initialDate: _selectedMonth,
+      selectedMonth: _selectedMonth,
+      // Allow selection from Jan 2020 to current month
       firstDate: DateTime(2020, 1, 1),
-      lastDate: DateTime(now.year, now.month, 1),
-      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      lastDate: AnalyticsCalculator.currentMonth,
     );
 
     if (picked != null) {
       setState(() {
-        // Normalize to first day of month
-        _selectedMonth = DateTime(picked.year, picked.month, 1);
+        _selectedMonth = picked;
       });
     }
   }
@@ -286,14 +302,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return spending;
   }
 
-  /// Calculates monthly spending totals for trend chart
+  /// Calculates monthly spending totals for trend chart.
+  ///
+  /// **Chart Logic**:
+  /// - Shows 6 months ending at the selected month (visible in chart)
+  /// - Plus 1 hidden month before for the continuous line effect
+  /// - Example: If Nov 2025 selected → shows Jun-Nov (6 visible) + May (hidden)
   Map<DateTime, double> _calculateMonthlyTrends(List<Expense> expenses) {
     final trends = <DateTime, double>{};
 
-    // Get last 6 months
-    final now = DateTime.now();
+    // Get 6 months ending at selected month
+    // The chart will show these 6 + use 1 additional hidden month for line continuity
     for (var i = 5; i >= 0; i--) {
-      final month = DateTime(now.year, now.month - i, 1);
+      final month = DateTime(_selectedMonth.year, _selectedMonth.month - i, 1);
       final normalizedMonth = DateTime(month.year, month.month, 1);
 
       final monthExpenses = AnalyticsCalculator.getExpensesForMonth(

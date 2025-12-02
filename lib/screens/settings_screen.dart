@@ -7,6 +7,8 @@ import '../providers/auth_provider.dart';
 import '../theme/colors/app_colors.dart';
 import '../theme/typography/app_typography.dart';
 import '../widgets/settings/budget_edit_sheet.dart';
+import '../widgets/settings/select_theme_sheet.dart';
+import '../widgets/common/success_overlay.dart';
 
 /// Settings screen with Figma-based design
 ///
@@ -350,6 +352,14 @@ class SettingsScreen extends StatelessWidget {
 
     if (newBudget != null && context.mounted) {
       await prefsProvider.updateBudget(newBudget);
+
+      // Show success overlay after budget is updated
+      if (context.mounted) {
+        await showSuccessOverlay(
+          context: context,
+          message: 'Budget updated.',
+        );
+      }
     }
   }
 
@@ -430,14 +440,14 @@ class SettingsScreen extends StatelessWidget {
 
   /// Build Theme row
   ///
-  /// **Design Reference**: Figma node-id=63-1516
+  /// **Design Reference**: Figma node-id=63-2176
   ///
-  /// Layout: palette icon + "Theme" | "Light" + caret right
+  /// Layout: palette icon + "Theme" | current theme + caret right
   Widget _buildThemeRow(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        // For now, only Light mode is available
-        const themeText = 'Light';
+        // Get current theme mode and convert to AppThemeMode
+        final currentAppTheme = _themeProviderToAppTheme(themeProvider.themeMode);
 
         return InkWell(
           onTap: () => _showThemeSelector(context, themeProvider),
@@ -472,7 +482,7 @@ class SettingsScreen extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      themeText,
+                      currentAppTheme.shortLabel,
                       style: AppTypography.style(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
@@ -495,162 +505,44 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  /// Show theme selector (only Light available for now)
-  void _showThemeSelector(BuildContext context, ThemeProvider themeProvider) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (bottomSheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.gray3,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SizedBox(width: 32), // Spacer
-                    Text(
-                      'Theme',
-                      style: AppTypography.style(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBlack,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(bottomSheetContext),
-                      child: const Icon(
-                        PhosphorIconsRegular.x,
-                        size: 24,
-                        color: AppColors.textBlack,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Divider(height: 1),
-
-              // Light theme option (selected)
-              _buildThemeOption(
-                context: bottomSheetContext,
-                label: 'Light',
-                subtitle: 'Always use light theme',
-                isSelected: true,
-                onTap: () {
-                  themeProvider.setThemeMode(ThemeMode.light);
-                  Navigator.pop(bottomSheetContext);
-                },
-              ),
-
-              // Dark theme option (not available)
-              _buildThemeOption(
-                context: bottomSheetContext,
-                label: 'Dark',
-                subtitle: 'Coming soon',
-                isSelected: false,
-                isDisabled: true,
-                onTap: null,
-              ),
-
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
-    );
+  /// Convert ThemeMode to AppThemeMode
+  AppThemeMode _themeProviderToAppTheme(ThemeMode themeMode) {
+    switch (themeMode) {
+      case ThemeMode.light:
+        return AppThemeMode.light;
+      case ThemeMode.dark:
+        return AppThemeMode.dark;
+      case ThemeMode.system:
+        return AppThemeMode.system;
+    }
   }
 
-  /// Build theme option row
-  Widget _buildThemeOption({
-    required BuildContext context,
-    required String label,
-    required String subtitle,
-    required bool isSelected,
-    bool isDisabled = false,
-    VoidCallback? onTap,
-  }) {
-    return Opacity(
-      opacity: isDisabled ? 0.5 : 1.0,
-      child: InkWell(
-        onTap: isDisabled ? null : onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              // Radio indicator
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? AppColors.textBlack : AppColors.gray,
-                    width: 2,
-                  ),
-                ),
-                child: isSelected
-                    ? Center(
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.textBlack,
-                          ),
-                        ),
-                      )
-                    : null,
-              ),
+  /// Convert AppThemeMode to ThemeMode
+  ThemeMode _appThemeToThemeMode(AppThemeMode appTheme) {
+    switch (appTheme) {
+      case AppThemeMode.light:
+        return ThemeMode.light;
+      case AppThemeMode.dark:
+        return ThemeMode.dark;
+      case AppThemeMode.system:
+        return ThemeMode.system;
+    }
+  }
 
-              const SizedBox(width: 12),
+  /// Show theme selector using the new SelectThemeSheet design
+  ///
+  /// **Design Reference**: Figma node-id=64-2286
+  Future<void> _showThemeSelector(BuildContext context, ThemeProvider themeProvider) async {
+    final currentAppTheme = _themeProviderToAppTheme(themeProvider.themeMode);
 
-              // Labels
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: AppTypography.style(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textBlack,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: AppTypography.style(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.gray,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    final selectedTheme = await showSelectThemeSheet(
+      context: context,
+      selectedTheme: currentAppTheme,
     );
+
+    if (selectedTheme != null && context.mounted) {
+      // Convert back to ThemeMode and update
+      themeProvider.setThemeMode(_appThemeToThemeMode(selectedTheme));
+    }
   }
 }

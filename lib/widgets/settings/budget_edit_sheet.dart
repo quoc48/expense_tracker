@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/typography/app_typography.dart';
 import '../../widgets/common/primary_button.dart';
+import '../../widgets/common/amount_input_field.dart';
 
 /// Bottom sheet for editing monthly budget with Figma-accurate design
 ///
@@ -43,15 +43,36 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
   @override
   void initState() {
     super.initState();
-    // Initialize with current budget value (raw number, no formatting)
-    final initialValue = widget.initialBudget.toInt().toString();
+    // Initialize with current budget value (formatted with commas)
+    // AmountInputField handles the formatting internally
+    final initialValue = _formatInitialValue(widget.initialBudget.toInt());
     _controller = TextEditingController(text: initialValue);
     _focusNode = FocusNode();
 
     // Auto-focus after build to show numeric keyboard
+    // This matches the behavior in AddExpenseSheet
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNode.requestFocus();
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
     });
+  }
+
+  /// Format initial value with comma separators
+  String _formatInitialValue(int value) {
+    if (value == 0) return '0';
+
+    final str = value.toString();
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(str[i]);
+    }
+
+    return buffer.toString();
   }
 
   @override
@@ -61,31 +82,11 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
     super.dispose();
   }
 
-  /// Format number with comma separators: "20000000" -> "20,000,000"
-  String _formatWithCommas(String value) {
-    if (value.isEmpty) return '0';
-
-    // Remove any existing non-digit characters
-    final digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
-    if (digitsOnly.isEmpty) return '0';
-
-    final buffer = StringBuffer();
-    final length = digitsOnly.length;
-
-    for (int i = 0; i < length; i++) {
-      if (i > 0 && (length - i) % 3 == 0) {
-        buffer.write(',');
-      }
-      buffer.write(digitsOnly[i]);
-    }
-
-    return buffer.toString();
-  }
-
   /// Handle save button press
   void _handleSave() {
-    final text = _controller.text.replaceAll(RegExp(r'[^\d]'), '');
-    if (text.isEmpty) {
+    // Remove commas to get raw value (same pattern as AddExpenseSheet)
+    final text = _controller.text.replaceAll(',', '');
+    if (text.isEmpty || text == '0') {
       Navigator.pop(context, 0.0);
       return;
     }
@@ -112,13 +113,16 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: SafeArea(
+      // Wrap in Material to prevent visual artifacts
+      child: Material(
+        color: Colors.transparent,
         child: Padding(
           padding: EdgeInsets.only(
             left: 24,
             right: 24,
             top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            // 32px spacing between button and keyboard per Figma
+            bottom: MediaQuery.of(context).viewInsets.bottom + 32,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -128,8 +132,13 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
 
               const SizedBox(height: 32),
 
-              // Amount display (large centered)
-              _buildAmountDisplay(),
+              // Amount input - reusing the same component as AddExpenseSheet
+              // This ensures consistent behavior: cursor, formatting, keyboard
+              AmountInputField(
+                controller: _controller,
+                focusNode: _focusNode,
+                autofocus: false, // We handle focus manually in initState
+              ),
 
               const SizedBox(height: 32),
 
@@ -138,9 +147,6 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
                 label: 'Set Budget',
                 onPressed: _handleSave,
               ),
-
-              // Hidden text field for keyboard input
-              _buildHiddenTextField(),
             ],
           ),
         ),
@@ -175,78 +181,6 @@ class _BudgetEditSheetState extends State<BudgetEditSheet> {
           ),
         ),
       ],
-    );
-  }
-
-  /// Build large centered amount display
-  ///
-  /// **Design Reference**: Figma node-id=63-1631
-  ///
-  /// Display format: "34,000 đ"
-  /// - Number part: Black, 40px Bold
-  /// - Currency part: Gray, 40px Bold
-  Widget _buildAmountDisplay() {
-    final formattedValue = _formatWithCommas(_controller.text);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        // Number part (black)
-        Text(
-          formattedValue,
-          style: AppTypography.style(
-            fontSize: 40,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textBlack,
-          ),
-        ),
-
-        // Space + Currency symbol (gray)
-        Text(
-          ' đ',
-          style: AppTypography.style(
-            fontSize: 40,
-            fontWeight: FontWeight.w700,
-            color: AppColors.gray,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Hidden text field that captures keyboard input
-  ///
-  /// This invisible field handles the numeric keyboard input
-  /// while the visible amount display shows formatted output.
-  Widget _buildHiddenTextField() {
-    return SizedBox(
-      height: 0,
-      child: TextField(
-        controller: _controller,
-        focusNode: _focusNode,
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(12), // Max 999,999,999,999
-        ],
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-        ),
-        style: const TextStyle(
-          color: Colors.transparent,
-          height: 0,
-        ),
-        cursorColor: Colors.transparent,
-        showCursor: false,
-        onChanged: (value) {
-          // Trigger rebuild to update displayed amount
-          setState(() {});
-        },
-        onSubmitted: (_) => _handleSave(),
-      ),
     );
   }
 }
