@@ -9,6 +9,7 @@ import '../widgets/settings/budget_edit_sheet.dart';
 import '../widgets/settings/select_theme_sheet.dart';
 import '../widgets/common/logout_confirmation_dialog.dart';
 import '../widgets/common/success_overlay.dart';
+import '../widgets/settings/recurring_expenses_list_screen.dart';
 
 /// Settings screen with Figma-based design
 ///
@@ -209,11 +210,14 @@ class SettingsScreen extends StatelessWidget {
           // Monthly Budget row
           _buildBudgetRow(context, prefsProvider),
 
-          // Divider
+          // Divider - same style as expense_list_tile.dart
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            height: 1,
-            color: AppColors.getDivider(context), // Adaptive divider for dark mode
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Divider(
+              height: 1,
+              thickness: 0.5,
+              color: AppColors.getDivider(context),
+            ),
           ),
 
           // Recurring Expenses row (coming soon)
@@ -325,7 +329,17 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  /// Build Recurring Expenses row (disabled/coming soon)
+  /// Navigate to Recurring Expenses list screen
+  void _navigateToRecurringExpenses(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const RecurringExpensesListScreen(),
+      ),
+    );
+  }
+
+  /// Build Recurring Expenses row
   ///
   /// **Design Reference**: Figma node-id=63-1487
   ///
@@ -333,8 +347,9 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildRecurringRow(BuildContext context) {
     final textColor = AppColors.getTextPrimary(context);
 
-    return Opacity(
-      opacity: 0.5, // Disabled state
+    return InkWell(
+      onTap: () => _navigateToRecurringExpenses(context),
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(

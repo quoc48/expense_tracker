@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Typography system for the Expense Tracker app
-/// Uses Momo Trust Sans font (Google Fonts) for modern Vietnamese fintech aesthetic
+/// Uses Momo Trust Sans font (local asset) for modern Vietnamese fintech aesthetic
 /// JetBrains Mono used for currency values with tabular figures for perfect alignment
 ///
 /// Font weights available in Momo Trust Sans:
@@ -51,15 +50,15 @@ class AppTypography {
     );
   }
 
-  /// Creates a complete text theme with Momo Trust Sans via Google Fonts
-  /// Uses GoogleFonts.getFont() for fonts that may not have dedicated methods yet
+  /// Creates a complete text theme with Momo Trust Sans
+  /// Uses local asset font for consistency and offline reliability
   static TextTheme createTextTheme({
     required Color textPrimary,
     required Color textSecondary,
     required Color textTertiary,
   }) {
-    // Helper to create Momo Trust Sans style
-    // Using getFont() for fonts not yet in the typed API
+    // Helper to create Momo Trust Sans style using local asset font
+    // This ensures consistency with AppTypography.style() and offline support
     TextStyle momoStyle({
       double fontSize = 14,
       FontWeight fontWeight = FontWeight.normal,
@@ -67,8 +66,8 @@ class AppTypography {
       double height = 1.4,
       Color? color,
     }) {
-      return GoogleFonts.getFont(
-        'Momo Trust Sans',
+      return TextStyle(
+        fontFamily: fontFamily, // Use local asset 'MomoTrustSans'
         fontSize: fontSize,
         fontWeight: fontWeight,
         letterSpacing: letterSpacing,
