@@ -4,7 +4,6 @@ import '../../models/recurring_expense.dart';
 import '../../theme/colors/app_colors.dart';
 import '../../theme/constants/app_spacing.dart';
 import '../../theme/typography/app_typography.dart';
-import '../common/grabber_bottom_sheet.dart';
 
 /// Actions available for a recurring expense
 enum RecurringExpenseAction {
@@ -115,42 +114,46 @@ class RecurringExpenseActionSheet extends StatelessWidget {
   }
 
   /// Build header with expense name and close button
+  ///
+  /// **Design**: Header height is 24px (matches icon size)
   Widget _buildHeader(BuildContext context, Color textColor) {
-    return Row(
-      children: [
-        // Spacer to balance close button
-        const SizedBox(width: 40),
+    return SizedBox(
+      height: 24, // Fixed header height
+      child: Row(
+        children: [
+          // Spacer to balance close button
+          const SizedBox(width: 24),
 
-        // Title (expense description, centered)
-        Expanded(
-          child: Text(
-            expense.description,
-            textAlign: TextAlign.center,
-            style: AppTypography.style(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-
-        // Close button
-        GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            child: Icon(
-              PhosphorIconsRegular.x,
-              size: 24,
-              color: textColor,
+          // Title (expense description, centered)
+          Expanded(
+            child: Text(
+              expense.description,
+              textAlign: TextAlign.center,
+              style: AppTypography.style(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        ),
-      ],
+
+          // Close button - 24x24 to match header height
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: Icon(
+                PhosphorIconsRegular.x,
+                size: 24,
+                color: textColor,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -249,8 +252,35 @@ Future<RecurringExpenseAction?> showRecurringExpenseActionSheet({
   required BuildContext context,
   required RecurringExpense expense,
 }) {
-  return showGrabberBottomSheet<RecurringExpenseAction>(
+  // Use raw showModalBottomSheet for precise control over padding
+  return showModalBottomSheet<RecurringExpenseAction>(
     context: context,
-    child: RecurringExpenseActionSheet(expense: expense),
+    backgroundColor: Colors.transparent,
+    barrierColor: AppColors.getOverlay(context),
+    isDismissible: true,
+    enableDrag: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(24),
+        topRight: Radius.circular(24),
+      ),
+    ),
+    builder: (context) => Container(
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(context),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      // Exact padding: 16px top, 16px sides, 40px bottom
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: 40,
+      ),
+      child: RecurringExpenseActionSheet(expense: expense),
+    ),
   );
 }

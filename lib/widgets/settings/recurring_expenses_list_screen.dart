@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../models/recurring_expense.dart';
@@ -8,6 +9,7 @@ import '../../theme/typography/app_typography.dart';
 import '../../theme/constants/app_spacing.dart';
 import 'add_recurring_expense_sheet.dart';
 import 'recurring_expense_action_sheet.dart';
+import '../common/primary_button.dart';
 
 /// Full-screen list of recurring expenses with empty state
 ///
@@ -152,10 +154,10 @@ class _RecurringExpensesListScreenState
 
   /// Build empty state with illustration and CTA button
   ///
-  /// **Design Reference**: Figma node-id=78-3867
-  /// - Image: 180x180px centered
-  /// - Text: "There is nothing yet" - 14px Regular, gray
-  /// - Button: "New Recurring Expense" - 220x48px, black bg, 12px radius
+  /// **Design Reference**: Figma node-id=78-3867, 80-4574 (notebook icon)
+  /// - Image: 180x180px centered (dark mode compatible)
+  /// - Text: "There is nothing yet" - 14px Regular, black (not gray)
+  /// - Button: "New Recurring Expense" - 220x48px, black bg, 12px radius, MomoTrustSans
   Widget _buildEmptyState(BuildContext context) {
     final textColor = AppColors.getTextPrimary(context);
 
@@ -165,48 +167,37 @@ class _RecurringExpensesListScreenState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Illustration - notebook empty state
-            Image.asset(
-              'assets/images/notebook.png',
+            // Illustration - notebook empty state (Figma node-id=80-4574)
+            // Uses theme-aware SVG for proper light/dark mode colors
+            SvgPicture.asset(
+              AppColors.isDarkMode(context)
+                  ? 'assets/images/notebook_dark.svg'
+                  : 'assets/images/notebook.svg',
               width: 180,
               height: 180,
-              fit: BoxFit.contain,
             ),
 
             const SizedBox(height: 24),
 
-            // Empty text
+            // Empty text - should be black (textPrimary), not gray
             Text(
               'There is nothing yet',
               style: AppTypography.style(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: AppColors.gray,
+                color: textColor, // Bug fix: was AppColors.gray, now uses textPrimary
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // CTA Button
-            GestureDetector(
-              onTap: () => _showAddSheet(context),
-              child: Container(
-                width: 220,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: textColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    'New Recurring Expense',
-                    style: AppTypography.style(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getSurface(context),
-                    ),
-                  ),
-                ),
+            // CTA Button - Uses PrimaryButton for consistent MomoTrustSans font
+            // PrimaryButton uses ElevatedButton which properly applies the theme font
+            SizedBox(
+              width: 220,
+              child: PrimaryButton(
+                label: 'New Recurring Expense',
+                onPressed: () => _showAddSheet(context),
               ),
             ),
           ],
@@ -265,6 +256,8 @@ class _RecurringExpensesListScreenState
   /// **Design Reference**: White card with 8px radius, items separated by dividers
   Widget _buildExpenseCard(
       BuildContext context, List<RecurringExpense> expenses) {
+    final dividerColor = AppColors.getDivider(context);
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurface(context),
@@ -275,10 +268,14 @@ class _RecurringExpensesListScreenState
           for (int i = 0; i < expenses.length; i++) ...[
             _buildExpenseItem(context, expenses[i]),
             if (i < expenses.length - 1)
+              // Divider - same style as expense_list_tile.dart
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                height: 1,
-                color: AppColors.getDivider(context),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: dividerColor,
+                ),
               ),
           ],
         ],
@@ -288,14 +285,23 @@ class _RecurringExpensesListScreenState
 
   /// Build individual expense item row
   ///
-  /// **Design Reference**: Figma node-id=78-4080
-  /// - 32x32 icon circle (gray6 bg)
+  /// **Design Reference**: Figma node-id=78-4080 (active), 78-4161 (inactive)
+  /// - Active: 32x32 icon circle with category color (10% opacity bg)
+  /// - Inactive: 32x32 icon circle with gray6 bg (#F2F2F7)
   /// - Description (14px) + Frequency subtitle (10px gray)
   /// - Amount on right (14px)
   Widget _buildExpenseItem(BuildContext context, RecurringExpense expense) {
     final textColor = AppColors.getTextPrimary(context);
     final isDark = AppColors.isDarkMode(context);
-    final iconBgColor = isDark ? AppColors.neutral300Dark : AppColors.gray6;
+
+    // Active items use category color, inactive use gray
+    final categoryColor = AppColors.getCategoryColor(expense.categoryNameVi);
+    final iconBgColor = expense.isActive
+        ? categoryColor.withValues(alpha: 0.1) // 10% category color
+        : (isDark ? AppColors.neutral300Dark : AppColors.gray6); // Gray for inactive
+    final iconColor = expense.isActive
+        ? categoryColor // Category color for active
+        : (isDark ? AppColors.gray : textColor); // Gray icon for inactive
 
     return InkWell(
       onTap: () => _showActionSheet(context, expense),
@@ -303,7 +309,7 @@ class _RecurringExpensesListScreenState
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            // Category icon circle
+            // Category icon circle - color based on active status
             Container(
               width: 32,
               height: 32,
@@ -314,7 +320,7 @@ class _RecurringExpensesListScreenState
               child: Icon(
                 expense.categoryIcon,
                 size: 16,
-                color: textColor,
+                color: iconColor,
               ),
             ),
 
@@ -407,8 +413,10 @@ class _RecurringExpensesListScreenState
     switch (action) {
       case RecurringExpenseAction.edit:
         // Show edit sheet with existing data
+        if (!mounted) return;
         final updated = await showAddRecurringExpenseSheet(
-          context: context,
+          // Use this.context after mounted check for proper lint compliance
+          context: this.context,
           existingExpense: expense,
         );
         if (updated != null && mounted) {

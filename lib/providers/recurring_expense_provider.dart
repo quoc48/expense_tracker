@@ -125,8 +125,9 @@ class RecurringExpenseProvider extends ChangeNotifier {
   /// Uses optimistic UI: adds to list immediately, then saves to database.
   /// On failure, removes from list and shows error.
   ///
-  /// **Auto-Creation:** After saving, immediately creates this month's expense
-  /// so user doesn't have to wait until next app open.
+  /// **Note:** Does NOT create an expense immediately. The expense will be
+  /// auto-created on the 1st of the NEXT month when the app opens.
+  /// Example: Add recurring on Dec 2 → first expense created Jan 1.
   Future<bool> createRecurringExpense(RecurringExpense expense) async {
     try {
       // Optimistic update
@@ -144,14 +145,8 @@ class RecurringExpenseProvider extends ChangeNotifier {
         notifyListeners();
       }
 
-      // Immediately create this month's expense
-      // So user sees it right away instead of waiting for next app open
-      final createdExpense = await _service.forceCreateExpense(saved.id);
-      if (createdExpense != null) {
-        debugPrint('✅ Immediately created expense for: ${saved.description}');
-        // Refresh to get updated lastCreatedDate
-        await loadRecurringExpenses();
-      }
+      debugPrint('✅ Created recurring expense: ${saved.description}');
+      debugPrint('   → First expense will be auto-created next month');
 
       _error = null;
       return true;
@@ -183,14 +178,23 @@ class RecurringExpenseProvider extends ChangeNotifier {
 
       // Save to database
       final saved = await _repository.update(expense);
-      _expenses[index] = saved;
+
+      // IMPORTANT: Find by ID again since sorting changed indices!
+      final newIndex = _expenses.indexWhere((e) => e.id == expense.id);
+      if (newIndex != -1) {
+        _expenses[newIndex] = saved;
+      }
 
       _error = null;
       notifyListeners();
       return true;
     } catch (e) {
-      // Rollback
-      _expenses[index] = original;
+      // Rollback - find by ID since indices may have changed
+      final rollbackIndex = _expenses.indexWhere((e) => e.id == expense.id);
+      if (rollbackIndex != -1) {
+        _expenses[rollbackIndex] = original;
+      }
+      _sortExpenses();
       _error = 'Failed to update recurring expense: $e';
       debugPrint('❌ $_error');
       notifyListeners();
@@ -219,14 +223,23 @@ class RecurringExpenseProvider extends ChangeNotifier {
 
       // Save to database
       final saved = await _repository.toggleActive(id, newActive);
-      _expenses[index] = saved;
+
+      // IMPORTANT: Find by ID again since sorting changed indices!
+      final newIndex = _expenses.indexWhere((e) => e.id == id);
+      if (newIndex != -1) {
+        _expenses[newIndex] = saved;
+      }
 
       _error = null;
       notifyListeners();
       return true;
     } catch (e) {
-      // Rollback
-      _expenses[index] = original;
+      // Rollback - find by ID since indices may have changed
+      final rollbackIndex = _expenses.indexWhere((e) => e.id == id);
+      if (rollbackIndex != -1) {
+        _expenses[rollbackIndex] = original;
+      }
+      _sortExpenses();
       _error = 'Failed to toggle status: $e';
       debugPrint('❌ $_error');
       notifyListeners();

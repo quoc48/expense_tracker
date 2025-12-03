@@ -210,11 +210,14 @@ class SettingsScreen extends StatelessWidget {
           // Monthly Budget row
           _buildBudgetRow(context, prefsProvider),
 
-          // Divider
+          // Divider - same style as expense_list_tile.dart
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            height: 1,
-            color: AppColors.getDivider(context), // Adaptive divider for dark mode
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Divider(
+              height: 1,
+              thickness: 0.5,
+              color: AppColors.getDivider(context),
+            ),
           ),
 
           // Recurring Expenses row (coming soon)

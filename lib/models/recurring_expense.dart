@@ -138,20 +138,42 @@ class RecurringExpense {
   ///
   /// Returns true if:
   /// 1. This is an active recurring expense, AND
-  /// 2. Either never created before (lastCreatedDate is null), OR
-  /// 3. Last creation was before current month
+  /// 2. Current month is AFTER the month when recurring was created, AND
+  /// 3. Either never created before (lastCreatedDate is null), OR
+  ///    last creation was before current month
   ///
-  /// **Example:**
+  /// **Example 1 - New recurring, same month:**
   /// - Today: Dec 2, 2025
+  /// - startDate: Dec 2, 2025 (just created)
+  /// - lastCreatedDate: null
+  /// - Result: false (don't create until Jan 2026)
+  ///
+  /// **Example 2 - New recurring, next month:**
+  /// - Today: Jan 5, 2026
+  /// - startDate: Dec 2, 2025
+  /// - lastCreatedDate: null
+  /// - Result: true (create for January)
+  ///
+  /// **Example 3 - Existing recurring:**
+  /// - Today: Dec 2, 2025
+  /// - startDate: Oct 15, 2025
   /// - lastCreatedDate: Nov 1, 2025
   /// - Result: true (need to create for December)
   bool needsCreationForMonth(DateTime currentDate) {
     if (!isActive) return false;
 
-    if (lastCreatedDate == null) return true;
-
     // Compare year and month only
     final currentYearMonth = currentDate.year * 12 + currentDate.month;
+    final startYearMonth = startDate.year * 12 + startDate.month;
+
+    // Don't create expense for the same month the recurring was created
+    // First expense should be created starting from the NEXT month
+    if (currentYearMonth <= startYearMonth) return false;
+
+    // If never created before, need to create
+    if (lastCreatedDate == null) return true;
+
+    // Otherwise, check if we've already created for current month
     final lastYearMonth =
         lastCreatedDate!.year * 12 + lastCreatedDate!.month;
 
