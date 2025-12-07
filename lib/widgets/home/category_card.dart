@@ -19,11 +19,16 @@ import '../../utils/currency_formatter.dart';
 /// - All cards share 100% of total spending (sum of fillPercentage = 1.0)
 /// - Available fill space = cardHeight - 4px (baseline is always present)
 ///
+/// **Tooltip Behavior**:
+/// - On tap, shows a tooltip above the card with "CategoryName: X% of spending"
+/// - Auto-dismisses after 2 seconds
+/// - Uses OverlayEntry for proper layering above other widgets
+///
 /// **Typography** (from Figma):
 /// - Font: Momo Trust Sans, 14px, weight 500
 /// - Color: #000 (Black), center aligned
 /// - Font features: 'liga' off, 'clig' off
-class CategoryCard extends StatelessWidget {
+class CategoryCard extends StatefulWidget {
   /// The category name (Vietnamese, e.g., "Thực phẩm")
   final String categoryName;
 
@@ -34,9 +39,6 @@ class CategoryCard extends StatelessWidget {
   /// Calculated as: categorySpent / totalSpent (all percentages sum to 1.0)
   final double fillPercentage;
 
-  /// Callback when the card is tapped
-  final VoidCallback? onTap;
-
   /// Baseline fill height in pixels (always present, even for zero-spend)
   static const double _baselineFillHeight = 4.0;
 
@@ -45,16 +47,97 @@ class CategoryCard extends StatelessWidget {
     required this.categoryName,
     required this.amount,
     required this.fillPercentage,
-    this.onTap,
   });
+
+  @override
+  State<CategoryCard> createState() => _CategoryCardState();
+}
+
+class _CategoryCardState extends State<CategoryCard> {
+  /// Key to get the card's position for tooltip placement
+  final GlobalKey _cardKey = GlobalKey();
+
+  /// Current overlay entry for the tooltip
+  OverlayEntry? _overlayEntry;
+
+  /// Global reference to the currently active tooltip state
+  /// Ensures only one tooltip is visible at a time across all CategoryCards
+  static _CategoryCardState? _activeTooltipState;
+
+  @override
+  void dispose() {
+    _removeTooltip();
+    super.dispose();
+  }
+
+  /// Shows the tooltip above the card
+  void _showTooltip() {
+    // Dismiss any existing tooltip from other cards first
+    if (_activeTooltipState != null && _activeTooltipState != this) {
+      _activeTooltipState!._removeTooltip();
+    }
+
+    // Remove our own tooltip if already showing
+    _removeTooltip();
+
+    // Get the card's position on screen
+    final renderBox = _cardKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final cardPosition = renderBox.localToGlobal(Offset.zero);
+    final cardSize = renderBox.size;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Calculate percentage for display (round to nearest integer)
+    final percentDisplay = (widget.fillPercentage * 100).round();
+
+    // Card center X position
+    final cardCenterX = cardPosition.dx + (cardSize.width / 2);
+
+    // Create the overlay entry
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return _TooltipPositioner(
+          cardCenterX: cardCenterX,
+          cardTop: cardPosition.dy,
+          screenWidth: screenWidth,
+          categoryName: widget.categoryName,
+          percentage: percentDisplay,
+        );
+      },
+    );
+
+    // Mark this as the active tooltip
+    _activeTooltipState = this;
+
+    // Insert the overlay
+    Overlay.of(context).insert(_overlayEntry!);
+
+    // Auto-dismiss after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (_activeTooltipState == this) {
+        _removeTooltip();
+      }
+    });
+  }
+
+  /// Removes the tooltip if it exists
+  void _removeTooltip() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (_activeTooltipState == this) {
+      _activeTooltipState = null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     // Get the category color from our color system
-    final categoryColor = AppColors.getCategoryColor(categoryName);
+    final categoryColor = AppColors.getCategoryColor(widget.categoryName);
 
     return GestureDetector(
-      onTap: onTap,
+      key: _cardKey,
+      onTap: _showTooltip,
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Calculate fill height:
@@ -65,9 +148,9 @@ class CategoryCard extends StatelessWidget {
           // This ensures zero-spend cards show exactly 4px
           // and cards with spending show 4px + their proportional share
           final cardHeight = constraints.maxHeight;
-          final availableSpace = cardHeight - _baselineFillHeight;
-          final proportionalFill = availableSpace * fillPercentage.clamp(0.0, 1.0);
-          final fillHeight = _baselineFillHeight + proportionalFill;
+          final availableSpace = cardHeight - CategoryCard._baselineFillHeight;
+          final proportionalFill = availableSpace * widget.fillPercentage.clamp(0.0, 1.0);
+          final fillHeight = CategoryCard._baselineFillHeight + proportionalFill;
 
           return Container(
             decoration: BoxDecoration(
@@ -109,7 +192,7 @@ class CategoryCard extends StatelessWidget {
                           children: [
                             // Filled icon - 24px as per Figma (adaptive for dark mode)
                             Icon(
-                              MinimalistIcons.getCategoryIconFill(categoryName),
+                              MinimalistIcons.getCategoryIconFill(widget.categoryName),
                               size: 24,
                               color: textColor,
                             ),
@@ -119,7 +202,7 @@ class CategoryCard extends StatelessWidget {
 
                             // Amount text - Momo Trust Sans, 14px, w500 (adaptive for dark mode)
                             Text(
-                              _formatAmount(amount),
+                              _formatAmount(widget.amount),
                               style: TextStyle(
                                 fontFamily: 'MomoTrustSans',
                                 fontSize: 16,
@@ -153,6 +236,167 @@ class CategoryCard extends StatelessWidget {
   }
 }
 
+/// Positions the tooltip with smart edge detection.
+///
+/// **Positioning Logic**:
+/// - Centers tooltip above the card by default
+/// - If tooltip would overflow left edge: align left, arrow points to card center
+/// - If tooltip would overflow right edge: align right, arrow points to card center
+/// - Arrow always points to the card center regardless of tooltip position
+class _TooltipPositioner extends StatefulWidget {
+  final double cardCenterX;
+  final double cardTop;
+  final double screenWidth;
+  final String categoryName;
+  final int percentage;
+
+  const _TooltipPositioner({
+    required this.cardCenterX,
+    required this.cardTop,
+    required this.screenWidth,
+    required this.categoryName,
+    required this.percentage,
+  });
+
+  @override
+  State<_TooltipPositioner> createState() => _TooltipPositionerState();
+}
+
+class _TooltipPositionerState extends State<_TooltipPositioner> {
+  final GlobalKey _tooltipKey = GlobalKey();
+  double? _tooltipWidth;
+
+  @override
+  void initState() {
+    super.initState();
+    // Measure tooltip width after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final renderBox = _tooltipKey.currentContext?.findRenderObject() as RenderBox?;
+      if (renderBox != null && mounted) {
+        setState(() {
+          _tooltipWidth = renderBox.size.width;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltipColor = AppColors.isDarkMode(context)
+        ? const Color(0xFF2C2C2C)
+        : const Color(0xFF1C1C1E);
+
+    const edgePadding = 12.0;
+    const arrowSize = Size(12, 6);
+    const tooltipHeight = 40.0; // Approximate height for positioning
+
+    // Calculate tooltip position
+    double tooltipLeft;
+    double arrowOffsetFromLeft;
+
+    if (_tooltipWidth != null) {
+      // We have measured width - calculate proper position
+      final idealLeft = widget.cardCenterX - (_tooltipWidth! / 2);
+      final idealRight = idealLeft + _tooltipWidth!;
+
+      if (idealLeft < edgePadding) {
+        // Would overflow left - align to left edge
+        tooltipLeft = edgePadding;
+        arrowOffsetFromLeft = widget.cardCenterX - edgePadding - (arrowSize.width / 2);
+      } else if (idealRight > widget.screenWidth - edgePadding) {
+        // Would overflow right - align to right edge
+        tooltipLeft = widget.screenWidth - edgePadding - _tooltipWidth!;
+        arrowOffsetFromLeft = widget.cardCenterX - tooltipLeft - (arrowSize.width / 2);
+      } else {
+        // Centered - no overflow
+        tooltipLeft = idealLeft;
+        arrowOffsetFromLeft = (_tooltipWidth! / 2) - (arrowSize.width / 2);
+      }
+    } else {
+      // First render - use approximate positioning (will update after measure)
+      tooltipLeft = widget.cardCenterX - 80; // Approximate half-width
+      arrowOffsetFromLeft = 80 - (arrowSize.width / 2);
+    }
+
+    // Clamp arrow position to stay within tooltip bounds
+    if (_tooltipWidth != null) {
+      arrowOffsetFromLeft = arrowOffsetFromLeft.clamp(8.0, _tooltipWidth! - arrowSize.width - 8);
+    }
+
+    return Positioned(
+      left: tooltipLeft,
+      top: widget.cardTop - tooltipHeight - arrowSize.height - 4,
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Tooltip container
+            Container(
+              key: _tooltipKey,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: tooltipColor,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                '${widget.categoryName}: ${widget.percentage}% of spending',
+                style: const TextStyle(
+                  fontFamily: 'MomoTrustSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            // Arrow pointing down - positioned to point at card center
+            Padding(
+              padding: EdgeInsets.only(left: arrowOffsetFromLeft.clamp(0, double.infinity)),
+              child: CustomPaint(
+                size: arrowSize,
+                painter: _TrianglePainter(color: tooltipColor),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Paints a small triangle for the tooltip arrow
+class _TrianglePainter extends CustomPainter {
+  final Color color;
+
+  _TrianglePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, 0)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 /// A grid of CategoryCards for displaying category spending overview.
 ///
 /// **Design Reference**: Figma node-id=5-939 (Category section)
@@ -165,15 +409,14 @@ class CategoryCard extends StatelessWidget {
 /// - Each card's fill = (categorySpent / totalSpent) × 100%
 /// - This means all fill percentages sum to 100%
 /// - Categories with 0 spent show 4px minimum fill
+///
+/// **Interaction**: Each card shows a tooltip on tap with percentage info
 class CategoryCardGrid extends StatelessWidget {
   /// Map of category names to their spending amounts
   final Map<String, double> categorySpending;
 
   /// Monthly budget (kept for potential future use, not used in fill calculation)
   final double monthlyBudget;
-
-  /// Callback when a category card is tapped
-  final void Function(String categoryName)? onCategoryTap;
 
   /// All category names in display order (matches Supabase)
   ///
@@ -200,7 +443,6 @@ class CategoryCardGrid extends StatelessWidget {
     super.key,
     required this.categorySpending,
     required this.monthlyBudget,
-    this.onCategoryTap,
   });
 
   @override
@@ -252,9 +494,6 @@ class CategoryCardGrid extends StatelessWidget {
           categoryName: categoryName,
           amount: amount,
           fillPercentage: fillPercent,
-          onTap: onCategoryTap != null
-              ? () => onCategoryTap!(categoryName)
-              : null,
         );
       },
     );

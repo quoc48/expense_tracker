@@ -241,15 +241,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final categorySpending = _calculateCategorySpending(monthExpenses);
 
     // Always show CategoryCardGrid (it handles empty state internally by showing all 14 categories)
+    // Each card displays a tooltip with spending percentage on tap
     return CategoryCardGrid(
       categorySpending: categorySpending,
       monthlyBudget: budget,
-      onCategoryTap: (categoryName) {
-        // TODO: Navigate to category detail or filter expenses
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Tapped: $categoryName')),
-        );
-      },
     );
   }
 
