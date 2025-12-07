@@ -15,8 +15,21 @@ import 'expense_repository.dart';
 /// - Zero data loss (Cà phê stays Cà phê)
 /// - Supabase is the single source of truth
 /// - Future-proof (add categories in Supabase without code changes)
+///
+/// **SINGLETON PATTERN** - All usages share the same cached mappings!
+/// This ensures category/type ID caches persist across all screens.
 class SupabaseExpenseRepository implements ExpenseRepository {
+  // Singleton instance
+  static final SupabaseExpenseRepository _instance = SupabaseExpenseRepository._internal();
+
+  // Factory constructor returns singleton
+  factory SupabaseExpenseRepository() => _instance;
+
+  // Private constructor for singleton
+  SupabaseExpenseRepository._internal();
+
   // Cache for category/type UUIDs (to avoid repeated lookups)
+  // Now shared across ALL usages thanks to singleton pattern!
   Map<String, String>? _categoryIdMap; // Vietnamese name → UUID
   Map<String, String>? _typeIdMap;     // Vietnamese name → UUID
 

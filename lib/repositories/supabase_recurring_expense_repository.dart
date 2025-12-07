@@ -28,8 +28,21 @@ import 'recurring_expense_repository.dart';
 ///
 /// **Row Level Security (RLS):**
 /// Same as expenses table - users can only access their own recurring expenses.
+///
+/// **SINGLETON PATTERN** - All usages share the same cached mappings!
 class SupabaseRecurringExpenseRepository implements RecurringExpenseRepository {
+  // Singleton instance
+  static final SupabaseRecurringExpenseRepository _instance =
+      SupabaseRecurringExpenseRepository._internal();
+
+  // Factory constructor returns singleton
+  factory SupabaseRecurringExpenseRepository() => _instance;
+
+  // Private constructor for singleton
+  SupabaseRecurringExpenseRepository._internal();
+
   // Cache for category/type UUIDs (to avoid repeated lookups)
+  // Now shared across ALL usages thanks to singleton pattern!
   Map<String, String>? _categoryIdMap; // Vietnamese name → UUID
   Map<String, String>? _typeIdMap; // Vietnamese name → UUID
 
