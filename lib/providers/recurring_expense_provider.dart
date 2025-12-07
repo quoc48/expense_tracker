@@ -302,14 +302,17 @@ class RecurringExpenseProvider extends ChangeNotifier {
   /// **Called from:** AuthGate on app open (after login)
   ///
   /// **Returns:** Number of expenses created
+  ///
+  /// **Performance Optimization:**
+  /// Always preloads recurring expenses during startup so the
+  /// Recurring Expenses screen opens instantly (no loading delay).
   Future<int> processAutoCreation() async {
     try {
       final created = await _service.processRecurringExpenses();
 
-      // Refresh to update lastCreatedDate values
-      if (created.isNotEmpty) {
-        await loadRecurringExpenses();
-      }
+      // ALWAYS load recurring expenses during startup for instant screen display
+      // This populates _expenses list so screen shows CACHED instead of loading
+      await loadRecurringExpenses(forceRefresh: created.isNotEmpty);
 
       return created.length;
     } catch (e) {
