@@ -1,33 +1,34 @@
 # Session: December 7, 2025 - Font Size Scale Shift COMPLETE
 
-## Goal ✅
-Shift font sizes: 8→10, 10→12, 12→14, 14→16
+## Branch
+`feature/font-size-scale-shift`
 
-## Status: COMPLETE
+## Commit
+`cc4bdc5` - style: Complete font size scale shift with consistency fixes
 
-### Summary
-All font sizes shifted up by one scale step AND non-standard sizes normalized.
+## Summary
+Comprehensive typography and UX polish session.
 
-### Scale Shifts Applied
-| Original | New | Count |
-|----------|-----|-------|
-| 8 | 10 | 1 |
-| 10 | 12 | 2 |
-| 12 | 14 | 17 |
-| 14 | 16 | ~20 (previous session) |
+### Typography Changes
+- Scale shift: 8→10, 10→12, 12→14, 14→16
+- Non-standard sizes normalized (11→12, 13→14, 17→18)
+- Dialog titles: 18→16 (consistent)
+- FormInput._fontSize: 14→16
 
-### Non-Standard Sizes Fixed
-| Original | New | Location |
-|----------|-----|----------|
-| 11 | 12 | analytics_summary_card.dart (chart labels) |
-| 13 | 14 | add_expense_screen.dart, sync_queue_details_sheet.dart (offline warnings) |
-| 17 | 18 | image_preview_screen.dart (dialog titles) |
+### UI Improvements
+- Settings nav items: vertical padding 12→16
+- Recurring expenses: Fill icons (matches expense list)
+- Recurring expenses: Success overlay for add/edit
+- Sheet close delay: 1000ms→100ms (instant feedback)
+- Nav bar touch targets: 28×28→48×48
 
-### Final Font Size Distribution
-- 10 (1) - smallest labels
-- 12 (3) - small text
-- 14 (19) - caption/secondary
-- 16 (80) - body text
-- 18 (4) - subheadings
-- 32 (1) - large headings
-- 40 (2) - hero text
+### Files Changed (31 files)
+- Models: recurring_expense.dart (Fill icons)
+- Screens: settings, scanning, expense_list, add_expense
+- Widgets: form_input, add_expense_sheet, recurring_expenses_list_screen, floating_nav_bar
+- Theme: analytics_summary_card
+
+## Status: COMPLETE ✅
+
+## Next Task
+Fix popover/tooltip message when touching category cards on Analytics page
