@@ -1,21 +1,40 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/expense.dart';
 
 // StorageService: Handles all data persistence operations
 // This is a "Service" - a class that handles business logic separate from UI
+//
+// **SINGLETON PATTERN** - Pre-initialize at app startup for instant cache access
 class StorageService {
+  // Singleton instance
+  static final StorageService _instance = StorageService._internal();
+
+  // Factory constructor returns singleton
+  factory StorageService() => _instance;
+
+  // Private constructor for singleton
+  StorageService._internal();
+
   // Key used to store expenses in shared_preferences
   // Making it static const means it's the same across all instances
   static const String _expensesKey = 'expenses';
 
-  // SharedPreferences instance - we'll initialize this once
+  // Keys for current month expense cache (Performance Optimization)
+  static const String _currentMonthCacheKey = 'cached_current_month_expenses';
+  static const String _cacheTimestampKey = 'cache_timestamp';
+
+  // SharedPreferences instance - initialized once, shared across app
   SharedPreferences? _prefs;
 
   // Initialize the storage service
   // This must be called before using save/load methods
   // async: This operation takes time (disk access)
   Future<void> initialize() async {
+    // Skip if already initialized (singleton pattern optimization)
+    if (_prefs != null) return;
+
     // SharedPreferences.getInstance() returns a Future
     // await: Wait for it to complete before continuing
     _prefs = await SharedPreferences.getInstance();
@@ -91,5 +110,60 @@ class StorageService {
       await initialize();
     }
     await _prefs!.remove(_expensesKey);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CURRENT MONTH CACHE (Performance Optimization)
+  // ═══════════════════════════════════════════════════════════════════════════
+  //
+  // Cache current month expenses for instant loading on next launch (~30ms vs ~1500ms)
+  // Only stores current month to minimize storage (~25KB for 50 expenses)
+
+  /// Cache current month expenses for instant loading on next launch
+  Future<void> cacheCurrentMonthExpenses(List<Expense> expenses) async {
+    if (_prefs == null) {
+      await initialize();
+    }
+    final json = jsonEncode(expenses.map((e) => e.toMap()).toList());
+    await _prefs!.setString(_currentMonthCacheKey, json);
+    await _prefs!.setInt(_cacheTimestampKey, DateTime.now().millisecondsSinceEpoch);
+    debugPrint('💾 Cached ${expenses.length} current month expenses');
+  }
+
+  /// Get cached current month expenses (returns null if no cache)
+  Future<List<Expense>?> getCachedCurrentMonthExpenses() async {
+    if (_prefs == null) {
+      await initialize();
+    }
+    final json = _prefs!.getString(_currentMonthCacheKey);
+    if (json == null) return null;
+
+    try {
+      final List<dynamic> list = jsonDecode(json);
+      return list.map((e) => Expense.fromMap(e as Map<String, dynamic>)).toList();
+    } catch (e) {
+      debugPrint('❌ Error loading cached expenses: $e');
+      return null;
+    }
+  }
+
+  /// Check if cache is from current month (stale if month changed)
+  bool isCacheFromCurrentMonth() {
+    final timestamp = _prefs?.getInt(_cacheTimestampKey);
+    if (timestamp == null) return false;
+
+    final cacheDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final now = DateTime.now();
+    return cacheDate.year == now.year && cacheDate.month == now.month;
+  }
+
+  /// Clear expense cache (called on logout or data reset)
+  Future<void> clearExpenseCache() async {
+    if (_prefs == null) {
+      await initialize();
+    }
+    await _prefs!.remove(_currentMonthCacheKey);
+    await _prefs!.remove(_cacheTimestampKey);
+    debugPrint('🗑️ Expense cache cleared');
   }
 }

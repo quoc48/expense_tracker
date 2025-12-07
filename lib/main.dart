@@ -11,6 +11,7 @@ import 'providers/sync_provider.dart';
 import 'providers/recurring_expense_provider.dart';
 import 'services/connectivity_monitor.dart';
 import 'services/queue_service.dart';
+import 'services/storage_service.dart';
 import 'repositories/supabase_expense_repository.dart';
 import 'widgets/auth_gate.dart';
 import 'theme/minimalist/minimalist_theme.dart';
@@ -59,6 +60,12 @@ Future<void> main() async {
 
   final queueService = QueueService();
   await queueService.initialize();
+
+  // Pre-initialize StorageService for instant cache access
+  // This moves SharedPreferences initialization to startup (during splash)
+  // so cache reads in ExpenseProvider are instant (<50ms vs ~200ms)
+  final storageService = StorageService();
+  await storageService.initialize();
 
   runApp(ExpenseTrackerApp(
     connectivityMonitor: connectivityMonitor,

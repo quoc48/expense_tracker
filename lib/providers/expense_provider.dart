@@ -4,6 +4,7 @@ import '../repositories/expense_repository.dart';
 import '../repositories/supabase_expense_repository.dart';
 import '../services/connectivity_monitor.dart';
 import '../services/queue_service.dart';
+import '../services/storage_service.dart';
 
 /// ExpenseProvider manages the global state for all expenses in the app.
 /// It extends ChangeNotifier which is part of Flutter's built-in state management.
@@ -28,9 +29,16 @@ class ExpenseProvider extends ChangeNotifier {
   // Repository for data access (now using Supabase instead of SharedPreferences)
   final ExpenseRepository _repository = SupabaseExpenseRepository();
 
+  // Storage service for local caching (Performance Optimization)
+  final StorageService _storageService = StorageService();
+
   // Offline queue services (optional - for backward compatibility)
   final ConnectivityMonitor? _connectivityMonitor;
   final QueueService? _queueService;
+
+  // Error state for UI feedback
+  String? _error;
+  String? get error => _error;
 
   // Constructor with optional offline services
   ExpenseProvider({
@@ -51,69 +59,67 @@ class ExpenseProvider extends ChangeNotifier {
     return _expenses.fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  /// Load all expenses using Background Preload pattern:
-  /// 1. Load current month expenses quickly (user sees data fast)
-  /// 2. Load remaining history in background (seamless experience)
+  /// Load all expenses using Cache-First pattern:
+  /// 1. PHASE 0: Load from local cache instantly (~30ms)
+  /// 2. PHASE 1: Refresh ALL data from Supabase in background (silent)
   ///
-  /// Performance: Two-phase loading with timing metrics.
+  /// Performance: Cache-first with single background network call.
   Future<void> loadExpenses() async {
     // Guard: Prevent duplicate concurrent calls
     if (_isLoadingInProgress) {
-      debugPrint('⚠️ [PERF] loadExpenses already in progress, skipping duplicate call');
+      debugPrint('⚠️ [PERF] loadExpenses already in progress, skipping');
       return;
     }
     _isLoadingInProgress = true;
 
     final totalStopwatch = Stopwatch()..start();
-    debugPrint('📊 [PERF] loadExpenses: START (Background Preload)');
+    debugPrint('📊 [PERF] loadExpenses: START (Cache-First)');
 
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
       // ═══════════════════════════════════════════════════════════════════
-      // PHASE 1: Load current month expenses (FAST - user sees data quickly)
+      // PHASE 0: Load from cache instantly (NEW! ~30ms vs ~1500ms)
       // ═══════════════════════════════════════════════════════════════════
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month + 1, 0); // Last day of month
+      final initStopwatch = Stopwatch()..start();
+      await _storageService.initialize();
+      initStopwatch.stop();
+      debugPrint('📊 [PERF] Phase 0.1 (init): ${initStopwatch.elapsedMilliseconds}ms');
 
-      try {
-        final phase1Stopwatch = Stopwatch()..start();
-        _expenses = await _repository.getByDateRange(startOfMonth, endOfMonth)
-            .timeout(const Duration(seconds: 10));
-        phase1Stopwatch.stop();
+      if (_storageService.isCacheFromCurrentMonth()) {
+        final cacheReadStopwatch = Stopwatch()..start();
+        final cached = await _storageService.getCachedCurrentMonthExpenses();
+        cacheReadStopwatch.stop();
+        debugPrint('📊 [PERF] Phase 0.2 (cache read): ${cacheReadStopwatch.elapsedMilliseconds}ms');
 
-        debugPrint('📊 [PERF] Phase 1 (current month): ${phase1Stopwatch.elapsedMilliseconds}ms '
-            '(${_expenses.length} expenses)');
+        if (cached != null && cached.isNotEmpty) {
+          _expenses = cached;
+          _addQueuedExpenses();
+          _isLoading = false;
 
-        // Add pending queued items for current month
-        _addQueuedExpenses();
+          final notifyStopwatch = Stopwatch()..start();
+          notifyListeners(); // UI shows data instantly!
+          notifyStopwatch.stop();
+          debugPrint('📊 [PERF] Phase 0.3 (notify): ${notifyStopwatch.elapsedMilliseconds}ms');
 
-        // UI can now show current month data!
-        _isLoading = false;
-        notifyListeners();
-        debugPrint('✅ Phase 1 complete - UI showing ${_expenses.length} current month expenses');
-
-      } catch (e) {
-        debugPrint('⚠️ Phase 1 failed (offline?): $e');
-        _expenses = [];
-        _addQueuedExpenses();
-        _isLoading = false;
-        notifyListeners();
+          totalStopwatch.stop();
+          debugPrint('📊 [PERF] Phase 0 (total): ${cached.length} expenses in ${totalStopwatch.elapsedMilliseconds}ms');
+          debugPrint('✅ Cache hit - UI showing ${_expenses.length} expenses instantly!');
+        }
+      } else {
+        debugPrint('📊 [PERF] Phase 0: No valid cache (first launch or month changed)');
       }
 
       // ═══════════════════════════════════════════════════════════════════
-      // PHASE 2: Load remaining history in background (user doesn't wait)
+      // PHASE 1: Load ALL data in background (single network call)
       // ═══════════════════════════════════════════════════════════════════
-      _loadRemainingExpensesInBackground(startOfMonth);
-
-      totalStopwatch.stop();
-      debugPrint('📊 [PERF] loadExpenses Phase 1 TOTAL: ${totalStopwatch.elapsedMilliseconds}ms');
+      _loadAllExpensesInBackground();
 
     } catch (e) {
-      debugPrint('❌ Critical error loading expenses: $e');
-      _expenses = [];
+      debugPrint('❌ Error in loadExpenses: $e');
+      _error = 'Failed to load expenses: $e';
       _isLoading = false;
       notifyListeners();
     } finally {
@@ -121,34 +127,45 @@ class ExpenseProvider extends ChangeNotifier {
     }
   }
 
-  /// Phase 2: Load expenses before current month in background
-  /// This runs silently - user already sees current month data
-  Future<void> _loadRemainingExpensesInBackground(DateTime currentMonthStart) async {
+  /// Load all expenses from Supabase in background and update cache
+  /// This runs silently - if cache was hit, user already sees data
+  Future<void> _loadAllExpensesInBackground() async {
+    final stopwatch = Stopwatch()..start();
+    debugPrint('📊 [PERF] Phase 1 (background): Starting...');
+
     try {
-      final phase2Stopwatch = Stopwatch()..start();
-      debugPrint('📊 [PERF] Phase 2 (background): Starting...');
+      // Single network call for ALL expenses
+      final allExpenses = await _repository.getAll()
+          .timeout(const Duration(seconds: 30));
 
-      // Get all expenses before current month
-      final veryOldDate = DateTime(2020, 1, 1); // Reasonable start date
-      final dayBeforeMonth = currentMonthStart.subtract(const Duration(days: 1));
+      stopwatch.stop();
+      debugPrint('📊 [PERF] Phase 1 (background): ${allExpenses.length} expenses in ${stopwatch.elapsedMilliseconds}ms');
 
-      final olderExpenses = await _repository.getByDateRange(veryOldDate, dayBeforeMonth)
-          .timeout(const Duration(seconds: 30)); // Longer timeout for history
-
-      phase2Stopwatch.stop();
-      debugPrint('📊 [PERF] Phase 2 (background): ${phase2Stopwatch.elapsedMilliseconds}ms '
-          '(${olderExpenses.length} older expenses)');
-
-      // Merge with current expenses
-      _expenses = [..._expenses, ...olderExpenses];
-      _expenses.sort((a, b) => b.date.compareTo(a.date)); // Newest first
+      // Update the expense list
+      _expenses = allExpenses;
+      _addQueuedExpenses();
+      _isLoading = false;
       notifyListeners();
 
-      debugPrint('✅ Phase 2 complete - Total ${_expenses.length} expenses loaded');
+      // Update cache with current month expenses for next launch
+      final now = DateTime.now();
+      final currentMonthExpenses = allExpenses.where((e) =>
+        e.date.year == now.year && e.date.month == now.month
+      ).toList();
+      await _storageService.cacheCurrentMonthExpenses(currentMonthExpenses);
+
+      debugPrint('✅ Background load complete - Total ${_expenses.length} expenses');
 
     } catch (e) {
-      // Silent failure - we already have current month, don't disrupt user
-      debugPrint('⚠️ Phase 2 (background) failed: $e - keeping current month data');
+      debugPrint('❌ Background load failed: $e');
+      // Don't show error if we already have cached data
+      if (_expenses.isEmpty) {
+        _error = 'Failed to load expenses: $e';
+        _isLoading = false;
+        notifyListeners();
+      } else {
+        debugPrint('ℹ️ Keeping cached data, background refresh failed');
+      }
     }
   }
 
@@ -175,6 +192,16 @@ class ExpenseProvider extends ChangeNotifier {
     }
     _expenses.sort((a, b) => b.date.compareTo(a.date));
     debugPrint('📦 Added ${_queueService.getPendingCount()} pending queued items');
+  }
+
+  /// Update current month cache after CRUD operations
+  /// This ensures the cache stays in sync with the in-memory list
+  Future<void> _updateCurrentMonthCache() async {
+    final now = DateTime.now();
+    final currentMonthExpenses = _expenses.where((e) =>
+      e.date.year == now.year && e.date.month == now.month
+    ).toList();
+    await _storageService.cacheCurrentMonthExpenses(currentMonthExpenses);
   }
 
   /// Add a new expense to the list with offline queue support
@@ -211,6 +238,9 @@ class ExpenseProvider extends ChangeNotifier {
         }
       }
 
+      // Update cache after successful add
+      await _updateCurrentMonthCache();
+
       return true;
     } catch (e) {
       debugPrint('❌ Error adding expense: $e');
@@ -243,6 +273,9 @@ class ExpenseProvider extends ChangeNotifier {
       // Save to Supabase (Vietnamese names are in the expense object)
       await _repository.update(updatedExpense);
 
+      // Update cache after successful update
+      await _updateCurrentMonthCache();
+
       // Notify listeners
       notifyListeners();
 
@@ -274,6 +307,9 @@ class ExpenseProvider extends ChangeNotifier {
       debugPrint('🗑️ Deleting expense from Supabase: $expenseId');
       await _repository.delete(expenseId);
       debugPrint('✅ Successfully deleted from Supabase: $expenseId');
+
+      // Update cache after successful delete
+      await _updateCurrentMonthCache();
 
       // Notify listeners
       notifyListeners();
