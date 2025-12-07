@@ -122,7 +122,7 @@ class SyncQueueDetailsSheet extends StatelessWidget {
                               '$pendingCount',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -151,7 +151,7 @@ class SyncQueueDetailsSheet extends StatelessWidget {
                               '$failedCount',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -195,7 +195,7 @@ class SyncQueueDetailsSheet extends StatelessWidget {
                           'Device is offline. Items will sync when online.',
                           style: TextStyle(
                             color: Colors.orange.shade900,
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                         ),
                       ),
@@ -429,7 +429,7 @@ class SyncQueueDetailsSheet extends StatelessWidget {
                       child: Text(
                         receipt.errorMessage!,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: Colors.red.shade700,
                         ),
                         maxLines: 2,

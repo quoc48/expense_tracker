@@ -34,7 +34,7 @@ class AppTypography {
   /// )
   /// ```
   static TextStyle style({
-    double fontSize = 14,
+    double fontSize = 16,  // Updated: 14 → 16
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
     double? letterSpacing,
@@ -60,7 +60,7 @@ class AppTypography {
     // Helper to create Momo Trust Sans style using local asset font
     // This ensures consistency with AppTypography.style() and offline support
     TextStyle momoStyle({
-      double fontSize = 14,
+      double fontSize = 16,  // Updated: 14 → 16
       FontWeight fontWeight = FontWeight.normal,
       double letterSpacing = 0,
       double height = 1.4,
@@ -132,14 +132,14 @@ class AppTypography {
         color: textPrimary,
       ),
       titleMedium: momoStyle(
-        fontSize: 14,
+        fontSize: 16,  // Updated: 14 → 16
         fontWeight: FontWeight.w600, // SemiBold for section titles like "Category"
         letterSpacing: 0.1,
         height: 1.4,
         color: textPrimary,
       ),
       titleSmall: momoStyle(
-        fontSize: 12,
+        fontSize: 14,  // Updated: 12 → 14
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         height: 1.4,
@@ -155,14 +155,14 @@ class AppTypography {
         color: textPrimary,
       ),
       bodyMedium: momoStyle(
-        fontSize: 14,
+        fontSize: 16,  // Updated: 14 → 16
         fontWeight: FontWeight.normal,
         letterSpacing: 0.25,
         height: 1.5,
         color: textPrimary,
       ),
       bodySmall: momoStyle(
-        fontSize: 12,
+        fontSize: 14,  // Updated: 12 → 14
         fontWeight: FontWeight.normal,
         letterSpacing: 0.4,
         height: 1.5,
@@ -171,21 +171,21 @@ class AppTypography {
 
       // Label styles - For buttons, chips, badges (14px Medium per Figma category cards)
       labelLarge: momoStyle(
-        fontSize: 14,
+        fontSize: 16,  // Updated: 14 → 16
         fontWeight: FontWeight.w500, // Medium for category amounts
         letterSpacing: 0.1,
         height: 1.4,
         color: textPrimary,
       ),
       labelMedium: momoStyle(
-        fontSize: 12,
+        fontSize: 14,  // Updated: 12 → 14
         fontWeight: FontWeight.w500,
         letterSpacing: 0.5,
         height: 1.4,
         color: textPrimary,
       ),
       labelSmall: momoStyle(
-        fontSize: 10, // Updated for chart labels per Figma
+        fontSize: 12,  // Updated: 10 → 12 (chart labels)
         fontWeight: FontWeight.normal,
         letterSpacing: 0.5,
         height: 1.4,
@@ -225,7 +225,7 @@ class AppTypography {
   static TextStyle currencySmall({Color? color}) {
     return const TextStyle(
       fontFamily: 'JetBrainsMono',
-      fontSize: 14,
+      fontSize: 16,  // Updated: 14 → 16
       fontWeight: FontWeight.normal,
       letterSpacing: 0,
       height: 1.4,
@@ -258,7 +258,7 @@ class ComponentTextStyles {
   static TextStyle expenseTitleCompact(TextTheme theme) => theme.titleLarge!.copyWith(height: 1.2);  // Balanced: tight yet readable
   static TextStyle expenseDateCompact(TextTheme theme) => theme.labelSmall!.copyWith(
     height: 1.0,  // Tight but no clipping
-    fontSize: 12,  // Increased from 11px for better readability
+    fontSize: 14,  // Updated: 12 → 14 for better readability
     // No hardcoded color - inherit from theme.labelSmall which is already adaptive
   );
 

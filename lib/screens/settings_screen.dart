@@ -112,7 +112,7 @@ class SettingsScreen extends StatelessWidget {
           Text(
             prefsProvider.errorMessage!,
             style: AppTypography.style(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
               color: AppColors.getTextSecondary(context),
             ),
@@ -124,7 +124,7 @@ class SettingsScreen extends StatelessWidget {
             child: Text(
               'Retry',
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: AppColors.getTextPrimary(context),
               ),
@@ -155,7 +155,7 @@ class SettingsScreen extends StatelessWidget {
         'Settings',
         style: TextStyle(
           fontFamily: 'MomoTrustSans',
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           color: textColor,
           fontFeatures: const [
@@ -189,7 +189,7 @@ class SettingsScreen extends StatelessWidget {
     return Text(
       label,
       style: AppTypography.style(
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
         color: AppColors.gray,
       ),
@@ -239,7 +239,7 @@ class SettingsScreen extends StatelessWidget {
       onTap: () => _showBudgetEditSheet(context, prefsProvider),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
             // Left: Icon + Label
@@ -255,7 +255,7 @@ class SettingsScreen extends StatelessWidget {
                   Text(
                     'Monthly Budget',
                     style: AppTypography.style(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: textColor,
                     ),
@@ -270,7 +270,7 @@ class SettingsScreen extends StatelessWidget {
                 Text(
                   _formatBudgetValue(prefsProvider.monthlyBudget),
                   style: AppTypography.style(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: textColor,
                   ),
@@ -351,7 +351,7 @@ class SettingsScreen extends StatelessWidget {
       onTap: () => _navigateToRecurringExpenses(context),
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
             // Left: Icon + Labels
@@ -371,7 +371,7 @@ class SettingsScreen extends StatelessWidget {
                         Text(
                           'Recurring Expenses',
                           style: AppTypography.style(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w400,
                             color: textColor,
                           ),
@@ -380,7 +380,7 @@ class SettingsScreen extends StatelessWidget {
                         Text(
                           'Manage automatic expenses',
                           style: AppTypography.style(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: AppColors.gray,
                           ),
@@ -434,7 +434,7 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => _showThemeSelector(context, themeProvider),
           borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
               children: [
                 // Left: Icon + Label
@@ -450,7 +450,7 @@ class SettingsScreen extends StatelessWidget {
                       Text(
                         'Theme',
                         style: AppTypography.style(
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w400,
                           color: textColor,
                         ),
@@ -465,7 +465,7 @@ class SettingsScreen extends StatelessWidget {
                     Text(
                       currentAppTheme.shortLabel,
                       style: AppTypography.style(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w400,
                         color: textColor,
                       ),

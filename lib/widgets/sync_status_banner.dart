@@ -127,7 +127,7 @@ class SyncStatusBanner extends StatelessWidget {
                       duration: const Duration(milliseconds: 200),
                       style: TextStyle(
                         color: config.textColor,
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       child: Text(_getMessage()),

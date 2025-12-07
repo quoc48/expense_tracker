@@ -129,7 +129,7 @@ class FormInput extends StatelessWidget {
   static const double _borderRadius = 12.0;
   static const double _horizontalPadding = 16.0;
   static const double _labelGap = 8.0;
-  static const double _fontSize = 14.0;
+  static const double _fontSize = 16.0;
   static const double _letterSpacing = 0.28;
   // Note: Placeholder color is now adaptive via AppColors.getPlaceholder(context)
   static const Color _errorColor = Color(0xFFFF3B30); // iOS red
@@ -167,7 +167,7 @@ class FormInput extends StatelessWidget {
           Text(
             errorText!,
             style: AppTypography.style(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w400,
               color: _errorColor,
             ),

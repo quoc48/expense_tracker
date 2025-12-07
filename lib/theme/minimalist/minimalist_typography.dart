@@ -54,11 +54,11 @@ class MinimalistTypography {
   /// Body size - 16px - Default text, buttons
   static const double sizeBody = 16.0;
 
-  /// Caption size - 14px - Secondary info, labels
-  static const double sizeCaption = 14.0;
+  /// Caption size - 16px - Secondary info, labels (Updated: 14 → 16)
+  static const double sizeCaption = 16.0;
 
-  /// Small size - 12px - Timestamps, hints, minimal text
-  static const double sizeSmall = 12.0;
+  /// Small size - 14px - Timestamps, hints, minimal text (Updated: 12 → 14)
+  static const double sizeSmall = 14.0;
 
   // ==========================================
   // Line Heights

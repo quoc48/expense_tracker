@@ -10,6 +10,7 @@ import '../../theme/constants/app_spacing.dart';
 import 'add_recurring_expense_sheet.dart';
 import 'recurring_expense_action_sheet.dart';
 import '../common/primary_button.dart';
+import '../common/success_overlay.dart';
 
 /// Full-screen list of recurring expenses with empty state
 ///
@@ -114,7 +115,7 @@ class _RecurringExpensesListScreenState
               'Recurring Expenses',
               textAlign: TextAlign.center,
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: textColor,
               ),
@@ -183,7 +184,7 @@ class _RecurringExpensesListScreenState
             Text(
               'There is nothing yet',
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w400,
                 color: textColor, // Bug fix: was AppColors.gray, now uses textPrimary
               ),
@@ -244,7 +245,7 @@ class _RecurringExpensesListScreenState
     return Text(
       '$label ($count)',
       style: AppTypography.style(
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
         color: AppColors.gray,
       ),
@@ -334,7 +335,7 @@ class _RecurringExpensesListScreenState
                   Text(
                     expense.description,
                     style: AppTypography.style(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: textColor,
                     ),
@@ -345,7 +346,7 @@ class _RecurringExpensesListScreenState
                   Text(
                     'Monthly (1st)',
                     style: AppTypography.style(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w400,
                       color: AppColors.gray,
                     ),
@@ -358,7 +359,7 @@ class _RecurringExpensesListScreenState
             Text(
               _formatAmount(expense.amount),
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w400,
                 color: textColor,
               ),
@@ -394,6 +395,13 @@ class _RecurringExpensesListScreenState
 
     if (result != null && mounted) {
       await provider.createRecurringExpense(result);
+      // Show success overlay
+      if (mounted) {
+        await showSuccessOverlay(
+          context: context,
+          message: 'Recurring expense added',
+        );
+      }
     }
   }
 
@@ -421,6 +429,13 @@ class _RecurringExpensesListScreenState
         );
         if (updated != null && mounted) {
           await provider.updateRecurringExpense(updated);
+          // Show success overlay
+          if (mounted) {
+            await showSuccessOverlay(
+              context: this.context,
+              message: 'Recurring expense updated',
+            );
+          }
         }
         break;
 

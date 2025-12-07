@@ -75,7 +75,7 @@ class FormTextField extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w400,
             color: textColor, // Adaptive for dark mode
             height: 20 / 14, // line-height: 20px
@@ -100,7 +100,7 @@ class FormTextField extends StatelessWidget {
             textCapitalization: textCapitalization,
             maxLines: maxLines,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
               color: textColor, // Adaptive for dark mode
               letterSpacing: 0.28,
@@ -109,7 +109,7 @@ class FormTextField extends StatelessWidget {
             decoration: InputDecoration(
               hintText: placeholder,
               hintStyle: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w400,
                 color: placeholderColor, // Adaptive for dark mode
                 letterSpacing: 0.28,

@@ -117,7 +117,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
         Text(
           '$monthName Spent',
           style: _momoTextStyle(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w500,
             color: AppColors.getTextSecondary(context),
           ),
@@ -167,7 +167,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
               Text(
                 'Remaining Budget',
                 style: _momoTextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: AppColors.getTextPrimary(context),
                 ),
@@ -175,7 +175,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
               Text(
                 CurrencyFormatter.formatCompact(remaining.abs()),
                 style: _momoTextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: progressColor,
                 ),
@@ -207,7 +207,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
               Text(
                 '$percentageDisplay%',
                 style: _momoTextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.getTextSecondary(context),
                 ),
@@ -241,7 +241,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
           child: Text(
             'Not enough data for trend',
             style: _momoTextStyle(
-              fontSize: 14,
+              fontSize: 16,
               color: AppColors.getTextSecondary(context),
             ),
           ),
@@ -382,7 +382,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
                             return LineTooltipItem(
                               CurrencyFormatter.formatCompact(spot.y),
                               _momoTextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
@@ -410,7 +410,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'MomoTrustSans',
-                          fontSize: 8,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: AppColors.getTextPrimary(context),
                           fontFeatures: const [
@@ -446,7 +446,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
                   child: Text(
                     label,
                     style: _momoTextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: isCurrentMonth ? FontWeight.bold : FontWeight.w400,
                       // Adaptive colors for dark mode
                       color: isCurrentMonth

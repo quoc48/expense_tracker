@@ -199,7 +199,7 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
         Text(
           _displayYear.toString(),
           style: AppTypography.style(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.getTextPrimary(context),
           ),
@@ -348,7 +348,7 @@ class _SelectMonthSheetState extends State<SelectMonthSheet> {
             child: Text(
               label,
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: textColor,
               ),

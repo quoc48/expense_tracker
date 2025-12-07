@@ -225,7 +225,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                 'Using offline mode. Categories may be limited.',
                                 style: TextStyle(
                                   color: Colors.orange.shade900,
-                                  fontSize: 13,
+                                  fontSize: 14,
                                 ),
                               ),
                             ),

@@ -153,7 +153,7 @@ class _NavigationPill extends StatelessWidget {
             onTap: () => onDestinationSelected(0),
           ),
 
-          const SizedBox(width: 29), // Gap from Figma
+          const SizedBox(width: 8), // Reduced gap (touch areas are now 48px)
 
           // Expenses - receipt icon
           _NavItem(
@@ -163,7 +163,7 @@ class _NavigationPill extends StatelessWidget {
             onTap: () => onDestinationSelected(1),
           ),
 
-          const SizedBox(width: 29), // Gap from Figma
+          const SizedBox(width: 8), // Reduced gap (touch areas are now 48px)
 
           // Settings - gear icon
           _NavItem(
@@ -255,16 +255,20 @@ class _NavItem extends StatelessWidget {
       child: Tooltip(
         message: label,
         child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: onTap,
           child: SizedBox(
-            // Icon container size 28x28
-            width: 28,
-            height: 28,
-            child: Icon(
-              icon,
-              size: 28,
-              // Selected: primary text, Unselected: neutral gray
-              color: isSelected ? selectedColor : unselectedColor,
+            // Expanded touch target (48x48) for easier interaction
+            // Icon remains 28px, centered within touch area
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Icon(
+                icon,
+                size: 28,
+                // Selected: primary text, Unselected: neutral gray
+                color: isSelected ? selectedColor : unselectedColor,
+              ),
             ),
           ),
         ),

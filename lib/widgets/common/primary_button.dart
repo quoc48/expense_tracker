@@ -174,7 +174,7 @@ class SecondaryButton extends StatelessWidget {
             Text(
               label,
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: textColor,
               ),

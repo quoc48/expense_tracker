@@ -312,8 +312,8 @@ class _AddRecurringExpenseSheetState extends State<AddRecurringExpenseSheet> {
           : _noteController.text.trim(),
     );
 
-    // Show loading for better UX
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Brief loading state before closing (prevents double-tap, shows feedback)
+    await Future.delayed(const Duration(milliseconds: 100));
 
     if (!mounted) return;
 
@@ -407,7 +407,7 @@ class _AddRecurringExpenseSheetState extends State<AddRecurringExpenseSheet> {
                               Text(
                                 _amountError!,
                                 style: AppTypography.style(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w400,
                                   color: const Color(0xFFFF3B30),
                                 ),

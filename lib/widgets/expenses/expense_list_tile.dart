@@ -145,7 +145,7 @@ class ExpenseListTile extends StatelessWidget {
           expense.description,
           style: TextStyle(
             fontFamily: 'MomoTrustSans',
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w400, // Regular
             color: textColor, // Adaptive for dark mode
             height: 1.2, // Compact line height
@@ -162,7 +162,7 @@ class ExpenseListTile extends StatelessWidget {
           dateFormat.format(expense.date),
           style: TextStyle(
             fontFamily: 'MomoTrustSans',
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: FontWeight.w400, // Regular
             color: secondaryColor, // Adaptive for dark mode
             height: 1.2,
@@ -181,7 +181,7 @@ class ExpenseListTile extends StatelessWidget {
       CurrencyFormatter.format(expense.amount, context: CurrencyContext.full),
       style: TextStyle(
         fontFamily: 'MomoTrustSans',
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: FontWeight.w400, // Regular
         color: textColor, // Adaptive for dark mode
       ),

@@ -376,7 +376,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           title: Text(
             'Discard changes?',
             style: AppTypography.style(
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.getTextPrimary(dialogContext),
             ),
@@ -384,7 +384,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           content: Text(
             'Unsaved items will be lost. Are you sure?',
             style: AppTypography.style(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
               color: AppColors.getTextSecondary(dialogContext),
             ),
@@ -891,7 +891,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                 Text(
                   'Total',
                   style: AppTypography.style(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: secondaryColor,
                   ),
@@ -920,7 +920,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                   Text(
                     'Date',
                     style: AppTypography.style(
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: secondaryColor,
                     ),
@@ -962,7 +962,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                 Text(
                   '# Items',
                   style: AppTypography.style(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: secondaryColor,
                   ),
@@ -1064,7 +1064,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                   Text(
                     item.description,
                     style: AppTypography.style(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: AppColors.getTextPrimary(context),
                     ),
@@ -1075,7 +1075,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
                   Text(
                     _formatDateFull(_selectedDate),
                     style: AppTypography.style(
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: AppColors.getTextSecondary(context),
                     ),
@@ -1088,7 +1088,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
             Text(
               _formatAmount(item.amount),
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: AppColors.getTextPrimary(context),
               ),
@@ -1130,7 +1130,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen>
           Text(
             'Try adding items manually',
             style: AppTypography.style(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
               color: AppColors.gray,
             ),

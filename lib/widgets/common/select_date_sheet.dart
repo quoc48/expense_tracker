@@ -186,7 +186,7 @@ class _SelectDateSheetState extends State<SelectDateSheet> {
             child: Text(
               label,
               style: AppTypography.style(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600, // SemiBold
                 color: AppColors.getTextPrimary(context), // Adaptive for dark mode
                 letterSpacing: 0.24,
@@ -277,7 +277,7 @@ class _SelectDateSheetState extends State<SelectDateSheet> {
             child: Text(
               day,
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected
                     ? selectedTextColor // Inverted for selected state
@@ -333,7 +333,7 @@ class _CalendarHeader extends StatelessWidget {
               child: Text(
                 monthYear,
                 style: AppTypography.style(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600, // SemiBold
                   color: textColor, // Adaptive for dark mode
                 ),
@@ -612,7 +612,7 @@ class _SelectDateSheetWithHeaderState
             child: Text(
               label,
               style: AppTypography.style(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.getTextPrimary(context), // Adaptive for dark mode
                 letterSpacing: 0.24,
@@ -686,7 +686,7 @@ class _SelectDateSheetWithHeaderState
         child: Text(
           day,
           style: AppTypography.style(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             color: isSelected
                 ? selectedTextColor // Inverted for selected state

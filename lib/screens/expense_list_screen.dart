@@ -103,7 +103,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         'Expenses',
         style: TextStyle(
           fontFamily: 'MomoTrustSans',
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           color: textColor,
           fontFeatures: [
@@ -167,7 +167,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           'Tap Refresh to load your expenses',
                           style: TextStyle(
                             fontFamily: 'MomoTrustSans',
-                            fontSize: 14,
+                            fontSize: 16,
                             color: AppColors.getTextSecondary(context),
                           ),
                           textAlign: TextAlign.center,
@@ -295,7 +295,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             'Delete Expense',
             style: TextStyle(
               fontFamily: 'MomoTrustSans',
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
               color: textColor,
             ),
@@ -304,7 +304,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             'Are you sure you want to delete "${expense.description}"?',
             style: TextStyle(
               fontFamily: 'MomoTrustSans',
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
               color: secondaryColor,
             ),
@@ -316,7 +316,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 'Cancel',
                 style: TextStyle(
                   fontFamily: 'MomoTrustSans',
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: textColor,
                 ),
@@ -331,7 +331,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 'Delete',
                 style: TextStyle(
                   fontFamily: 'MomoTrustSans',
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: AppColors.error,
                 ),

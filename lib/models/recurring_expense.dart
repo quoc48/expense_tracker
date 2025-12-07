@@ -53,7 +53,7 @@ class RecurringExpense {
   /// Get icon for category based on Vietnamese name
   /// Uses the same centralized icon mapping as Expense
   IconData get categoryIcon {
-    return MinimalistIcons.getCategoryIcon(categoryNameVi);
+    return MinimalistIcons.getCategoryIconFill(categoryNameVi);
   }
 
   /// Factory constructor for creating from Supabase row

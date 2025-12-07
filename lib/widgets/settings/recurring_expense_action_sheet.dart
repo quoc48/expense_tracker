@@ -233,7 +233,7 @@ class _ActionCardState extends State<_ActionCard> {
             Text(
               widget.label,
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: textColor,
               ),

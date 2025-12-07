@@ -152,7 +152,7 @@ class _UndoSnackbarState extends State<UndoSnackbar>
                           child: Text(
                             widget.message,
                             style: AppTypography.style(
-                              fontSize: 14,
+                              fontSize: 16,
                               fontWeight: FontWeight.w400,
                               color: textColor, // Inverted for dark mode
                             ),
@@ -169,7 +169,7 @@ class _UndoSnackbarState extends State<UndoSnackbar>
                               child: Text(
                                 'Undo',
                                 style: AppTypography.style(
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w400,
                                   color: textColor, // Inverted for dark mode
                                 ),

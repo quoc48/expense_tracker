@@ -67,7 +67,7 @@ class FormSelectField extends StatelessWidget {
         Text(
           label,
           style: AppTypography.style(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w400,
             color: textColor, // Adaptive for dark mode
             height: 20 / 14, // line-height: 20px
@@ -94,7 +94,7 @@ class FormSelectField extends StatelessWidget {
                   child: Text(
                     hasValue ? value! : placeholder,
                     style: AppTypography.style(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: hasValue
                           ? textColor // Adaptive for dark mode

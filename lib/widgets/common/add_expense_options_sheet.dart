@@ -13,7 +13,7 @@ import 'grabber_bottom_sheet.dart';
 //
 // Example:
 //   style: AppTypography.style(
-//     fontSize: 14,
+//     fontSize: 16,
 //     fontWeight: FontWeight.w500,
 //     color: AppColors.textBlack,
 //   )
@@ -177,7 +177,7 @@ class _InputMethodCardState extends State<_InputMethodCard> {
             Text(
               widget.label,
               style: AppTypography.style(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: textColor, // Adaptive for dark mode
               ),

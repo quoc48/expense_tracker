@@ -39,7 +39,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
         'Sign Out',
         style: TextStyle(
           fontFamily: 'MomoTrustSans',
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           color: textColor,
         ),
@@ -48,7 +48,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
         'Are you sure you want to sign out?',
         style: TextStyle(
           fontFamily: 'MomoTrustSans',
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w400,
           color: secondaryColor,
         ),
@@ -60,7 +60,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
             'Cancel',
             style: TextStyle(
               fontFamily: 'MomoTrustSans',
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
               color: textColor,
             ),
@@ -72,7 +72,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
             'Sign Out',
             style: TextStyle(
               fontFamily: 'MomoTrustSans',
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
           ),

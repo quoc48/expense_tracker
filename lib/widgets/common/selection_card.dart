@@ -107,7 +107,7 @@ class SelectionCard extends StatelessWidget {
                   child: Text(
                     label,
                     style: AppTypography.style(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: textColor, // Adaptive for dark mode
                     ),
@@ -210,7 +210,7 @@ class SelectionCardText extends StatelessWidget {
                   child: Text(
                     label,
                     style: AppTypography.style(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: textColor, // Adaptive for dark mode
                     ),

@@ -427,8 +427,8 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
           : _noteController.text.trim(),
     );
 
-    // Show loading state for minimum 1 second for better UX feedback
-    await Future.delayed(const Duration(seconds: 1));
+    // Brief loading state before closing (prevents double-tap, shows feedback)
+    await Future.delayed(const Duration(milliseconds: 100));
 
     if (!mounted) return;
 
@@ -559,7 +559,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                               Text(
                                 _amountError!,
                                 style: AppTypography.style(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w400,
                                   color: const Color(0xFFFF3B30),
                                 ),

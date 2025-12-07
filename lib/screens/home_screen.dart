@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'Analytic',
         style: TextStyle(
           fontFamily: 'MomoTrustSans',
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.getTextPrimary(context),
           fontFeatures: [
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title,
         style: TextStyle(
           fontFamily: 'MomoTrustSans',
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.getTextPrimary(context),
           fontFeatures: const [
