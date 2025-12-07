@@ -89,10 +89,22 @@ class RecurringExpenseProvider extends ChangeNotifier {
   /// Load all recurring expenses from database
   ///
   /// Also loads categories and expense types for dropdowns.
-  Future<void> loadRecurringExpenses() async {
+  ///
+  /// **Performance Optimization:**
+  /// - If data is already loaded, returns immediately (cached)
+  /// - Use `forceRefresh: true` to bypass cache and fetch fresh data
+  Future<void> loadRecurringExpenses({bool forceRefresh = false}) async {
+    // OPTIMIZATION: Skip loading if already have data (cache hit)
+    if (!forceRefresh && _expenses.isNotEmpty) {
+      debugPrint('📊 [PERF] loadRecurringExpenses: CACHED (${_expenses.length} items)');
+      return;
+    }
+
     _isLoading = true;
     _error = null;
     notifyListeners();
+
+    final stopwatch = Stopwatch()..start();
 
     try {
       _expenses = await _repository.getAll();
@@ -101,7 +113,9 @@ class RecurringExpenseProvider extends ChangeNotifier {
       _categories ??= await _repository.getCategories();
       _expenseTypes ??= await _repository.getExpenseTypes();
 
-      debugPrint('✅ Loaded ${_expenses.length} recurring expenses');
+      stopwatch.stop();
+      debugPrint('📊 [PERF] loadRecurringExpenses: ${stopwatch.elapsedMilliseconds}ms '
+          '(${_expenses.length} items, forceRefresh: $forceRefresh)');
     } catch (e) {
       _error = 'Failed to load recurring expenses: $e';
       debugPrint('❌ $_error');
@@ -111,9 +125,9 @@ class RecurringExpenseProvider extends ChangeNotifier {
     }
   }
 
-  /// Refresh data from database
+  /// Refresh data from database (forces fresh fetch)
   Future<void> refresh() async {
-    await loadRecurringExpenses();
+    await loadRecurringExpenses(forceRefresh: true);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

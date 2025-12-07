@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/expense.dart';
+import '../../providers/expense_provider.dart';
 import '../../repositories/expense_repository.dart';
 import '../../repositories/supabase_expense_repository.dart';
 import '../../theme/colors/app_colors.dart';
@@ -202,35 +204,46 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
   /// Load categories and expense types from Supabase
   /// Categories are sorted by usage frequency in current month (highest first),
   /// with alphabetical order as tiebreaker.
+  ///
+  /// **Performance Optimization:**
+  /// - Uses already-loaded expenses from ExpenseProvider (no extra Supabase call!)
+  /// - Categories/types use cached mappings from repository
   Future<void> _loadOptions() async {
+    final stopwatch = Stopwatch()..start();
+
     try {
-      // Load categories, types, and current month expenses in parallel
+      // OPTIMIZATION: Get current month expenses from ExpenseProvider (already loaded!)
+      // No need to make another Supabase call - data is already in memory
+      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+      final currentMonthExpenses = _getCurrentMonthExpensesFromProvider(expenseProvider);
+
+      // Load categories and types (uses cached mappings - should be fast)
       final categoriesFuture = _repository.getCategories()
           .timeout(const Duration(seconds: 5));
       final typesFuture = _repository.getExpenseTypes()
           .timeout(const Duration(seconds: 5));
-      final expensesFuture = _getCurrentMonthExpenses();
 
       final results = await Future.wait([
         categoriesFuture,
         typesFuture,
-        expensesFuture,
       ]);
 
       if (!mounted) return;
 
       final categories = (results[0] as List<String>).toSet().toList();
       final types = (results[1] as List<String>).toSet().toList();
-      final currentMonthExpenses = results[2] as List<dynamic>;
 
       // Sort categories by usage frequency, then alphabetically
       final sortedCategories = _sortCategoriesByUsage(
         categories,
-        currentMonthExpenses.cast(),
+        currentMonthExpenses,
       );
 
       // Sort types in fixed display order per Figma
       final sortedTypes = _sortTypesInDisplayOrder(types);
+
+      stopwatch.stop();
+      debugPrint('📊 [PERF] AddExpenseSheet._loadOptions: ${stopwatch.elapsedMilliseconds}ms');
 
       setState(() {
         _categories = sortedCategories;
@@ -251,19 +264,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     }
   }
 
-  /// Get expenses for the current month
-  Future<List<Expense>> _getCurrentMonthExpenses() async {
-    try {
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
-
-      return await _repository.getByDateRange(startOfMonth, endOfMonth)
-          .timeout(const Duration(seconds: 5));
-    } catch (e) {
-      debugPrint('Error loading current month expenses: $e');
-      return [];
-    }
+  /// Get current month expenses from ExpenseProvider (already loaded, no network call!)
+  List<Expense> _getCurrentMonthExpensesFromProvider(ExpenseProvider provider) {
+    final now = DateTime.now();
+    return provider.expenses.where((expense) {
+      return expense.date.year == now.year && expense.date.month == now.month;
+    }).toList();
   }
 
   /// Sort categories by usage frequency in current month (descending),

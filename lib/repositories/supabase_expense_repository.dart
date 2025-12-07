@@ -20,6 +20,9 @@ class SupabaseExpenseRepository implements ExpenseRepository {
   Map<String, String>? _categoryIdMap; // Vietnamese name → UUID
   Map<String, String>? _typeIdMap;     // Vietnamese name → UUID
 
+  // Lock to prevent multiple parallel loads of mappings (race condition fix)
+  Future<void>? _mappingsLoadFuture;
+
   // UUID generator for creating new expense IDs
   final _uuid = const Uuid();
 
@@ -27,35 +30,68 @@ class SupabaseExpenseRepository implements ExpenseRepository {
   ///
   /// This fetches the categories and expense_types tables once
   /// and caches the UUID mappings for future use.
+  ///
+  /// Performance: Uses Future.wait for parallel fetching instead of sequential.
+  /// Race condition fix: Uses _mappingsLoadFuture lock to prevent duplicate loads.
   Future<void> _ensureMappingsLoaded() async {
+    // Already cached - instant return
     if (_categoryIdMap != null && _typeIdMap != null) {
-      return; // Already loaded
+      return;
     }
 
-    // Fetch categories
-    final categoriesResponse =
-        await supabase.from('categories').select('id, name_vi');
+    // Another load in progress - wait for it instead of starting a new one
+    if (_mappingsLoadFuture != null) {
+      debugPrint('📊 [PERF] _ensureMappingsLoaded: waiting for existing load...');
+      await _mappingsLoadFuture;
+      return;
+    }
+
+    // Start new load and store the future for others to wait on
+    _mappingsLoadFuture = _doLoadMappings();
+    await _mappingsLoadFuture;
+    _mappingsLoadFuture = null; // Clear after completion
+  }
+
+  /// Internal method that actually loads the mappings
+  Future<void> _doLoadMappings() async {
+    final stopwatch = Stopwatch()..start();
+
+    // OPTIMIZATION: Parallel fetch using Future.wait instead of sequential
+    final results = await Future.wait([
+      supabase.from('categories').select('id, name_vi'),
+      supabase.from('expense_types').select('id, name_vi'),
+    ]);
+
+    final categoriesResponse = results[0];
+    final typesResponse = results[1];
 
     _categoryIdMap = {};
     for (final cat in categoriesResponse) {
       _categoryIdMap![cat['name_vi'] as String] = cat['id'] as String;
     }
 
-    // Fetch expense types
-    final typesResponse =
-        await supabase.from('expense_types').select('id, name_vi');
-
     _typeIdMap = {};
     for (final type in typesResponse) {
       _typeIdMap![type['name_vi'] as String] = type['id'] as String;
     }
+
+    stopwatch.stop();
+    debugPrint('📊 [PERF] _ensureMappingsLoaded: ${stopwatch.elapsedMilliseconds}ms '
+        '(categories: ${_categoryIdMap!.length}, types: ${_typeIdMap!.length})');
   }
 
   @override
   Future<List<Expense>> getAll() async {
-    await _ensureMappingsLoaded();
+    final totalStopwatch = Stopwatch()..start();
+
+    // OPTIMIZATION: Fire-and-forget mappings load
+    // getAll() uses SQL joins for category/type names, so doesn't need mappings
+    // Mappings are only needed for create/update operations
+    // Starting load now so they're ready when user adds an expense
+    _ensureMappingsLoaded(); // No await - runs in background
 
     // Query expenses with joined category and type names
+    final queryStopwatch = Stopwatch()..start();
     final response = await supabase
         .from('expenses')
         .select('''
@@ -68,10 +104,17 @@ class SupabaseExpenseRepository implements ExpenseRepository {
           expense_types!inner(name_vi)
         ''')
         .order('date', ascending: false);
+    queryStopwatch.stop();
 
-    return (response as List)
+    final expenses = (response as List)
         .map((row) => Expense.fromSupabaseRow(row as Map<String, dynamic>))
         .toList();
+
+    totalStopwatch.stop();
+    debugPrint('📊 [PERF] getAll: ${totalStopwatch.elapsedMilliseconds}ms '
+        '(query: ${queryStopwatch.elapsedMilliseconds}ms, count: ${expenses.length})');
+
+    return expenses;
   }
 
   @override
@@ -214,7 +257,12 @@ class SupabaseExpenseRepository implements ExpenseRepository {
 
   @override
   Future<List<Expense>> getByDateRange(DateTime start, DateTime end) async {
-    await _ensureMappingsLoaded();
+    final stopwatch = Stopwatch()..start();
+
+    // OPTIMIZATION: Fire-and-forget mappings load
+    // getByDateRange uses SQL JOINs for names, doesn't need mappings
+    // Mappings only needed for create/update operations
+    _ensureMappingsLoaded(); // No await - runs in background
 
     final response = await supabase
         .from('expenses')
@@ -231,9 +279,15 @@ class SupabaseExpenseRepository implements ExpenseRepository {
         .lte('date', end.toIso8601String().split('T')[0])
         .order('date', ascending: false);
 
-    return (response as List)
+    final expenses = (response as List)
         .map((row) => Expense.fromSupabaseRow(row as Map<String, dynamic>))
         .toList();
+
+    stopwatch.stop();
+    debugPrint('📊 [PERF] getByDateRange: ${stopwatch.elapsedMilliseconds}ms '
+        '(${expenses.length} expenses, ${start.month}/${start.year} - ${end.month}/${end.year})');
+
+    return expenses;
   }
 
   @override

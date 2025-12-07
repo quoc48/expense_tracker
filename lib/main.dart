@@ -95,16 +95,15 @@ class ExpenseTrackerApp extends StatelessWidget {
           create: (context) => AuthProvider(),
         ),
         // ExpenseProvider handles expense data management with offline queue
+        // OPTIMIZATION: Don't call loadExpenses() here - it will be called in
+        // MainNavigationScreen after auth state is confirmed. This prevents
+        // double loading and ensures we don't query Supabase before auth is ready.
         ChangeNotifierProvider(
           create: (context) {
-            final provider = ExpenseProvider(
+            return ExpenseProvider(
               connectivityMonitor: connectivityMonitor,
               queueService: queueService,
             );
-            // Load expenses from storage when the provider is created
-            // This happens asynchronously, so the app will show loading state initially
-            provider.loadExpenses();
-            return provider;
           },
         ),
         // UserPreferencesProvider handles user settings and budget configuration

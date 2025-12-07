@@ -22,6 +22,9 @@ class ExpenseProvider extends ChangeNotifier {
   List<Expense> _expenses = [];
   bool _isLoading = false;
 
+  // Performance guard: Prevent duplicate/concurrent loadExpenses() calls
+  bool _isLoadingInProgress = false;
+
   // Repository for data access (now using Supabase instead of SharedPreferences)
   final ExpenseRepository _repository = SupabaseExpenseRepository();
 
@@ -48,62 +51,130 @@ class ExpenseProvider extends ChangeNotifier {
     return _expenses.fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  /// Load all expenses from Supabase + pending queue items
-  /// This should be called once when the app starts
-  /// Fetches all expenses for the authenticated user AND queued offline items
+  /// Load all expenses using Background Preload pattern:
+  /// 1. Load current month expenses quickly (user sees data fast)
+  /// 2. Load remaining history in background (seamless experience)
+  ///
+  /// Performance: Two-phase loading with timing metrics.
   Future<void> loadExpenses() async {
+    // Guard: Prevent duplicate concurrent calls
+    if (_isLoadingInProgress) {
+      debugPrint('⚠️ [PERF] loadExpenses already in progress, skipping duplicate call');
+      return;
+    }
+    _isLoadingInProgress = true;
+
+    final totalStopwatch = Stopwatch()..start();
+    debugPrint('📊 [PERF] loadExpenses: START (Background Preload)');
+
     _isLoading = true;
-    // Notify listeners that loading has started
-    // This allows UI to show a loading indicator
     notifyListeners();
 
     try {
-      // Try to load synced expenses from Supabase (with timeout for offline mode)
+      // ═══════════════════════════════════════════════════════════════════
+      // PHASE 1: Load current month expenses (FAST - user sees data quickly)
+      // ═══════════════════════════════════════════════════════════════════
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0); // Last day of month
+
       try {
-        _expenses = await _repository.getAll()
-            .timeout(const Duration(seconds: 15)); // Increased from 5s for large datasets
-        debugPrint('✅ Loaded ${_expenses.length} expenses from Supabase');
+        final phase1Stopwatch = Stopwatch()..start();
+        _expenses = await _repository.getByDateRange(startOfMonth, endOfMonth)
+            .timeout(const Duration(seconds: 10));
+        phase1Stopwatch.stop();
+
+        debugPrint('📊 [PERF] Phase 1 (current month): ${phase1Stopwatch.elapsedMilliseconds}ms '
+            '(${_expenses.length} expenses)');
+
+        // Add pending queued items for current month
+        _addQueuedExpenses();
+
+        // UI can now show current month data!
+        _isLoading = false;
+        notifyListeners();
+        debugPrint('✅ Phase 1 complete - UI showing ${_expenses.length} current month expenses');
+
       } catch (e) {
-        // Offline or timeout - just start with empty list
-        debugPrint('⚠️  Could not load from Supabase (offline?): $e');
-        debugPrint('📦 Will show queued items only');
+        debugPrint('⚠️ Phase 1 failed (offline?): $e');
         _expenses = [];
+        _addQueuedExpenses();
+        _isLoading = false;
+        notifyListeners();
       }
 
-      // ALWAYS load pending queued items (for optimistic UI)
-      if (_queueService != null) {
-        final pendingReceipts = _queueService.getPendingReceipts();
-        if (pendingReceipts.isNotEmpty) {
-          // Convert queued items to Expense objects and add to list
-          for (final receipt in pendingReceipts) {
-            for (final item in receipt.items) {
-              final queuedExpense = Expense(
-                id: 'pending_${receipt.id}_${item.hashCode}', // Temporary ID
-                description: item.description,
-                amount: item.amount,
-                categoryNameVi: item.categoryNameVi,
-                typeNameVi: item.typeNameVi,
-                date: item.date,
-                note: item.note,
-              );
-              _expenses.add(queuedExpense);
-            }
-          }
-          _expenses.sort((a, b) => b.date.compareTo(a.date));
-          debugPrint('📦 Added ${_queueService.getPendingCount()} pending queued items to expense list');
-        }
-      }
+      // ═══════════════════════════════════════════════════════════════════
+      // PHASE 2: Load remaining history in background (user doesn't wait)
+      // ═══════════════════════════════════════════════════════════════════
+      _loadRemainingExpensesInBackground(startOfMonth);
 
-      debugPrint('📊 Total expenses in list: ${_expenses.length}');
+      totalStopwatch.stop();
+      debugPrint('📊 [PERF] loadExpenses Phase 1 TOTAL: ${totalStopwatch.elapsedMilliseconds}ms');
+
     } catch (e) {
-      // Critical error - log it but don't crash
       debugPrint('❌ Critical error loading expenses: $e');
       _expenses = [];
-    } finally {
       _isLoading = false;
-      // Notify listeners that loading is complete and data is ready
       notifyListeners();
+    } finally {
+      _isLoadingInProgress = false;
     }
+  }
+
+  /// Phase 2: Load expenses before current month in background
+  /// This runs silently - user already sees current month data
+  Future<void> _loadRemainingExpensesInBackground(DateTime currentMonthStart) async {
+    try {
+      final phase2Stopwatch = Stopwatch()..start();
+      debugPrint('📊 [PERF] Phase 2 (background): Starting...');
+
+      // Get all expenses before current month
+      final veryOldDate = DateTime(2020, 1, 1); // Reasonable start date
+      final dayBeforeMonth = currentMonthStart.subtract(const Duration(days: 1));
+
+      final olderExpenses = await _repository.getByDateRange(veryOldDate, dayBeforeMonth)
+          .timeout(const Duration(seconds: 30)); // Longer timeout for history
+
+      phase2Stopwatch.stop();
+      debugPrint('📊 [PERF] Phase 2 (background): ${phase2Stopwatch.elapsedMilliseconds}ms '
+          '(${olderExpenses.length} older expenses)');
+
+      // Merge with current expenses
+      _expenses = [..._expenses, ...olderExpenses];
+      _expenses.sort((a, b) => b.date.compareTo(a.date)); // Newest first
+      notifyListeners();
+
+      debugPrint('✅ Phase 2 complete - Total ${_expenses.length} expenses loaded');
+
+    } catch (e) {
+      // Silent failure - we already have current month, don't disrupt user
+      debugPrint('⚠️ Phase 2 (background) failed: $e - keeping current month data');
+    }
+  }
+
+  /// Helper to add queued (offline) expenses to the list
+  void _addQueuedExpenses() {
+    if (_queueService == null) return;
+
+    final pendingReceipts = _queueService.getPendingReceipts();
+    if (pendingReceipts.isEmpty) return;
+
+    for (final receipt in pendingReceipts) {
+      for (final item in receipt.items) {
+        final queuedExpense = Expense(
+          id: 'pending_${receipt.id}_${item.hashCode}',
+          description: item.description,
+          amount: item.amount,
+          categoryNameVi: item.categoryNameVi,
+          typeNameVi: item.typeNameVi,
+          date: item.date,
+          note: item.note,
+        );
+        _expenses.add(queuedExpense);
+      }
+    }
+    _expenses.sort((a, b) => b.date.compareTo(a.date));
+    debugPrint('📦 Added ${_queueService.getPendingCount()} pending queued items');
   }
 
   /// Add a new expense to the list with offline queue support
