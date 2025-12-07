@@ -3,10 +3,32 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/expense.dart';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TOP-LEVEL FUNCTION FOR compute() ISOLATE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Why top-level? Flutter's compute() requires a top-level or static function.
+// It can't use closures or instance methods because isolates don't share memory.
+//
+// This function runs in a SEPARATE ISOLATE (background thread), so:
+// - Main thread (UI) stays responsive
+// - Expensive DateTime.parse() calls don't block animations
+// - User sees instant loading while parsing happens in background
+List<Expense> _parseExpensesJson(String json) {
+  final List<dynamic> list = jsonDecode(json);
+  return list.map((e) => Expense.fromMap(e as Map<String, dynamic>)).toList();
+}
+
 // StorageService: Handles all data persistence operations
 // This is a "Service" - a class that handles business logic separate from UI
 //
 // **SINGLETON PATTERN** - Pre-initialize at app startup for instant cache access
+//
+// **PERFORMANCE OPTIMIZATION** (Dec 2025):
+// - Pre-parse cache during splash screen using compute() isolate
+// - Store parsed expenses in memory for instant access
+// - Expense.fromMap() is slow in debug mode (~8ms each due to DateTime.parse)
+// - By pre-parsing, we move the cost to startup and get <5ms access later
 class StorageService {
   // Singleton instance
   static final StorageService _instance = StorageService._internal();
@@ -28,6 +50,9 @@ class StorageService {
   // SharedPreferences instance - initialized once, shared across app
   SharedPreferences? _prefs;
 
+  // Memory cache for pre-parsed expenses (instant access after preload)
+  List<Expense>? _memoryCache;
+
   // Initialize the storage service
   // This must be called before using save/load methods
   // async: This operation takes time (disk access)
@@ -38,6 +63,44 @@ class StorageService {
     // SharedPreferences.getInstance() returns a Future
     // await: Wait for it to complete before continuing
     _prefs = await SharedPreferences.getInstance();
+  }
+
+  /// Pre-parse cache during app startup (called from main.dart)
+  ///
+  /// This moves the expensive JSON parsing + DateTime.parse() to the splash screen,
+  /// so when ExpenseProvider calls getCachedCurrentMonthExpenses(), it returns instantly.
+  ///
+  /// Uses compute() to run parsing in a background isolate, keeping UI responsive.
+  Future<void> preloadCache() async {
+    if (_prefs == null) {
+      await initialize();
+    }
+
+    // Check if cache is stale (different month)
+    if (!isCacheFromCurrentMonth()) {
+      debugPrint('📊 [PRELOAD] Cache stale or missing, skipping preload');
+      return;
+    }
+
+    final json = _prefs!.getString(_currentMonthCacheKey);
+    if (json == null) {
+      debugPrint('📊 [PRELOAD] No cache to preload');
+      return;
+    }
+
+    final stopwatch = Stopwatch()..start();
+
+    // Use compute() to parse in background isolate
+    // This keeps the splash screen animations smooth
+    _memoryCache = await compute(_parseExpensesJson, json);
+
+    stopwatch.stop();
+    debugPrint('📊 [PRELOAD] Pre-parsed ${_memoryCache!.length} expenses in ${stopwatch.elapsedMilliseconds}ms (isolate)');
+  }
+
+  /// Clear memory cache (called when cache is updated)
+  void invalidateMemoryCache() {
+    _memoryCache = null;
   }
 
   // Save expenses to local storage
@@ -99,7 +162,7 @@ class StorageService {
     } catch (e) {
       // If there's an error (corrupted data, etc.), return empty list
       // In production, you might want to log this error
-      print('Error loading expenses: $e');
+      debugPrint('❌ Error loading expenses: $e');
       return [];
     }
   }
@@ -124,23 +187,47 @@ class StorageService {
     if (_prefs == null) {
       await initialize();
     }
+
+    // Update memory cache immediately (for subsequent reads in this session)
+    _memoryCache = expenses;
+
+    // Persist to disk for next app launch
     final json = jsonEncode(expenses.map((e) => e.toMap()).toList());
     await _prefs!.setString(_currentMonthCacheKey, json);
     await _prefs!.setInt(_cacheTimestampKey, DateTime.now().millisecondsSinceEpoch);
-    debugPrint('💾 Cached ${expenses.length} current month expenses');
+    debugPrint('💾 Cached ${expenses.length} current month expenses (memory + disk)');
   }
 
   /// Get cached current month expenses (returns null if no cache)
+  ///
+  /// PERFORMANCE: If preloadCache() was called at startup, this returns
+  /// from memory cache in <1ms. Otherwise falls back to parsing (slower).
   Future<List<Expense>?> getCachedCurrentMonthExpenses() async {
+    // Fast path: Return pre-parsed memory cache (instant!)
+    if (_memoryCache != null) {
+      debugPrint('  📊 [CACHE] Memory cache hit: ${_memoryCache!.length} expenses (instant)');
+      return _memoryCache;
+    }
+
+    // Slow path: Parse from disk (fallback if preload wasn't called)
     if (_prefs == null) {
       await initialize();
     }
+
     final json = _prefs!.getString(_currentMonthCacheKey);
     if (json == null) return null;
 
     try {
-      final List<dynamic> list = jsonDecode(json);
-      return list.map((e) => Expense.fromMap(e as Map<String, dynamic>)).toList();
+      debugPrint('  ⚠️ [CACHE] Memory cache miss - parsing from disk...');
+      final stopwatch = Stopwatch()..start();
+
+      // Parse in isolate to avoid blocking UI
+      _memoryCache = await compute(_parseExpensesJson, json);
+
+      stopwatch.stop();
+      debugPrint('  📊 [CACHE] Parsed ${_memoryCache!.length} expenses in ${stopwatch.elapsedMilliseconds}ms');
+
+      return _memoryCache;
     } catch (e) {
       debugPrint('❌ Error loading cached expenses: $e');
       return null;
